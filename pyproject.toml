@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "fine"
+version = "0.0.1"
+description = "A compiler for the Fine Programming Language"
+authors = [
+    "Eduardo García Maleta <egmaleta@proton.me>",
+]
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/egmaleta/fine"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+black = "24.3.0"
+pytest = "8.1.1"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.poetry.scripts]
+format = 'black:patched_main'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
