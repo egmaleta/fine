@@ -21,8 +21,14 @@ line-length = 88
 target-version = ['py311']
 exclude = "vendor"
 
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+
 [tool.poetry.scripts]
 format = 'black:patched_main'
+test = "pytest:console_main"
 
 [build-system]
 requires = ["poetry-core"]
