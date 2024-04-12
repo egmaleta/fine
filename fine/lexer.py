@@ -123,6 +123,8 @@ class FineLexer(Lexer):
                 elif level < current_level:
                     yield END_T
                     levels.pop()
+                else:
+                    yield t
 
         while len(levels) > 1:
             yield END_T
