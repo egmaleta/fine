@@ -1,26 +1,21 @@
 from .tools.lexer import Lexer
 
 
-class FineToken:
-    def __init__(self, type, value, lineno, index, end, column):
-        super().__init__()
-        self.type = type
-        self.value = value
-        self.lineno = lineno
-        self.index = index
-        self.end = end
+class LexemeInfo:
+    def __init__(self, lex, line, column):
+        self.lex = lex
+        self.line = line
         self.column = column
 
-    @property
-    def pos(self):
-        return self.column, self.lineno
-
     def __repr__(self):
-        return f"Token(type={repr(self.type)}, value={repr(self.value)}, column={self.column}, line={self.lineno})"
+        return repr(self.lex)
+
+    def __str__(self):
+        return self.lex
 
 
-INDENT_T = FineToken("INDENT", "", -1, -1, -1, -1)
-DEDENT_T = FineToken("DEDENT", "", -1, -1, -1, -1)
+INDENT_TTYPE = "INDENT"
+DEDENT_TTYPE = "DEDENT"
 
 
 def indent_len(s: str):
@@ -32,7 +27,7 @@ def indent_len(s: str):
 
 
 class FineLexer(Lexer):
-    TOKEN_TYPES = {
+    tokens = {
         "INFIXL",
         "INFIXR",
         "ID",
@@ -43,9 +38,8 @@ class FineLexer(Lexer):
         "SINGLE_OP",
         "OPAR",
         "CPAR",
+        "NEWLINE",
     }
-
-    tokens = TOKEN_TYPES | {"NEWLINE"}
 
     # precedence over id
     INFIXL = r"infixl"
@@ -78,24 +72,13 @@ class FineLexer(Lexer):
         self.index += 1
 
     @staticmethod
-    def _merge_nl(tokens):
-        end = 0
+    def _merge_newline_tokens(tokens):
         nl_t = None
         for t in tokens:
-            t = FineToken(t.type, t.value, t.lineno, t.index, t.end, t.index - end + 1)
-
             if t.type == "NEWLINE":
-                end = t.end - indent_len(t.value)
-
                 if nl_t:
-                    nl_t = FineToken(
-                        nl_t.type,
-                        nl_t.value + t.value,
-                        nl_t.lineno,
-                        nl_t.index,
-                        t.end,
-                        nl_t.column,
-                    )
+                    nl_t.value += t.value
+                    nl_t.end = t.end
                 else:
                     nl_t = t
             else:
@@ -105,30 +88,55 @@ class FineLexer(Lexer):
 
                 yield t
 
+        # last newline token is dropped
+
     @staticmethod
-    def _emit_indent(tokens):
+    def _newline_to_indent_tokens(tokens):
         levels = [0]
+        last_t = None
 
         for t in tokens:
-            if t.type != "NL":
-                yield t
-            else:
+            if t.type == "NEWLINE":
                 current_level = levels[-1]
                 level = indent_len(t.value)
 
                 if level > current_level:
-                    yield INDENT_T
+                    t.type = INDENT_TTYPE
                     levels.append(level)
 
                 elif level < current_level:
-                    yield DEDENT_T
+                    t.type = DEDENT_TTYPE
                     levels.pop()
-                else:
-                    yield t
 
-        while len(levels) > 1:
-            yield DEDENT_T
-            levels.pop()
+            yield t
+            last_t = t
+
+        if last_t:
+            Token = type(last_t)
+            while len(levels) > 1:
+                t = Token()
+                t.type = DEDENT_TTYPE
+                t.value = ""
+                t.lineno = last_t.lineno
+                t.index = last_t.index
+                t.end = last_t.end
+                yield t
+
+                levels.pop()
+
+    @staticmethod
+    def _create_lexeme_info(tokens):
+        end = 0
+        for t in tokens:
+            t.value = LexemeInfo(t.value, t.lineno, t.index - end + 1)
+
+            if "\n" in t.value.lex:
+                end = t.end - indent_len(t.value.lex)
+
+            yield t
 
     def tokenize(self, text, lineno=1, index=0):
-        return self._emit_indent(self._merge_nl(super().tokenize(text, lineno, index)))
+        tokens = super().tokenize(text, lineno, index)
+        tokens = self._merge_newline_tokens(tokens)
+        tokens = self._newline_to_indent_tokens(tokens)
+        return self._create_lexeme_info(tokens)
