@@ -1,3 +1,4 @@
+_ = None  # to suppress pylance warning
 from .tools.lexer import Lexer
 
 
@@ -50,11 +51,11 @@ class FineLexer(Lexer):
     DEC = r"0|[1-9][0-9_]*\.[0-9_]*"
     NAT = r"0|[1-9][0-9_]*"
 
-    CUSTOM_OP = r"[~!@$%^&*-+|?.<>:=]{2,3}"
+    CUSTOM_OP = r"[~!@$%^&*/-+|?.<>:=]{2,3}"
 
     ASSIGN = r"="
 
-    SINGLE_OP = r"[~!@$%^&*-+|?.<>:]"
+    SINGLE_OP = r"[~!@$%^&*/-+|?.<>:]"
 
     OPAR = r"\("
     CPAR = r"\)"
