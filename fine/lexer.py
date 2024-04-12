@@ -34,9 +34,9 @@ class FineLexer(Lexer):
         "ID",
         "DEC",
         "NAT",
-        "CUSTOM_OP",
+        "EXT_OP",
         "ASSIGN",
-        "SINGLE_OP",
+        "OP",
         "OPAR",
         "CPAR",
         "NEWLINE",
@@ -51,11 +51,11 @@ class FineLexer(Lexer):
     DEC = r"0|[1-9][0-9_]*\.[0-9_]*"
     NAT = r"0|[1-9][0-9_]*"
 
-    CUSTOM_OP = r"[~!@$%^&*/-+|?.<>:=]{2,3}"
+    EXT_OP = r"[~!@$%^&*/-+|?.<>:=]{2,3}"
 
     ASSIGN = r"="
 
-    SINGLE_OP = r"[~!@$%^&*/-+|?.<>:]"
+    OP = r"[~!@$%^&*/-+|?.<>:]"
 
     OPAR = r"\("
     CPAR = r"\)"
