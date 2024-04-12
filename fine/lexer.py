@@ -19,8 +19,8 @@ class FineToken:
         return f"Token(type={repr(self.type)}, value={repr(self.value)}, column={self.column}, line={self.lineno})"
 
 
-BEGIN_T = FineToken("BEGIN", "", -1, -1, -1, -1)
-END_T = FineToken("END", "", -1, -1, -1, -1)
+INDENT_T = FineToken("INDENT", "", -1, -1, -1, -1)
+DEDENT_T = FineToken("DEDENT", "", -1, -1, -1, -1)
 
 
 def indent_len(s: str):
@@ -45,7 +45,7 @@ class FineLexer(Lexer):
         "CPAR",
     }
 
-    tokens = TOKEN_TYPES | {"NL"}
+    tokens = TOKEN_TYPES | {"NEWLINE"}
 
     # precedence over id
     INFIXL = r"infixl"
@@ -66,7 +66,7 @@ class FineLexer(Lexer):
     CPAR = r"\)"
 
     @_(r"\n\s*")
-    def NL(self, t):
+    def NEWLINE(self, t):
         self.lineno += t.value.count("\n")
         return t
 
@@ -84,7 +84,7 @@ class FineLexer(Lexer):
         for t in tokens:
             t = FineToken(t.type, t.value, t.lineno, t.index, t.end, t.index - end + 1)
 
-            if t.type == "NL":
+            if t.type == "NEWLINE":
                 end = t.end - indent_len(t.value)
 
                 if nl_t:
@@ -117,17 +117,17 @@ class FineLexer(Lexer):
                 level = indent_len(t.value)
 
                 if level > current_level:
-                    yield BEGIN_T
+                    yield INDENT_T
                     levels.append(level)
 
                 elif level < current_level:
-                    yield END_T
+                    yield DEDENT_T
                     levels.pop()
                 else:
                     yield t
 
         while len(levels) > 1:
-            yield END_T
+            yield DEDENT_T
             levels.pop()
 
     def tokenize(self, text, lineno=1, index=0):
