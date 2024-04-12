@@ -5,8 +5,7 @@ from .tools.lexer import Lexer
 class LexemeInfo:
     def __init__(self, lex, line, column):
         self.lex = lex
-        self.line = line
-        self.column = column
+        self.pos = (column, line)
 
     def __repr__(self):
         return repr(self.lex)
