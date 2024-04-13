@@ -99,3 +99,8 @@ class FunctionDefn(AST):
         self.name = name.lex
         self.params = [t.lex for t in param_names] if param_names else None
         self.segments = segments
+
+
+class Program(AST):
+    def __init__(self, definitions: list[AST]):
+        self.definitions = definitions

@@ -1,11 +1,13 @@
 _ = None  # to suppress pylance warning
 from .tools.parser import Parser
-from .lexer import FineLexer, INDENT_TTYPE, DEDENT_TTYPE
+from .lexer import FineLexer
 from . import ast
 
 
 class FineParser(Parser):
-    tokens = FineLexer.tokens | {INDENT_TTYPE, DEDENT_TTYPE}
+    tokens = FineLexer.tokens
+
+    debugfile = "parser.out"
 
     start = "program"
 
@@ -18,7 +20,7 @@ class FineParser(Parser):
 
     @_("defn_list")
     def program(self, p):
-        pass
+        return ast.Program(p[0])
 
     @_("empty")
     def program(self, p):
@@ -38,7 +40,7 @@ class FineParser(Parser):
     # defn : INFIXL NAT operator
     #      | INFIXR NAT operator
     #      | VAL name ASSIGN opt_ind_expr
-    #      | FUN name param_list NEWLINE func_segments
+    #      | FUN name opt_param_list NEWLINE func_segments
 
     @_("INFIXL NAT operator", "INFIXR NAT operator")
     def defn(self, p):
@@ -48,9 +50,9 @@ class FineParser(Parser):
     def defn(self, p):
         return ast.ValueDefn(p[1], p[3])
 
-    @_("FUN name param_list NEWLINE func_segments")
+    @_("FUN name opt_param_list NEWLINE func_segments")
     def defn(self, p):
-        return ast.FunctionDefn(p[1], p[3], p[4])
+        return ast.FunctionDefn(p[1], p[2], p[4])
 
     # operator : OP
     #          | EXT_OP
@@ -81,9 +83,19 @@ class FineParser(Parser):
     def opt_ind_expr(self, p):
         return p[0]
 
+    # opt_param_list : param_list
+    #                | empty
+
+    @_("param_list")
+    def opt_param_list(self, p):
+        return p[0]
+
+    @_("empty")
+    def opt_param_list(self, p):
+        return None
+
     # param_list : ID param_list
     #            | ID
-    #            | empty
 
     @_("ID param_list")
     def param_list(self, p):
@@ -93,16 +105,17 @@ class FineParser(Parser):
     def param_list(self, p):
         return [p[0]]
 
-    @_("empty")
-    def param_list(self, p):
-        return None
-
     # func_segments : func_seg NEWLINE func_segments
+    #               | func_seg func_segments
     #               | func_seg
 
     @_("func_seg NEWLINE func_segments")
     def func_segments(self, p):
         return [p[0], *p[2]]
+
+    @_("func_seg func_segments")
+    def func_segments(self, p):
+        return [p[0], *p[1]]
 
     @_("func_seg")
     def func_segments(self, p):

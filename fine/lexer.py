@@ -21,10 +21,6 @@ class Token:
         return self.lex
 
 
-INDENT_TTYPE = "INDENT"
-DEDENT_TTYPE = "DEDENT"
-
-
 def indent_len(s: str):
     try:
         i = s.rindex("\n")
@@ -48,6 +44,8 @@ class FineLexer(Lexer):
         "OPAR",
         "CPAR",
         "NEWLINE",
+        "INDENT",
+        "DEDENT",
     }
 
     # precedence over id
@@ -61,11 +59,11 @@ class FineLexer(Lexer):
     DEC = r"0|[1-9][0-9_]*\.[0-9_]*"
     NAT = r"0|[1-9][0-9_]*"
 
-    EXT_OP = r"[~!@$%^&*/-+|?.<>:=]{2,3}"
+    EXT_OP = r"[~!@$%^&*/\-+|?.<>:=]{2,3}"
 
     ASSIGN = r"="
 
-    OP = r"[~!@$%^&*/-+|?.<>:]"
+    OP = r"[~!@$%^&*/\-+|?.<>:]"
 
     OPAR = r"\("
     CPAR = r"\)"
@@ -112,11 +110,11 @@ class FineLexer(Lexer):
                 level = indent_len(t.value)
 
                 if level > current_level:
-                    t.type = INDENT_TTYPE
+                    t.type = "INDENT"
                     levels.append(level)
 
                 elif level < current_level:
-                    t.type = DEDENT_TTYPE
+                    t.type = "DEDENT"
                     levels.pop()
 
             yield t
@@ -126,7 +124,7 @@ class FineLexer(Lexer):
             Token = type(last_t)
             while len(levels) > 1:
                 t = Token()
-                t.type = DEDENT_TTYPE
+                t.type = "DEDENT"
                 t.value = ""
                 t.lineno = last_t.lineno
                 t.index = last_t.index
