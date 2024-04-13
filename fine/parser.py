@@ -13,10 +13,10 @@ class FineParser(Parser):
     def empty(self, p):
         pass
 
-    # program : decl_list
+    # program : defn_list
     #         | empty
 
-    @_("decl_list")
+    @_("defn_list")
     def program(self, p):
         pass
 
@@ -24,60 +24,33 @@ class FineParser(Parser):
     def program(self, p):
         return None
 
-    # decl_list : decl NEWLINE decl_list
-    #           | decl
+    # defn_list : defn NEWLINE defn_list
+    #           | defn
 
-    @_("decl NEWLINE decl_list")
-    def decl_list(self, p):
+    @_("defn NEWLINE defn_list")
+    def defn_list(self, p):
         return [p[0], *p[2]]
 
-    @_("decl")
-    def decl_list(self, p):
+    @_("defn")
+    def defn_list(self, p):
         return [p[0]]
 
-    # decl : fixity NAT operator
-    #      | name ASSIGN opt_ind_expr
-    #      | ID id_list
-    #      | name pattern_list ASSIGN opt_ind_expr
+    # defn : INFIXL NAT operator
+    #      | INFIXR NAT operator
+    #      | VAL name ASSIGN opt_ind_expr
+    #      | FUN name param_list NEWLINE func_segments
 
-    @_("fixity NAT operator")
-    def decl(self, p):
-        fix = p[0]
-        op = p[2]
+    @_("INFIXL NAT operator", "INFIXR NAT operator")
+    def defn(self, p):
+        return ast.OperatorInfo(p[0], p[1], p[2])
 
-        return ast.OperatorInfo(
-            op.lex,
-            fix.lex == "INFIXL",
-            int(p[1].lex),
-            start_pos=fix.pos,
-            end_pos=(op.pos[0] + len(op.lex), op.pos[1]),
-        )
+    @_("VAL name ASSIGN opt_ind_expr")
+    def defn(self, p):
+        return ast.ValueDefn(p[1], p[3])
 
-    @_("name ASSIGN opt_ind_expr")
-    def decl(self, p):
-        return ast.ValueDecl(p[0].lex, p[2], start_pos=p[0].pos)
-
-    @_("ID id_list")
-    def decl(self, p):
-        last = p[1][-1]
-
-        return ast.FunctionParams(
-            p[0].lex,
-            [info.lex for info in p[1]],
-            start_pos=p[0].pos,
-            end_pos=(last.pos[0] + len(last.lex), last.pos[1]),
-        )
-
-    @_("name pattern_list ASSIGN opt_ind_expr")
-    def decl(self, p):
-        return ast.FunctionSegment(p[0].lex, p[1], p[3], start_pos=p[0].pos)
-
-    # fixity : INFIXL
-    #        | INFIXR
-
-    @_("INFIXL", "INFIXR")
-    def fixity(self, p):
-        return p[0]
+    @_("FUN name param_list NEWLINE func_segments")
+    def defn(self, p):
+        return ast.FunctionDefn(p[1], p[3], p[4])
 
     # operator : OP
     #          | EXT_OP
@@ -108,16 +81,38 @@ class FineParser(Parser):
     def opt_ind_expr(self, p):
         return p[0]
 
-    # id_list : ID id_list
-    #         | ID
+    # param_list : ID param_list
+    #            | ID
+    #            | empty
 
-    @_("ID id_list")
-    def id_list(self, p):
+    @_("ID param_list")
+    def param_list(self, p):
         return [p[0], *p[1]]
 
     @_("ID")
-    def id_list(self, p):
-        return p[0]
+    def param_list(self, p):
+        return [p[0]]
+
+    @_("empty")
+    def param_list(self, p):
+        return None
+
+    # func_segments : func_seg NEWLINE func_segments
+    #               | func_seg
+
+    @_("func_seg NEWLINE func_segments")
+    def func_segments(self, p):
+        return [p[0], *p[2]]
+
+    @_("func_seg")
+    def func_segments(self, p):
+        return [p[0]]
+
+    # func_seg : pattern_list ASSIGN opt_ind_expr
+
+    @_("pattern_list ASSIGN opt_ind_expr")
+    def func_seg(self, p):
+        return ast.FunctionSegment(p[0], p[2])
 
     # pattern_list : pattern pattern_list
     #              | pattern
@@ -135,7 +130,7 @@ class FineParser(Parser):
 
     @_("ID")
     def pattern(self, p):
-        return ast.Identifier(p[0].lex, start_pos=p[0].pos)
+        return ast.Identifier(p[0])
 
     @_("literal")
     def pattern(self, p):
@@ -202,7 +197,7 @@ class FineParser(Parser):
 
     @_("ID ASSIGN atom")
     def arg(self, p):
-        return (p[0].lex, p[2])
+        return (p[0], p[2])
 
     # atom : OPAR expr CPAR
     #      | ID
@@ -214,7 +209,7 @@ class FineParser(Parser):
 
     @_("ID")
     def atom(self, p):
-        return ast.Identifier(p[0].lex, start_pos=p[0].pos)
+        return ast.Identifier(p[0])
 
     @_("literal")
     def atom(self, p):
@@ -225,8 +220,8 @@ class FineParser(Parser):
 
     @_("NAT")
     def literal(self, p):
-        return ast.NaturalNumber(p[0].lex, start_pos=p[0].pos)
+        return ast.NaturalNumber(p[0])
 
     @_("DEC")
     def literal(self, p):
-        return ast.DecimalNumber(p[0].lex, start_pos=p[0].pos)
+        return ast.DecimalNumber(p[0])

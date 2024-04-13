@@ -2,10 +2,17 @@ _ = None  # to suppress pylance warning
 from .tools.lexer import Lexer
 
 
-class LexemeInfo:
-    def __init__(self, lex, line, column):
+class Token:
+    def __init__(self, lex: str, line: int, column: int):
         self.lex = lex
-        self.pos = (column, line)
+        self._start_pos = (column, line)
+        self._end_pos = (column + len(lex), line)
+
+    def start_pos(self):
+        return self._start_pos
+
+    def end_pos(self):
+        return self._end_pos
 
     def __repr__(self):
         return repr(self.lex)
@@ -28,6 +35,8 @@ def indent_len(s: str):
 
 class FineLexer(Lexer):
     tokens = {
+        "FUN",
+        "VAL",
         "INFIXL",
         "INFIXR",
         "ID",
@@ -42,6 +51,8 @@ class FineLexer(Lexer):
     }
 
     # precedence over id
+    FUN = r"fun"
+    VAL = r"val"
     INFIXL = r"infixl"
     INFIXR = r"infixr"
 
@@ -125,10 +136,10 @@ class FineLexer(Lexer):
                 levels.pop()
 
     @staticmethod
-    def _create_lexeme_info(tokens):
+    def _token_in_token(tokens):
         end = 0
         for t in tokens:
-            t.value = LexemeInfo(t.value, t.lineno, t.index - end + 1)
+            t.value = Token(t.value, t.lineno, t.index - end + 1)
 
             if "\n" in t.value.lex:
                 end = t.end - indent_len(t.value.lex)
@@ -139,4 +150,4 @@ class FineLexer(Lexer):
         tokens = super().tokenize(text, lineno, index)
         tokens = self._merge_newline_tokens(tokens)
         tokens = self._newline_to_indent_tokens(tokens)
-        return self._create_lexeme_info(tokens)
+        return self._token_in_token(tokens)
