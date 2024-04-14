@@ -38,8 +38,6 @@ def create_token(Constructor, **kwargs):
 
 class FineLexer(Lexer):
     tokens = {
-        "FUN",
-        "VAL",
         "INFIXL",
         "INFIXR",
         "ID",
@@ -56,8 +54,6 @@ class FineLexer(Lexer):
     }
 
     # precedence over id
-    FUN = r"fun"
-    VAL = r"val"
     INFIXL = r"infixl"
     INFIXR = r"infixr"
 
