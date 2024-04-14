@@ -88,6 +88,16 @@ class FineLexer(Lexer):
         self.index += 1
 
     @staticmethod
+    def _strip_leading_newline_tokens(tokens):
+        for t in tokens:
+            if t.type != "NEWLINE":
+                yield t
+                break
+
+        for t in tokens:
+            yield t
+
+    @staticmethod
     def _merge_newline_tokens(tokens):
         nl_t = None
         for t in tokens:
@@ -104,7 +114,7 @@ class FineLexer(Lexer):
 
                 yield t
 
-        # last newline token is dropped
+        # strip trailing newline by not yielding last newline token
 
     @staticmethod
     def _newline_to_indent_tokens(tokens):
@@ -121,14 +131,7 @@ class FineLexer(Lexer):
                     levels.append(level)
 
                 elif level < current_level:
-                    yield create_token(
-                        type(t),
-                        type="DEDENT",
-                        value="",
-                        lineno=t.lineno,
-                        index=t.index,
-                        end=t.end,
-                    )
+                    t.type = "DEDENT"
                     levels.pop()
 
             yield t
@@ -160,6 +163,7 @@ class FineLexer(Lexer):
 
     def tokenize(self, text, lineno=1, index=0):
         tokens = super().tokenize(text, lineno, index)
+        tokens = self._strip_leading_newline_tokens(tokens)
         tokens = self._merge_newline_tokens(tokens)
         tokens = self._newline_to_indent_tokens(tokens)
         return self._token_in_token(tokens)
