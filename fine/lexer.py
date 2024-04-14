@@ -29,6 +29,13 @@ def indent_len(s: str):
         return 0
 
 
+def create_token(Constructor, **kwargs):
+    t = Constructor()
+    for k, v in kwargs.items():
+        setattr(t, k, v)
+    return t
+
+
 class FineLexer(Lexer):
     tokens = {
         "FUN",
@@ -114,7 +121,14 @@ class FineLexer(Lexer):
                     levels.append(level)
 
                 elif level < current_level:
-                    t.type = "DEDENT"
+                    yield create_token(
+                        type(t),
+                        type="DEDENT",
+                        value="",
+                        lineno=t.lineno,
+                        index=t.index,
+                        end=t.end,
+                    )
                     levels.pop()
 
             yield t
@@ -123,14 +137,14 @@ class FineLexer(Lexer):
         if last_t:
             Token = type(last_t)
             while len(levels) > 1:
-                t = Token()
-                t.type = "DEDENT"
-                t.value = ""
-                t.lineno = last_t.lineno
-                t.index = last_t.index
-                t.end = last_t.end
-                yield t
-
+                yield create_token(
+                    Token,
+                    type="DEDENT",
+                    value="",
+                    lineno=last_t.lineno,
+                    index=last_t.index,
+                    end=last_t.end,
+                )
                 levels.pop()
 
     @staticmethod
