@@ -43,6 +43,7 @@ class FineLexer(Lexer):
         "ID",
         "DEC",
         "NAT",
+        "BTICK",
         "UNIT",
         "EXT_OP",
         "ASSIGN",
@@ -62,6 +63,8 @@ class FineLexer(Lexer):
 
     DEC = r"(0|[1-9][0-9]*)\.[0-9]*"
     NAT = r"0|[1-9][0-9]*"
+
+    BTICK = r"`"
 
     UNIT = r"\(\)"
 

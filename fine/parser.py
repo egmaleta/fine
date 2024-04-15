@@ -72,29 +72,9 @@ class FineParser(Parser):
 
     # binop_info
 
-    @_("INFIXL NAT op_repr", "INFIXR NAT op_repr")
+    @_("INFIXL NAT operator", "INFIXR NAT operator")
     def binop_info(self, p):
         return ast.BinOpInfo(p[0], p[1], p[2])
-
-    # op_repr
-
-    @_("OPAR operator CPAR")
-    def op_repr(self, p):
-        return p[1]
-
-    @_("operator")
-    def op_repr(self, p):
-        return p[0]
-
-    # name
-
-    @_("ID")
-    def name(self, p):
-        return p[0]
-
-    @_("OPAR operator CPAR")
-    def name(self, p):
-        return p[1]
 
     # params
 
@@ -140,17 +120,23 @@ class FineParser(Parser):
     def atom(self, p):
         return p[1]
 
-    @_("OPAR operator CPAR")
-    def atom(self, p):
-        return ast.Identifier(p[1])
-
-    @_("ID")
+    @_("name")
     def atom(self, p):
         return ast.Identifier(p[0])
 
     @_("literal")
     def atom(self, p):
         return p[0]
+
+    # name
+
+    @_("ID")
+    def name(self, p):
+        return p[0]
+
+    @_("OPAR EXT_OP CPAR", "OPAR OP CPAR")
+    def name(self, p):
+        return p[1]
 
     # literal
 
@@ -171,6 +157,10 @@ class FineParser(Parser):
     @_("EXT_OP", "OP")
     def operator(self, p):
         return p[0]
+
+    @_("BTICK ID BTICK")
+    def operator(self, p):
+        return p[1]
 
     # args
 

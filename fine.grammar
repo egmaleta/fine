@@ -17,14 +17,8 @@ val_defn : name ASSIGN opt_ind_expr
 fun_defn : name params ASSIGN opt_ind_expr
          | ID operator ID ASSIGN opt_ind_expr
 
-binop_info : INFIXL NAT op_repr
-           | INFIXR NAT op_repr
-
-op_repr : operator
-        | OPAR operator CPAR
-
-name : ID
-     | OPAR operator CPAR
+binop_info : INFIXL NAT operator
+           | INFIXR NAT operator
 
 params : ID params
        | ID
@@ -37,9 +31,12 @@ op_chain : operand operator op_chain
 operand : atom args
 
 atom : OPAR expr CPAR
-     | OPAR operator CPAR
-     | ID
+     | name
      | literal
+
+name : ID
+     | OPAR EXT_OP CPAR
+     | OPAR OP CPAR
 
 literal : DEC
         | NAT
@@ -47,6 +44,7 @@ literal : DEC
 
 operator : EXT_OP
          | OP
+         | BTICK ID BTICK
 
 args : ID ASSIGN atom args
      | atom args
