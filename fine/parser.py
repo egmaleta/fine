@@ -1,4 +1,6 @@
 _ = None  # to suppress pylance warning
+from typing import Union
+
 from .tools.parser import Parser
 from .lexer import FineLexer
 from . import ast
@@ -8,6 +10,11 @@ class FineParser(Parser):
     tokens = FineLexer.tokens
 
     start = "program"
+
+    def parse(self, tokens) -> Union[ast.Program, None]:
+        return super().parse(tokens)
+
+    ## grammar
 
     @_("")
     def empty(self, p):
