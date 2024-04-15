@@ -4,30 +4,29 @@ from .tools.ast import AST, Expr
 from .lexer import Token
 
 
-class Literal(Expr):
-    def __init__(self, value: Token):
-        self.value = value.lex
-
-        self._start_pos = value.start_pos()
-        self._end_pos = value.end_pos()
-
-    def start_pos(self):
-        return self._start_pos
-
-    def end_pos(self):
-        return self._end_pos
+class Program(AST):
+    def __init__(self, definitions: list[AST]):
+        self.definitions = definitions
 
 
-class NaturalNumber(Literal):
-    pass
+class ValueDefn(AST):
+    def __init__(self, name: Token, value: Expr):
+        self.name = name.lex
+        self.value = value
 
 
-class DecimalNumber(Literal):
-    pass
+class FunctionDefn(AST):
+    def __init__(self, name: Token, params: list[Token], body: Expr):
+        self.name = name.lex
+        self.params = [t.lex for t in params]
+        self.body = body
 
 
-class Identifier(Literal):
-    pass
+class BinOpInfo(AST):
+    def __init__(self, assoc: Token, precedence: Token, operator: Token):
+        self.operator = operator.lex
+        self.is_left_assoc = assoc.lex == "INFIXL"
+        self.precedence = int(precedence.lex)
 
 
 class BinOp(Expr):
@@ -56,26 +55,27 @@ class FunctionApp(Expr):
         return self.arg.end_pos()
 
 
-class ValueDefn(AST):
-    def __init__(self, name: Token, value: Expr):
-        self.name = name.lex
-        self.value = value
+class Literal(Expr):
+    def __init__(self, value: Token):
+        self.value = value.lex
+
+        self._start_pos = value.start_pos()
+        self._end_pos = value.end_pos()
+
+    def start_pos(self):
+        return self._start_pos
+
+    def end_pos(self):
+        return self._end_pos
 
 
-class BinOpInfo(AST):
-    def __init__(self, assoc: Token, precedence: Token, operator: Token):
-        self.operator = operator.lex
-        self.is_left_assoc = assoc.lex == "INFIXL"
-        self.precedence = int(precedence.lex)
+class NaturalNumber(Literal):
+    pass
 
 
-class FunctionDefn(AST):
-    def __init__(self, name: Token, params: list[Token], body: Expr):
-        self.name = name.lex
-        self.params = [t.lex for t in params]
-        self.body = body
+class DecimalNumber(Literal):
+    pass
 
 
-class Program(AST):
-    def __init__(self, definitions: list[AST]):
-        self.definitions = definitions
+class Identifier(Literal):
+    pass
