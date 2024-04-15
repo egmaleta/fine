@@ -23,8 +23,12 @@ class FunctionDefn(AST):
 class BinOpInfo(AST):
     def __init__(self, assoc: Token, precedence: Token, operator: Token):
         self.operator = operator.lex
-        self.is_left_assoc = assoc.lex == "INFIXL"
+        self.is_left_assoc = assoc.lex == "infixl"
         self.precedence = int(precedence.lex)
+
+    # .tools.scope._Named protocol impl
+    def name(self):
+        return self.operator
 
 
 class OpChain(Expr):
