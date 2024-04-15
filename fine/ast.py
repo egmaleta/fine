@@ -1,5 +1,3 @@
-from typing import Optional, Union
-
 from .tools.ast import AST, Expr
 from .lexer import Token
 
@@ -30,7 +28,7 @@ class BinOpInfo(AST):
 
 
 class OpChain(Expr):
-    def __init__(self, elements: list[Union[Expr, Token]]):
+    def __init__(self, elements: list[Expr | Token]):
         self.elements = elements
 
     def start_pos(self):
@@ -54,7 +52,7 @@ class BinOp(Expr):
 
 
 class FunctionApp(Expr):
-    def __init__(self, target: Expr, arg: Expr, arg_name: Optional[Token]):
+    def __init__(self, target: Expr, arg: Expr, arg_name: Token | None):
         self.target = target
         self.arg = arg
         self.arg_name = arg_name.lex if arg_name else None
