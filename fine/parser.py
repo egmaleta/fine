@@ -6,7 +6,7 @@ from . import ast
 
 class FineParser(Parser):
     tokens = FineLexer.tokens
-
+    debugfile = "parse.debug"
     start = "program"
 
     def parse(self, tokens) -> ast.Program | None:
