@@ -20,6 +20,9 @@ fun_defn : name params ASSIGN opt_ind_expr
 binop_info : INFIXL NAT operator
            | INFIXR NAT operator
 
+name : ID
+     | OPAR operator CPAR
+
 params : ID params
        | ID
 
@@ -31,18 +34,17 @@ op_chain : operand operator op_chain
 operand : atom args
 
 atom : OPAR expr CPAR
-     | name
-     | literal
-
-name : ID
      | OPAR operator CPAR
+     | ID
+     | literal
 
 literal : DEC
         | NAT
+        | UNIT
 
 operator : EXT_OP
          | OP
 
 args : ID ASSIGN atom args
-     | atom
+     | atom args
      | <empty>

@@ -30,20 +30,6 @@ class Identifier(Literal):
     pass
 
 
-class UnaryOp(Expr):
-    def __init__(self, operator: Token, operand: Expr):
-        self.operator = operator.lex
-        self.operand = operand
-
-        self._start_pos = operator.start_pos()
-
-    def start_pos(self):
-        return self._start_pos
-
-    def end_pos(self):
-        return self.operand.end_pos()
-
-
 class BinOp(Expr):
     def __init__(self, left: Expr, operator: Token, right: Expr):
         self.left = left
@@ -58,7 +44,7 @@ class BinOp(Expr):
 
 
 class FunctionApp(Expr):
-    def __init__(self, target: Expr, arg: Expr, arg_name: Optional[Token] = None):
+    def __init__(self, target: Expr, arg: Expr, arg_name: Optional[Token]):
         self.target = target
         self.arg = arg
         self.arg_name = arg_name.lex if arg_name else None
@@ -76,29 +62,18 @@ class ValueDefn(AST):
         self.value = value
 
 
-class OperatorInfo(AST):
+class BinOpInfo(AST):
     def __init__(self, assoc: Token, precedence: Token, operator: Token):
         self.operator = operator.lex
         self.is_left_assoc = assoc.lex == "INFIXL"
         self.precedence = int(precedence.lex)
 
 
-class FunctionSegment(AST):
-    def __init__(self, patterns: list[Expr], body: Expr):
-        self.patterns = patterns
-        self.body = body
-
-
 class FunctionDefn(AST):
-    def __init__(
-        self,
-        name: Token,
-        param_names: Optional[list[Token]],
-        segments: list[FunctionSegment],
-    ):
+    def __init__(self, name: Token, params: list[Token], body: Expr):
         self.name = name.lex
-        self.params = [t.lex for t in param_names] if param_names else None
-        self.segments = segments
+        self.params = [t.lex for t in params]
+        self.body = body
 
 
 class Program(AST):
