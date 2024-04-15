@@ -63,7 +63,9 @@ class Dispatcher(object):
       issub = issubclass
       t = self.targets
       ks = iter(t)
-      return [t[k](*args, **kw) for k in ks if issub(typ, k)]
+      visits = [t[k](*args, **kw) for k in ks if issub(typ, k)]
+      assert len(visits) == 1
+      return visits[0]
 
   def add_target(self, typ, target):
     self.targets[typ] = target
