@@ -17,8 +17,11 @@ val_defn : name ASSIGN opt_ind_expr
 fun_defn : name params ASSIGN opt_ind_expr
          | ID operator ID ASSIGN opt_ind_expr
 
-binop_info : INFIXL NAT operator
-           | INFIXR NAT operator
+binop_info : INFIXL NAT op_repr
+           | INFIXR NAT op_repr
+
+op_repr : operator
+        | OPAR operator CPAR
 
 name : ID
      | OPAR operator CPAR

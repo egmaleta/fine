@@ -67,9 +67,19 @@ class FineParser(Parser):
 
     # binop_info
 
-    @_("INFIXL NAT operator", "INFIXR NAT operator")
+    @_("INFIXL NAT op_repr", "INFIXR NAT op_repr")
     def binop_info(self, p):
         return ast.BinOpInfo(p[0], p[1], p[2])
+
+    # op_repr
+
+    @_("OPAR operator CPAR")
+    def op_repr(self, p):
+        return p[1]
+
+    @_("operator")
+    def op_repr(self, p):
+        return p[0]
 
     # name
 
@@ -95,7 +105,10 @@ class FineParser(Parser):
 
     @_("op_chain")
     def expr(self, p):
-        return ast.OpChain(p[0])
+        chain = p[0]
+        if len(chain) == 1:
+            return chain[0]
+        return ast.OpChain(chain)
 
     # op_chain
 
