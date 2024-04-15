@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from .tools.ast import AST, Expr
 from .lexer import Token
@@ -27,6 +27,17 @@ class BinOpInfo(AST):
         self.operator = operator.lex
         self.is_left_assoc = assoc.lex == "INFIXL"
         self.precedence = int(precedence.lex)
+
+
+class OpChain(Expr):
+    def __init__(self, elements: list[Union[Expr, Token]]):
+        self.elements = elements
+
+    def start_pos(self):
+        return self.elements[0].start_pos()
+
+    def end_pos(self):
+        return self.elements[-1].end_pos()
 
 
 class BinOp(Expr):

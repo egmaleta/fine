@@ -95,7 +95,7 @@ class FineParser(Parser):
 
     @_("op_chain")
     def expr(self, p):
-        pass
+        return ast.OpChain(p[0])
 
     # op_chain
 
