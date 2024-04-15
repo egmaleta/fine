@@ -1,5 +1,5 @@
 from .tools.ast import AST, Expr
-from .lexer import Token
+from .lexer import Token, FineLexer
 
 
 class Program(AST):
@@ -23,7 +23,7 @@ class FunctionDefn(AST):
 class BinOpInfo(AST):
     def __init__(self, assoc: Token, precedence: Token, operator: Token):
         self.operator = operator.lex
-        self.is_left_assoc = assoc.lex == "infixl"
+        self.is_left_assoc = assoc.lex == FineLexer.INFIXL
         self.precedence = int(precedence.lex)
 
     # .tools.scope._Named protocol impl
