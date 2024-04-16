@@ -41,13 +41,13 @@ class FineLexer(Lexer):
         "INFIXR",
         "LET",
         "IN",
+        "DATA",
         "ID",
         "DEC",
         "NAT",
         "BTICK",
         "BSLASH",
         "SEMI",
-        "UNIT",
         "EXT_OP",
         "ASSIGN",
         "OP",
@@ -69,6 +69,7 @@ class FineLexer(Lexer):
     LET = r"let"
     IN = r"in"
 
+    DATA = r"[A-Z][a-zA-Z0-9_]*|\(\)"
     ID = r"[a-z_][a-zA-Z0-9_]*"
 
     DEC = r"(0|[1-9][0-9]*)\.[0-9]*"
@@ -77,8 +78,6 @@ class FineLexer(Lexer):
     BTICK = r"`"
     BSLASH = r"\\"
     SEMI = r";"
-
-    UNIT = r"\(\)"
 
     EXT_OP = r"[~!@$%^&*/\-+|?.<>:=]{2,3}"
 

@@ -182,7 +182,7 @@ class FineParser(Parser):
     def literal(self, p):
         return ast.NaturalNumber(p[0])
 
-    @_("UNIT")
+    @_("DATA")
     def literal(self, p):
         return ast.Literal(p[0])
 

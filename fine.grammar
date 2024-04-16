@@ -49,7 +49,7 @@ name : ID
 
 literal : DEC
         | NAT
-        | UNIT
+        | DATA
 
 operator : EXT_OP
          | OP
