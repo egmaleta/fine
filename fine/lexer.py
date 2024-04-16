@@ -77,12 +77,12 @@ class FineLexer(Lexer):
     OPAR = r"\("
     CPAR = r"\)"
 
-    @_(r"\n\s*")
+    @_(r"\n[ \t\n\r\f\v]*")
     def NEWLINE(self, t):
         self.lineno += t.value.count("\n")
         return t
 
-    ignore_space = r"\s+"
+    ignore_space = r"[ \t\r\f\v]+"
     ignore_comment = r"#.*"
 
     def error(self, t):
