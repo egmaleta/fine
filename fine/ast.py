@@ -66,14 +66,14 @@ class Conditional(Expr):
     def __init__(
         self,
         condition: Expr,
-        then_expr: Expr,
-        else_expr: Expr,
+        body: Expr,
+        fall_body: Expr,
         *,
         start_pos: tuple[int, int],
     ):
         self.condition = condition
-        self.then_expr = then_expr
-        self.else_expr = else_expr
+        self.body = body
+        self.fall_body = fall_body
 
         self._start_pos = start_pos
 
@@ -81,7 +81,21 @@ class Conditional(Expr):
         return self._start_pos
 
     def end_pos(self):
-        return self.else_expr.end_pos()
+        return self.fall_body.end_pos()
+
+
+class Block(Expr):
+    def __init__(self, actions: list[Expr], body: Expr, *, start_pos: tuple[int, int]):
+        self.actions = actions
+        self.body = body
+
+        self._start_pos = start_pos
+
+    def start_pos(self):
+        return self._start_pos
+
+    def end_pos(self):
+        return self.body.end_pos()
 
 
 class FunctionApp(Expr):

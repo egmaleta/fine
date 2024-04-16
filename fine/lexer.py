@@ -36,6 +36,7 @@ class FineLexer(Lexer):
         "IF",
         "THEN",
         "ELSE",
+        "DO",
         "INFIXL",
         "INFIXR",
         "ID",
@@ -43,6 +44,7 @@ class FineLexer(Lexer):
         "NAT",
         "BTICK",
         "BSLASH",
+        "SEMI",
         "UNIT",
         "EXT_OP",
         "ASSIGN",
@@ -59,6 +61,7 @@ class FineLexer(Lexer):
     IF = r"if"
     THEN = r"then"
     ELSE = r"else"
+    DO = r"do"
     INFIXL = r"infixl"
     INFIXR = r"infixr"
 
@@ -69,6 +72,7 @@ class FineLexer(Lexer):
 
     BTICK = r"`"
     BSLASH = r"\\"
+    SEMI = r";"
 
     UNIT = r"\(\)"
 

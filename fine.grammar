@@ -12,7 +12,6 @@ val_defn : VAL name ASSIGN expr
 
 fun_defn : FUN name opt_params ASSIGN expr
          | FUN ID operator ID ASSIGN expr
-         | IF expr THEN expr ELSE expr
 
 binop_info : INFIXL NAT operator
            | INFIXR NAT operator
@@ -25,6 +24,12 @@ params : ID params
 
 expr : op_chain
      | BSLASH opt_params ASSIGN expr
+     | IF expr THEN expr ELSE expr
+     | DO expr_list THEN expr
+
+expr_list : expr SEMI expr_list
+          | expr SEMI
+          | expr
 
 op_chain : operand operator op_chain
          | operand

@@ -105,6 +105,18 @@ class FineParser(Parser):
     def expr(self, p):
         return ast.Conditional(p[1], p[3], p[5], start_pos=p[0].start_pos())
 
+    @_("DO expr_list THEN expr")
+    def expr(self, p):
+        return ast.Block(p[1], p[3], start_pos=p[0].start_pos())
+
+    @_("expr SEMI expr_list")
+    def expr_list(self, p):
+        return [p[0], *p[2]]
+
+    @_("expr SEMI", "expr")
+    def expr_list(self, p):
+        return [p[0]]
+
     # op_chain
 
     @_("operand operator op_chain")
