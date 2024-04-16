@@ -97,13 +97,19 @@ class FineParser(Parser):
 
     # op_chain
 
-    @_("operand operator op_chain")
+    @_("operand sep operator sep op_chain")
     def op_chain(self, p):
-        return [p[0], p[1], *p[2]]
+        return [p[0], p[2], *p[4]]
 
     @_("operand")
     def op_chain(self, p):
         return [p[0]]
+
+    # sep
+
+    @_("NEWLINE", "empty")
+    def sep(self, p):
+        pass
 
     # operand
 

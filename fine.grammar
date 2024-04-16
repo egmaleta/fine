@@ -24,8 +24,11 @@ params : ID params
 
 expr : op_chain
 
-op_chain : operand operator op_chain
+op_chain : operand sep operator sep op_chain
          | operand
+
+sep : NEWLINE
+    | <empty>
 
 operand : atom args
 
