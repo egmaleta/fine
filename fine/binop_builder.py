@@ -93,6 +93,13 @@ class BinOpBuilder:
         node.body = self.visit(node.body, scope)
         return node
 
+    @visitor.when(ast.LetExpr)
+    def visit(self, node: ast.LetExpr, scope: Scope[ast.BinOpInfo]):
+        for stmt in node.stmts:
+            self.visit(stmt, scope)
+        node.body = self.visit(node.body, scope)
+        return node
+
     @visitor.when(ast.FunctionApp)
     def visit(self, node: ast.FunctionApp, scope: Scope[ast.BinOpInfo]):
         node.target = self.visit(node.target, scope)

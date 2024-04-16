@@ -26,6 +26,7 @@ expr : op_chain
      | BSLASH opt_params ASSIGN expr
      | IF expr THEN expr ELSE expr
      | DO expr_list THEN expr
+     | LET stmt_list IN expr
 
 expr_list : expr SEMI expr_list
           | expr SEMI

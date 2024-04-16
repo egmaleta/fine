@@ -39,6 +39,8 @@ class FineLexer(Lexer):
         "DO",
         "INFIXL",
         "INFIXR",
+        "LET",
+        "IN",
         "ID",
         "DEC",
         "NAT",
@@ -64,6 +66,8 @@ class FineLexer(Lexer):
     DO = r"do"
     INFIXL = r"infixl"
     INFIXR = r"infixr"
+    LET = r"let"
+    IN = r"in"
 
     ID = r"[a-z_][a-zA-Z0-9_]*"
 

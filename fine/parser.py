@@ -109,6 +109,12 @@ class FineParser(Parser):
     def expr(self, p):
         return ast.Block(p[1], p[3], start_pos=p[0].start_pos())
 
+    @_("LET stmt_list IN expr")
+    def expr(self, p):
+        return ast.LetExpr(p[1], p[3], start_pos=p[0].start_pos())
+
+    # expr_list
+
     @_("expr SEMI expr_list")
     def expr_list(self, p):
         return [p[0], *p[2]]

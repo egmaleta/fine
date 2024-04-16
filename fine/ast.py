@@ -98,6 +98,20 @@ class Block(Expr):
         return self.body.end_pos()
 
 
+class LetExpr(Expr):
+    def __init__(self, stmts: list[AST], body: Expr, *, start_pos: tuple[int, int]):
+        self.stmts = stmts
+        self.body = body
+
+        self._start_pos = start_pos
+
+    def start_pos(self):
+        return self._start_pos
+
+    def end_pos(self):
+        return self.body.end_pos()
+
+
 class FunctionApp(Expr):
     def __init__(self, target: Expr, arg: Expr, arg_name: Token | None):
         self.target = target
