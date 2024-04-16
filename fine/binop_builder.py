@@ -62,11 +62,6 @@ class BinOpBuilder:
         node.value = self.visit(node.value, scope)
         return node
 
-    @visitor.when(ast.FunctionDefn)
-    def visit(self, node: ast.FunctionDefn, scope: Scope[ast.BinOpInfo]):
-        node.body = self.visit(node.body, scope)
-        return node
-
     @visitor.when(ast.BinOpInfo)
     def visit(self, node: ast.BinOpInfo, scope: Scope[ast.BinOpInfo]):
         scope.add_item(node)
@@ -79,6 +74,11 @@ class BinOpBuilder:
             for el in node.elements
         ]
         return self._build_binop(elements, scope)
+
+    @visitor.when(ast.Function)
+    def visit(self, node: ast.Function, scope: Scope[ast.BinOpInfo]):
+        node.body = self.visit(node.body, scope)
+        return node
 
     @visitor.when(ast.FunctionApp)
     def visit(self, node: ast.FunctionApp, scope: Scope[ast.BinOpInfo]):

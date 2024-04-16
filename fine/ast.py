@@ -13,13 +13,6 @@ class ValueDefn(AST):
         self.value = value
 
 
-class FunctionDefn(AST):
-    def __init__(self, name: Token, params: list[Token], body: Expr):
-        self.name = name.lex
-        self.params = [t.lex for t in params]
-        self.body = body
-
-
 class BinOpInfo(AST):
     def __init__(self, assoc: Token, precedence: Token, operator: Token):
         self.operator = operator.lex
@@ -53,6 +46,20 @@ class BinOp(Expr):
 
     def end_pos(self):
         return self.right.end_pos()
+
+
+class Function(Expr):
+    def __init__(self, params: list[Token], body: Expr, *, start_pos: tuple[int, int]):
+        self.params = [t.lex for t in params]
+        self.body = body
+
+        self._start_pos = start_pos
+
+    def start_pos(self):
+        return self._start_pos
+
+    def end_pos(self):
+        return self.body.end_pos()
 
 
 class FunctionApp(Expr):

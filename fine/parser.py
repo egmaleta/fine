@@ -52,19 +52,31 @@ class FineParser(Parser):
 
     # fun_defn
 
-    @_("FUN name params ASSIGN expr")
+    @_("FUN name opt_params ASSIGN expr")
     def fun_defn(self, p):
-        return ast.FunctionDefn(p[1], p[2], p[4])
+        return ast.ValueDefn(p[1], ast.Function(p[2], p[4], start_pos=p[0].start_pos()))
 
     @_("FUN ID operator ID ASSIGN expr")
     def fun_defn(self, p):
-        return ast.FunctionDefn(p[2], [p[1], p[3]], p[5])
+        return ast.ValueDefn(
+            p[2], ast.Function([p[1], p[3]], p[5], start_pos=p[0].start_pos())
+        )
 
     # binop_info
 
     @_("INFIXL NAT operator", "INFIXR NAT operator")
     def binop_info(self, p):
         return ast.BinOpInfo(p[0], p[1], p[2])
+
+    # opt_params
+
+    @_("params")
+    def opt_params(self, p):
+        return p[0]
+
+    @_("empty")
+    def opt_params(self, p):
+        return []
 
     # params
 
@@ -84,6 +96,10 @@ class FineParser(Parser):
         if len(chain) == 1:
             return chain[0]
         return ast.OpChain(chain)
+
+    @_("BSLASH opt_params ASSIGN expr")
+    def expr(self, p):
+        return ast.Function(p[1], p[3], start_pos=p[0].start_pos())
 
     # op_chain
 

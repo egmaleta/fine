@@ -10,16 +10,20 @@ stmt : val_defn
 
 val_defn : VAL name ASSIGN expr
 
-fun_defn : FUN name params ASSIGN expr
+fun_defn : FUN name opt_params ASSIGN expr
          | FUN ID operator ID ASSIGN expr
 
 binop_info : INFIXL NAT operator
            | INFIXR NAT operator
 
+opt_params : params
+           | <empty>
+
 params : ID params
        | ID
 
 expr : op_chain
+     | BSLASH opt_params ASSIGN expr
 
 op_chain : operand operator op_chain
          | operand
