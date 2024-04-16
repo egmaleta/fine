@@ -2,6 +2,14 @@ _ = None  # to suppress pylance warning
 from .tools.lexer import Lexer
 
 
+def _indent_len(s: str):
+    try:
+        i = s.rindex("\n")
+        return len(s) - i - 1
+    except ValueError:
+        return 0
+
+
 class Token:
     def __init__(self, lex: str, line: int, column: int):
         self.lex = lex
@@ -21,23 +29,10 @@ class Token:
         return self.lex
 
 
-def indent_len(s: str):
-    try:
-        i = s.rindex("\n")
-        return len(s) - i - 1
-    except ValueError:
-        return 0
-
-
-def create_token(Constructor, **kwargs):
-    t = Constructor()
-    for k, v in kwargs.items():
-        setattr(t, k, v)
-    return t
-
-
 class FineLexer(Lexer):
-    tokens = {
+    TOKEN_TYPES = {
+        "FUN",
+        "VAL",
         "INFIXL",
         "INFIXR",
         "ID",
@@ -50,12 +45,13 @@ class FineLexer(Lexer):
         "OP",
         "OPAR",
         "CPAR",
-        "NEWLINE",
-        "INDENT",
-        "DEDENT",
     }
 
+    tokens = TOKEN_TYPES | {"SPACE"}
+
     # precedence over id
+    FUN = r"fun"
+    VAL = r"val"
     INFIXL = r"infixl"
     INFIXR = r"infixr"
 
@@ -77,12 +73,11 @@ class FineLexer(Lexer):
     OPAR = r"\("
     CPAR = r"\)"
 
-    @_(r"\n[ \t\n\r\f\v]*")
-    def NEWLINE(self, t):
+    @_(r"\s+")
+    def SPACE(self, t):
         self.lineno += t.value.count("\n")
         return t
 
-    ignore_space = r"[ \t\r\f\v]+"
     ignore_comment = r"#.*"
 
     def error(self, t):
@@ -90,89 +85,23 @@ class FineLexer(Lexer):
         self.index += 1
 
     @staticmethod
-    def _strip_leading_newline_tokens(tokens):
-        for t in tokens:
-            if t.type != "NEWLINE":
-                yield t
-                break
-
-        for t in tokens:
-            yield t
-
-    @staticmethod
-    def _merge_newline_tokens(tokens):
-        nl_t = None
-        for t in tokens:
-            if t.type == "NEWLINE":
-                if nl_t:
-                    nl_t.value += t.value
-                    nl_t.end = t.end
-                else:
-                    nl_t = t
-            else:
-                if nl_t:
-                    yield nl_t
-                    nl_t = None
-
-                yield t
-
-        # strip trailing newline by not yielding last newline token
-
-    @staticmethod
-    def _newline_to_indent_tokens(tokens):
-        levels = [0]
-        last_t = None
-
-        for t in tokens:
-            if t.type == "NEWLINE":
-                current_level = levels[-1]
-                level = indent_len(t.value)
-
-                if level > current_level:
-                    t.type = "INDENT"
-                    levels.append(level)
-
-                elif level < current_level:
-                    yield create_token(
-                        type(t),
-                        type="DEDENT",
-                        value="",
-                        lineno=t.lineno,
-                        index=t.index,
-                        end=t.index,
-                    )
-                    levels.pop()
-
-            yield t
-            last_t = t
-
-        if last_t:
-            Token = type(last_t)
-            while len(levels) > 1:
-                yield create_token(
-                    Token,
-                    type="DEDENT",
-                    value="",
-                    lineno=last_t.lineno,
-                    index=last_t.index,
-                    end=last_t.end,
-                )
-                levels.pop()
-
-    @staticmethod
     def _token_in_token(tokens):
         end = 0
         for t in tokens:
             t.value = Token(t.value, t.lineno, t.index - end + 1)
 
-            if "\n" in t.value.lex:
-                end = t.end - indent_len(t.value.lex)
+            if t.type == "SPACE" and "\n" in t.value.lex:
+                end = t.end - _indent_len(t.value.lex)
 
             yield t
 
+    @staticmethod
+    def _drop_spaces(tokens):
+        for t in tokens:
+            if t.type != "SPACE":
+                yield t
+
     def tokenize(self, text, lineno=1, index=0):
         tokens = super().tokenize(text, lineno, index)
-        tokens = self._strip_leading_newline_tokens(tokens)
-        tokens = self._merge_newline_tokens(tokens)
-        tokens = self._newline_to_indent_tokens(tokens)
-        return self._token_in_token(tokens)
+        tokens = self._token_in_token(tokens)
+        return self._drop_spaces(tokens)

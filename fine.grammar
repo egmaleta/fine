@@ -1,20 +1,17 @@
 program : stmt_list
         | <empty>
 
-stmt_list : stmt NEWLINE stmt_list
+stmt_list : stmt stmt_list
           | stmt
-
-opt_ind_expr : INDENT expr DEDENT
-             | expr
 
 stmt : val_defn
      | fun_defn
      | binop_info
 
-val_defn : name ASSIGN opt_ind_expr
+val_defn : VAL name ASSIGN expr
 
-fun_defn : name params ASSIGN opt_ind_expr
-         | ID operator ID ASSIGN opt_ind_expr
+fun_defn : FUN name params ASSIGN expr
+         | FUN ID operator ID ASSIGN expr
 
 binop_info : INFIXL NAT operator
            | INFIXR NAT operator
@@ -24,11 +21,8 @@ params : ID params
 
 expr : op_chain
 
-op_chain : operand sep operator sep op_chain
+op_chain : operand operator op_chain
          | operand
-
-sep : NEWLINE
-    | <empty>
 
 operand : atom args
 

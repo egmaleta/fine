@@ -5,7 +5,7 @@ from . import ast
 
 
 class FineParser(Parser):
-    tokens = FineLexer.tokens
+    tokens = FineLexer.TOKEN_TYPES
     debugfile = "parse.debug"
     start = "program"
 
@@ -30,23 +30,13 @@ class FineParser(Parser):
 
     # stmt_list
 
-    @_("stmt NEWLINE stmt_list")
+    @_("stmt stmt_list")
     def stmt_list(self, p):
-        return [p[0], *p[2]]
+        return [p[0], *p[1]]
 
     @_("stmt")
     def stmt_list(self, p):
         return [p[0]]
-
-    # opt_ind_expr
-
-    @_("INDENT expr DEDENT")
-    def opt_ind_expr(self, p):
-        return p[1]
-
-    @_("expr")
-    def opt_ind_expr(self, p):
-        return p[0]
 
     # stmt
 
@@ -56,19 +46,19 @@ class FineParser(Parser):
 
     # val_defn
 
-    @_("name ASSIGN opt_ind_expr")
+    @_("VAL name ASSIGN expr")
     def val_defn(self, p):
-        return ast.ValueDefn(p[0], p[2])
+        return ast.ValueDefn(p[1], p[3])
 
     # fun_defn
 
-    @_("name params ASSIGN opt_ind_expr")
+    @_("FUN name params ASSIGN expr")
     def fun_defn(self, p):
-        return ast.FunctionDefn(p[0], p[1], p[3])
+        return ast.FunctionDefn(p[1], p[2], p[4])
 
-    @_("ID operator ID ASSIGN opt_ind_expr")
+    @_("FUN ID operator ID ASSIGN expr")
     def fun_defn(self, p):
-        return ast.FunctionDefn(p[1], [p[0], p[2]], p[4])
+        return ast.FunctionDefn(p[2], [p[1], p[3]], p[5])
 
     # binop_info
 
@@ -97,19 +87,13 @@ class FineParser(Parser):
 
     # op_chain
 
-    @_("operand sep operator sep op_chain")
+    @_("operand operator op_chain")
     def op_chain(self, p):
-        return [p[0], p[2], *p[4]]
+        return [p[0], p[1], *p[2]]
 
     @_("operand")
     def op_chain(self, p):
         return [p[0]]
-
-    # sep
-
-    @_("NEWLINE", "empty")
-    def sep(self, p):
-        pass
 
     # operand
 
