@@ -30,11 +30,11 @@ class FineParser(Parser):
 
     # stmt_list
 
-    @_("stmt stmt_list")
+    @_("stmt opt_semi stmt_list")
     def stmt_list(self, p):
-        return [p[0], *p[1]]
+        return [p[0], *p[2]]
 
-    @_("stmt")
+    @_("stmt opt_semi")
     def stmt_list(self, p):
         return [p[0]]
 
@@ -43,6 +43,12 @@ class FineParser(Parser):
     @_("val_defn", "fun_defn", "binop_info")
     def stmt(self, p):
         return p[0]
+
+    # opt_semi
+
+    @_("SEMI", "empty")
+    def opt_semi(self, p):
+        pass
 
     # val_defn
 
@@ -119,7 +125,7 @@ class FineParser(Parser):
     def expr_list(self, p):
         return [p[0], *p[2]]
 
-    @_("expr SEMI", "expr")
+    @_("expr opt_semi")
     def expr_list(self, p):
         return [p[0]]
 

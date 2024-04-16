@@ -1,12 +1,15 @@
 program : stmt_list
         | <empty>
 
-stmt_list : stmt stmt_list
-          | stmt
+stmt_list : stmt opt_semi stmt_list
+          | stmt opt_semi
 
 stmt : val_defn
      | fun_defn
      | binop_info
+
+opt_semi : SEMI
+         | <empty>
 
 val_defn : VAL name ASSIGN expr
 
@@ -29,8 +32,7 @@ expr : op_chain
      | LET stmt_list IN expr
 
 expr_list : expr SEMI expr_list
-          | expr SEMI
-          | expr
+          | expr opt_semi
 
 op_chain : operand operator op_chain
          | operand
