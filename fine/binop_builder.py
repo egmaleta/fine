@@ -53,8 +53,8 @@ class BinOpBuilder:
 
     @visitor.when(ast.Program)
     def visit(self, node: ast.Program, scope: Scope[ast.BinOpInfo]):
-        for defn in node.definitions:
-            self.visit(defn, scope)
+        for stmt in node.stmts:
+            self.visit(stmt, scope)
         return node
 
     @visitor.when(ast.ValueDefn)

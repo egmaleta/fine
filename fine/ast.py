@@ -3,8 +3,8 @@ from .lexer import Token, FineLexer
 
 
 class Program(AST):
-    def __init__(self, definitions: list[AST]):
-        self.definitions = definitions
+    def __init__(self, stmts: list[AST]):
+        self.stmts = stmts
 
 
 class ValueDefn(AST):
