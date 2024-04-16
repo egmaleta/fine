@@ -80,6 +80,13 @@ class BinOpBuilder:
         node.body = self.visit(node.body, scope)
         return node
 
+    @visitor.when(ast.Conditional)
+    def visit(self, node: ast.Conditional, scope: Scope[ast.BinOpInfo]):
+        node.condition = self.visit(node.condition, scope)
+        node.then_expr = self.visit(node.then_expr, scope)
+        node.else_expr = self.visit(node.else_expr, scope)
+        return node
+
     @visitor.when(ast.FunctionApp)
     def visit(self, node: ast.FunctionApp, scope: Scope[ast.BinOpInfo]):
         node.target = self.visit(node.target, scope)

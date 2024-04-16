@@ -12,6 +12,7 @@ val_defn : VAL name ASSIGN expr
 
 fun_defn : FUN name opt_params ASSIGN expr
          | FUN ID operator ID ASSIGN expr
+         | IF expr THEN expr ELSE expr
 
 binop_info : INFIXL NAT operator
            | INFIXR NAT operator

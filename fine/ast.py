@@ -62,6 +62,28 @@ class Function(Expr):
         return self.body.end_pos()
 
 
+class Conditional(Expr):
+    def __init__(
+        self,
+        condition: Expr,
+        then_expr: Expr,
+        else_expr: Expr,
+        *,
+        start_pos: tuple[int, int],
+    ):
+        self.condition = condition
+        self.then_expr = then_expr
+        self.else_expr = else_expr
+
+        self._start_pos = start_pos
+
+    def start_pos(self):
+        return self._start_pos
+
+    def end_pos(self):
+        return self.else_expr.end_pos()
+
+
 class FunctionApp(Expr):
     def __init__(self, target: Expr, arg: Expr, arg_name: Token | None):
         self.target = target

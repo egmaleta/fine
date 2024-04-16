@@ -33,6 +33,9 @@ class FineLexer(Lexer):
     TOKEN_TYPES = {
         "FUN",
         "VAL",
+        "IF",
+        "THEN",
+        "ELSE",
         "INFIXL",
         "INFIXR",
         "ID",
@@ -53,6 +56,9 @@ class FineLexer(Lexer):
     # precedence over id
     FUN = r"fun"
     VAL = r"val"
+    IF = r"if"
+    THEN = r"then"
+    ELSE = r"else"
     INFIXL = r"infixl"
     INFIXR = r"infixr"
 

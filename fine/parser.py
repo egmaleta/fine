@@ -101,6 +101,10 @@ class FineParser(Parser):
     def expr(self, p):
         return ast.Function(p[1], p[3], start_pos=p[0].start_pos())
 
+    @_("IF expr THEN expr ELSE expr")
+    def expr(self, p):
+        return ast.Conditional(p[1], p[3], p[5], start_pos=p[0].start_pos())
+
     # op_chain
 
     @_("operand operator op_chain")
