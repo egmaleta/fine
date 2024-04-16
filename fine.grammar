@@ -2,10 +2,9 @@ program : stmt_list
         | <empty>
 
 stmt_list : stmt NEWLINE stmt_list
-          | stmt DEDENT stmt_list
           | stmt
 
-opt_ind_expr : INDENT expr
+opt_ind_expr : INDENT expr DEDENT
              | expr
 
 stmt : val_defn

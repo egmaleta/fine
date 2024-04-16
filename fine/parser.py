@@ -30,7 +30,7 @@ class FineParser(Parser):
 
     # stmt_list
 
-    @_("stmt NEWLINE stmt_list", "stmt DEDENT stmt_list")
+    @_("stmt NEWLINE stmt_list")
     def stmt_list(self, p):
         return [p[0], *p[2]]
 
@@ -40,7 +40,7 @@ class FineParser(Parser):
 
     # opt_ind_expr
 
-    @_("INDENT expr")
+    @_("INDENT expr DEDENT")
     def opt_ind_expr(self, p):
         return p[1]
 

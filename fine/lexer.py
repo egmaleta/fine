@@ -133,7 +133,14 @@ class FineLexer(Lexer):
                     levels.append(level)
 
                 elif level < current_level:
-                    t.type = "DEDENT"
+                    yield create_token(
+                        type(t),
+                        type="DEDENT",
+                        value="",
+                        lineno=t.lineno,
+                        index=t.index,
+                        end=t.index,
+                    )
                     levels.pop()
 
             yield t
