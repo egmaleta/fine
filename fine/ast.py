@@ -112,6 +112,30 @@ class LetExpr(Expr):
         return self.body.end_pos()
 
 
+class PatternMatching(Expr):
+    def __init__(
+        self,
+        matchable: list[Expr],
+        matches: list[tuple[Expr | Token, Expr]],
+        *,
+        start_pos: tuple[int, int],
+    ):
+        for pattern, _ in matches:
+            if isinstance(pattern, Expr):
+                assert isinstance(pattern, Literal)
+
+        self.matchable = matchable
+        self.matches = matches
+
+        self._start_pos = start_pos
+
+    def start_pos(self):
+        return self._start_pos
+
+    def end_pos(self):
+        return self.matches[-1][1].end_pos()
+
+
 class FunctionApp(Expr):
     def __init__(self, target: Expr, arg: Expr, arg_name: Token | None):
         self.target = target

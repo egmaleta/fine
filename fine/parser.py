@@ -119,6 +119,10 @@ class FineParser(Parser):
     def expr(self, p):
         return ast.LetExpr(p[1], p[3], start_pos=p[0].start_pos())
 
+    @_("MATCH expr BAR match_list")
+    def expr(self, p):
+        return ast.PatternMatching(p[1], p[3], start_pos=p[0].start_pos())
+
     # expr_list
 
     @_("expr SEMI expr_list")
@@ -128,6 +132,28 @@ class FineParser(Parser):
     @_("expr opt_semi")
     def expr_list(self, p):
         return [p[0]]
+
+    # match_list
+
+    @_("match BAR match_list")
+    def match_list(self, p):
+        return [p[0], *p[2]]
+
+    @_("match")
+    def match_list(self, p):
+        return [p[0]]
+
+    # match
+
+    @_("pattern ASSIGN expr")
+    def match(self, p):
+        return (p[0], p[2])
+
+    # pattern
+
+    @_("ID", "literal")
+    def pattern(self, p):
+        return p[0]
 
     # op_chain
 

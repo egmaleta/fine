@@ -100,6 +100,14 @@ class BinOpBuilder:
         node.body = self.visit(node.body, scope)
         return node
 
+    @visitor.when(ast.PatternMatching)
+    def visit(self, node: ast.PatternMatching, scope: Scope[ast.BinOpInfo]):
+        node.matchable = self.visit(node.matchable, scope)
+        node.matches = [
+            (pattern, self.visit(body, scope)) for pattern, body in node.matches
+        ]
+        return node
+
     @visitor.when(ast.FunctionApp)
     def visit(self, node: ast.FunctionApp, scope: Scope[ast.BinOpInfo]):
         node.target = self.visit(node.target, scope)

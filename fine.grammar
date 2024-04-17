@@ -30,9 +30,18 @@ expr : op_chain
      | IF expr THEN expr ELSE expr
      | DO expr_list THEN expr
      | LET stmt_list IN expr
+     | MATCH expr BAR match_list
 
 expr_list : expr SEMI expr_list
           | expr opt_semi
+
+match_list : match BAR match_list
+           | match
+
+match : pattern ASSIGN expr
+
+pattern : ID
+        | literal
 
 op_chain : operand operator op_chain
          | operand

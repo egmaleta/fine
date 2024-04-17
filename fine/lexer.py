@@ -41,6 +41,7 @@ class FineLexer(Lexer):
         "INFIXR",
         "LET",
         "IN",
+        "MATCH",
         "DATA",
         "ID",
         "DEC",
@@ -50,6 +51,7 @@ class FineLexer(Lexer):
         "SEMI",
         "EXT_OP",
         "ASSIGN",
+        "BAR",
         "OP",
         "OPAR",
         "CPAR",
@@ -68,6 +70,7 @@ class FineLexer(Lexer):
     INFIXR = r"infixr"
     LET = r"let"
     IN = r"in"
+    MATCH = r"match"
 
     DATA = r"[A-Z][a-zA-Z0-9_]*|\(\)"
     ID = r"[a-z_][a-zA-Z0-9_]*"
@@ -82,8 +85,9 @@ class FineLexer(Lexer):
     EXT_OP = r"[~!@$%^&*/\-+|?.<>:=]{2,3}"
 
     ASSIGN = r"="
+    BAR = r"\|"
 
-    OP = r"[~!@$%^&*/\-+|?.<>:]"
+    OP = r"[~!@$%^&*/\-+?.<>:]"
 
     OPAR = r"\("
     CPAR = r"\)"
