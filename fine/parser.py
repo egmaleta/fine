@@ -208,7 +208,11 @@ class FineParser(Parser):
     def literal(self, p):
         return ast.NaturalNumber(p[0])
 
-    @_("DATA")
+    @_("TYPE_ID")
+    def literal(self, p):
+        return ast.Literal(p[0])
+
+    @_("OPAR CPAR")
     def literal(self, p):
         return ast.Literal(p[0])
 

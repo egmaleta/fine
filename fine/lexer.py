@@ -15,7 +15,7 @@ class FineLexer(Lexer):
         "LET",
         "IN",
         "MATCH",
-        "DATA",
+        "TYPE_ID",
         "ID",
         "DEC",
         "NAT",
@@ -45,7 +45,7 @@ class FineLexer(Lexer):
     IN = r"in"
     MATCH = r"match"
 
-    DATA = r"[A-Z][a-zA-Z0-9_]*|\(\)"
+    TYPE_ID = r"[A-Z][a-zA-Z0-9_]*"
     ID = r"[a-z_][a-zA-Z0-9_]*"
 
     DEC = r"(0|[1-9][0-9]*)\.[0-9]*"

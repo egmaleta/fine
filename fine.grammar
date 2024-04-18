@@ -58,7 +58,8 @@ name : ID
 
 literal : DEC
         | NAT
-        | DATA
+        | TYPE_ID
+        | OPAR CPAR
 
 operator : EXT_OP
          | OP
