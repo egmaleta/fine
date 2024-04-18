@@ -6,10 +6,17 @@ class AST(ABC):
 
 
 class Expr(AST):
+    @property
     @abstractmethod
-    def start_pos(self) -> tuple[int, int]:
+    def lineno(self) -> int:
         raise NotImplementedError()
 
+    @property
     @abstractmethod
-    def end_pos(self) -> tuple[int, int]:
+    def index(self) -> int:
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def end(self) -> int:
         raise NotImplementedError()

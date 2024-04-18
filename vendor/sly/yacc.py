@@ -109,10 +109,8 @@ class YaccProduction:
         self._stack = stack
 
     def __getitem__(self, n):
-        if n >= 0:
-            return self._slice[n].value
-        else:
-            return self._stack[n].value
+        item = self._slice[n] if n >= 0 else self._stack[n]
+        return item.value if isinstance(item, YaccSymbol) else item
 
     def __setitem__(self, n, v):
         if n >= 0:
