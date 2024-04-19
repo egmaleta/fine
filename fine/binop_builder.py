@@ -86,9 +86,10 @@ class BinOpBuilder:
 
     @visitor.when(ast.LetExpr)
     def visit(self, node: ast.LetExpr, scope: Scope[ast.BinOpInfo]):
+        child_scope = scope.new_child()
         for defn in node.definitions:
-            self.visit(defn, scope)
-        node.body = self.visit(node.body, scope)
+            self.visit(defn, child_scope)
+        node.body = self.visit(node.body, child_scope)
         return node
 
     @visitor.when(ast.PatternMatching)
@@ -106,7 +107,7 @@ class BinOpBuilder:
 
     @visitor.when(ast.BinOpInfo)
     def visit(self, node: ast.BinOpInfo, scope: Scope[ast.BinOpInfo]):
-        scope.add_item(node)
+        scope.add_item(node.operator, node)
         return node
 
     @visitor.when(ast.Program)

@@ -196,10 +196,6 @@ class BinOpInfo(AST):
     def __post_init__(self):
         self.operator = self._operator_token.value
 
-    # .tools.scope._Named protocol impl
-    def name(self):
-        return self.operator
-
 
 @dataclass
 class Program(AST):

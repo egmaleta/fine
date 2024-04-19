@@ -1,12 +1,7 @@
-from typing import Self, Protocol
+from typing import Self
 
 
-class _Named(Protocol):
-    def name(self) -> str:
-        raise NotImplementedError()
-
-
-class Scope[T: _Named]:
+class Scope[T]:
     def __init__(self, parent: Self | None = None):
         self._store: dict[str, T] = {}
         self._parent = parent
@@ -32,9 +27,8 @@ class Scope[T: _Named]:
     def has_item(self, name: str, *, local=False):
         return self.get_item(name, local=local) is not None
 
-    def add_item(self, item: T, *, local=True):
-        name = item.name()
-        if not self.has_item(name, local=local):
+    def add_item(self, name: str, item: T):
+        if not self.has_item(name, local=True):
             self._store[name] = item
             return True
 
