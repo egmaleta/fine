@@ -31,7 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # -----------------------------------------------------------------------------
 
-__all__ = ['Lexer', 'LexerStateChange']
+__all__ = ['Lexer', 'LexerStateChange', 'Token']
 
 import re
 import copy
@@ -73,7 +73,13 @@ class Token(object):
     '''
     Representation of a single token.
     '''
-    __slots__ = ('type', 'value', 'lineno', 'index', 'end')
+    def __init__(self):
+        self.type: str = None
+        self.value: str = None
+        self.lineno: int = None
+        self.index: int = None
+        self.end: int = None
+
     def __repr__(self):
         return f'Token(type={self.type!r}, value={self.value!r}, lineno={self.lineno}, index={self.index}, end={self.end})'
 

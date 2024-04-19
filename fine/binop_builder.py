@@ -1,6 +1,6 @@
 from .tools import visitor
 from .tools.scope import Scope
-from .lexer import Token
+from .tools.lexer import Token
 from . import ast
 
 
@@ -13,11 +13,11 @@ class BinOpBuilder:
                 rpn.append(item)
                 continue
 
-            curr = scope.get_item(item.lex)
+            curr = scope.get_item(item.value)
             assert curr is not None
 
             while len(op_stack) > 0:
-                top = scope.get_item(op_stack[-1].lex)
+                top = scope.get_item(op_stack[-1].value)
                 assert top is not None
 
                 if (
@@ -51,20 +51,18 @@ class BinOpBuilder:
     def visit(self, node):
         pass
 
-    @visitor.when(ast.Program)
-    def visit(self, node: ast.Program, scope: Scope[ast.BinOpInfo]):
-        for stmt in node.stmts:
-            self.visit(stmt, scope)
+    @visitor.when(ast.Data)
+    def visit(self, node: ast.Data, scope: Scope[ast.BinOpInfo]):
         return node
 
-    @visitor.when(ast.ValueDefn)
-    def visit(self, node: ast.ValueDefn, scope: Scope[ast.BinOpInfo]):
-        node.value = self.visit(node.value, scope)
+    @visitor.when(ast.Identifier)
+    def visit(self, node: ast.Identifier, scope: Scope[ast.BinOpInfo]):
         return node
 
-    @visitor.when(ast.BinOpInfo)
-    def visit(self, node: ast.BinOpInfo, scope: Scope[ast.BinOpInfo]):
-        scope.add_item(node)
+    @visitor.when(ast.FunctionApp)
+    def visit(self, node: ast.FunctionApp, scope: Scope[ast.BinOpInfo]):
+        node.target = self.visit(node.target, scope)
+        node.arg = self.visit(node.arg, scope)
         return node
 
     @visitor.when(ast.OpChain)
@@ -80,13 +78,6 @@ class BinOpBuilder:
         node.body = self.visit(node.body, scope)
         return node
 
-    @visitor.when(ast.Conditional)
-    def visit(self, node: ast.Conditional, scope: Scope[ast.BinOpInfo]):
-        node.condition = self.visit(node.condition, scope)
-        node.body = self.visit(node.body, scope)
-        node.fall_body = self.visit(node.fall_body, scope)
-        return node
-
     @visitor.when(ast.Block)
     def visit(self, node: ast.Block, scope: Scope[ast.BinOpInfo]):
         node.actions = [self.visit(action, scope) for action in node.actions]
@@ -95,8 +86,8 @@ class BinOpBuilder:
 
     @visitor.when(ast.LetExpr)
     def visit(self, node: ast.LetExpr, scope: Scope[ast.BinOpInfo]):
-        for stmt in node.stmts:
-            self.visit(stmt, scope)
+        for defn in node.definitions:
+            self.visit(defn, scope)
         node.body = self.visit(node.body, scope)
         return node
 
@@ -108,12 +99,18 @@ class BinOpBuilder:
         ]
         return node
 
-    @visitor.when(ast.FunctionApp)
-    def visit(self, node: ast.FunctionApp, scope: Scope[ast.BinOpInfo]):
-        node.target = self.visit(node.target, scope)
-        node.arg = self.visit(node.arg, scope)
+    @visitor.when(ast.ValueDefn)
+    def visit(self, node: ast.ValueDefn, scope: Scope[ast.BinOpInfo]):
+        node.value = self.visit(node.value, scope)
         return node
 
-    @visitor.when(ast.Literal)
-    def visit(self, node: ast.Literal, scope: Scope[ast.BinOpInfo]):
+    @visitor.when(ast.BinOpInfo)
+    def visit(self, node: ast.BinOpInfo, scope: Scope[ast.BinOpInfo]):
+        scope.add_item(node)
+        return node
+
+    @visitor.when(ast.Program)
+    def visit(self, node: ast.Program, scope: Scope[ast.BinOpInfo]):
+        for defn in node.definitions:
+            self.visit(defn, scope)
         return node

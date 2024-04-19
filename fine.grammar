@@ -1,15 +1,17 @@
-program : stmt_list
+program : top_defn_list
         | <empty>
 
-stmt_list : stmt opt_semi stmt_list
-          | stmt opt_semi
+top_defn_list : top_defn top_defn_list
+              | top_defn
 
-stmt : val_defn
+top_defn : defn
+
+defn_list : defn defn_list
+          | defn
+
+defn : val_defn
      | fun_defn
      | binop_info
-
-opt_semi : SEMI
-         | <empty>
 
 val_defn : VAL name ASSIGN expr
 
@@ -25,23 +27,32 @@ opt_params : params
 params : ID params
        | ID
 
-expr : op_chain
-     | BSLASH opt_params ASSIGN expr
-     | IF expr THEN expr ELSE expr
+name : ID
+     | OPAR EXT_OP CPAR
+     | OPAR OP CPAR
+
+operator : BTICK ID BTICK
+         | EXT_OP
+         | OP
+
+expr : BSLASH opt_params ASSIGN expr
      | DO expr_list THEN expr
-     | LET stmt_list IN expr
-     | MATCH expr BAR match_list
+     | LET defn_list IN expr
+     | MATCH expr match_list
+     | op_chain
 
 expr_list : expr SEMI expr_list
-          | expr opt_semi
+          | expr SEMI
+          | expr
 
-match_list : match BAR match_list
+match_list : match match_list
            | match
 
-match : pattern ASSIGN expr
+match : BAR pattern ASSIGN expr
 
 pattern : ID
         | literal
+        | data_ct
 
 op_chain : operand operator op_chain
          | operand
@@ -51,19 +62,18 @@ operand : atom args
 atom : OPAR expr CPAR
      | name
      | literal
+     | data_ct_id
 
-name : ID
-     | OPAR EXT_OP CPAR
-     | OPAR OP CPAR
-
+# literals represent data constructors that cannot be
+# enumerated finitely, such as numbers and strings
 literal : DEC
         | NAT
-        | TYPE_ID
-        | OPAR CPAR
 
-operator : EXT_OP
-         | OP
-         | BTICK ID BTICK
+data_ct : TYPE_ID
+        | UNIT
+
+data_ct_id : TYPE_ID
+           | UNIT
 
 args : ID ASSIGN atom args
      | atom args

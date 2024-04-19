@@ -1,11 +1,11 @@
 _ = None  # to suppress pylance warning
-from .tools.parser import Parser
-from .lexer import FineLexer
+from .tools.parser import Parser as _Parser
+from .lexer import Lexer
 from . import ast
 
 
-class FineParser(Parser):
-    tokens = FineLexer.TOKEN_TYPES
+class Parser(_Parser):
+    tokens = Lexer.TOKEN_TYPES
     debugfile = "parse.debug"
     start = "program"
 
@@ -20,7 +20,7 @@ class FineParser(Parser):
 
     # program
 
-    @_("stmt_list")
+    @_("top_defn_list")
     def program(self, p):
         return ast.Program(p[0])
 
@@ -28,27 +28,37 @@ class FineParser(Parser):
     def program(self, p):
         return None
 
-    # stmt_list
+    # top_defn_list
 
-    @_("stmt opt_semi stmt_list")
-    def stmt_list(self, p):
-        return [p[0], *p[2]]
+    @_("top_defn top_defn_list")
+    def top_defn_list(self, p):
+        return [p[0], *p[1]]
 
-    @_("stmt opt_semi")
-    def stmt_list(self, p):
+    @_("top_defn")
+    def top_defn_list(self, p):
         return [p[0]]
 
-    # stmt
+    # top_defn
 
-    @_("val_defn", "fun_defn", "binop_info")
-    def stmt(self, p):
+    @_("defn")
+    def top_defn(self, p):
         return p[0]
 
-    # opt_semi
+    # defn_list
 
-    @_("SEMI", "empty")
-    def opt_semi(self, p):
-        pass
+    @_("defn defn_list")
+    def defn_list(self, p):
+        return [p[0], *p[1]]
+
+    @_("defn")
+    def defn_list(self, p):
+        return [p[0]]
+
+    # defn
+
+    @_("val_defn", "fun_defn", "binop_info")
+    def defn(self, p):
+        return p[0]
 
     # val_defn
 
@@ -60,19 +70,21 @@ class FineParser(Parser):
 
     @_("FUN name opt_params ASSIGN expr")
     def fun_defn(self, p):
-        return ast.ValueDefn(p[1], ast.Function(p[2], p[4], start_pos=p[0].start_pos()))
+        return ast.ValueDefn(
+            p[1], ast.Function(p[2], p[4], lineno=p[0].lineno, index=p[0].index)
+        )
 
     @_("FUN ID operator ID ASSIGN expr")
     def fun_defn(self, p):
         return ast.ValueDefn(
-            p[2], ast.Function([p[1], p[3]], p[5], start_pos=p[0].start_pos())
+            p[2], ast.Function([p[1], p[3]], p[5], lineno=p[0].lineno, index=p[0].index)
         )
 
     # binop_info
 
     @_("INFIXL NAT operator", "INFIXR NAT operator")
     def binop_info(self, p):
-        return ast.BinOpInfo(p[0], p[1], p[2])
+        return ast.BinOpInfo(p[2], p[0].type == "INFIXL", int(p[1].value))
 
     # opt_params
 
@@ -94,7 +106,43 @@ class FineParser(Parser):
     def params(self, p):
         return [p[0]]
 
+    # name
+
+    @_("ID")
+    def name(self, p):
+        return p[0]
+
+    @_("OPAR EXT_OP CPAR", "OPAR OP CPAR")
+    def name(self, p):
+        return p[1]
+
+    # operator
+
+    @_("BTICK ID BTICK")
+    def operator(self, p):
+        return p[1]
+
+    @_("EXT_OP", "OP")
+    def operator(self, p):
+        return p[0]
+
     # expr
+
+    @_("BSLASH opt_params ASSIGN expr")
+    def expr(self, p):
+        return ast.Function(p[1], p[3], lineno=p[0].lineno, index=p[0].index)
+
+    @_("DO expr_list THEN expr")
+    def expr(self, p):
+        return ast.Block(p[1], p[3], lineno=p[0].lineno, index=p[0].index)
+
+    @_("LET defn_list IN expr")
+    def expr(self, p):
+        return ast.LetExpr(p[1], p[3], lineno=p[0].lineno, index=p[0].index)
+
+    @_("MATCH expr match_list")
+    def expr(self, p):
+        return ast.PatternMatching(p[1], p[2], lineno=p[0].lineno, index=p[0].index)
 
     @_("op_chain")
     def expr(self, p):
@@ -103,41 +151,21 @@ class FineParser(Parser):
             return chain[0]
         return ast.OpChain(chain)
 
-    @_("BSLASH opt_params ASSIGN expr")
-    def expr(self, p):
-        return ast.Function(p[1], p[3], start_pos=p[0].start_pos())
-
-    @_("IF expr THEN expr ELSE expr")
-    def expr(self, p):
-        return ast.Conditional(p[1], p[3], p[5], start_pos=p[0].start_pos())
-
-    @_("DO expr_list THEN expr")
-    def expr(self, p):
-        return ast.Block(p[1], p[3], start_pos=p[0].start_pos())
-
-    @_("LET stmt_list IN expr")
-    def expr(self, p):
-        return ast.LetExpr(p[1], p[3], start_pos=p[0].start_pos())
-
-    @_("MATCH expr BAR match_list")
-    def expr(self, p):
-        return ast.PatternMatching(p[1], p[3], start_pos=p[0].start_pos())
-
     # expr_list
 
     @_("expr SEMI expr_list")
     def expr_list(self, p):
         return [p[0], *p[2]]
 
-    @_("expr opt_semi")
+    @_("expr SEMI", "expr")
     def expr_list(self, p):
         return [p[0]]
 
     # match_list
 
-    @_("match BAR match_list")
+    @_("match match_list")
     def match_list(self, p):
-        return [p[0], *p[2]]
+        return [p[0], *p[1]]
 
     @_("match")
     def match_list(self, p):
@@ -145,13 +173,17 @@ class FineParser(Parser):
 
     # match
 
-    @_("pattern ASSIGN expr")
+    @_("BAR pattern ASSIGN expr")
     def match(self, p):
-        return (p[0], p[2])
+        return (p[1], p[3])
 
     # pattern
 
-    @_("ID", "literal")
+    @_("ID")
+    def pattern(self, p):
+        return ast.Identifier(p[0])
+
+    @_("literal", "data_ct")
     def pattern(self, p):
         return p[0]
 
@@ -184,47 +216,33 @@ class FineParser(Parser):
     def atom(self, p):
         return ast.Identifier(p[0])
 
-    @_("literal")
+    @_("literal", "data_ct_id")
     def atom(self, p):
         return p[0]
-
-    # name
-
-    @_("ID")
-    def name(self, p):
-        return p[0]
-
-    @_("OPAR EXT_OP CPAR", "OPAR OP CPAR")
-    def name(self, p):
-        return p[1]
 
     # literal
 
     @_("DEC")
     def literal(self, p):
+        t = p[0]
         return ast.DecimalNumber(p[0])
 
     @_("NAT")
     def literal(self, p):
+        t = p[0]
         return ast.NaturalNumber(p[0])
 
-    @_("TYPE_ID")
-    def literal(self, p):
-        return ast.Literal(p[0])
+    # data_ct
 
-    @_("OPAR CPAR")
-    def literal(self, p):
-        return ast.Literal(p[0])
+    @_("TYPE_ID", "UNIT")
+    def data_ct(self, p):
+        return ast.Data(p[0])
 
-    # operator
+    # data_ct_id
 
-    @_("EXT_OP", "OP")
-    def operator(self, p):
-        return p[0]
-
-    @_("BTICK ID BTICK")
-    def operator(self, p):
-        return p[1]
+    @_("TYPE_ID", "UNIT")
+    def data_ct_id(self, p):
+        return ast.Identifier(p[0])
 
     # args
 

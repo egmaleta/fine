@@ -1,14 +1,14 @@
 _ = None  # to suppress pylance warning
-from .tools.lexer import Lexer
+from typing import Generator
+
+from .tools.lexer import Lexer as _Lexer, Token
 
 
-class FineLexer(Lexer):
+class Lexer(_Lexer):
     TOKEN_TYPES = {
         "FUN",
         "VAL",
-        "IF",
         "THEN",
-        "ELSE",
         "DO",
         "INFIXL",
         "INFIXR",
@@ -26,6 +26,7 @@ class FineLexer(Lexer):
         "ASSIGN",
         "BAR",
         "OP",
+        "UNIT",
         "OPAR",
         "CPAR",
     }
@@ -35,9 +36,7 @@ class FineLexer(Lexer):
     # precedence over id
     FUN = r"fun"
     VAL = r"val"
-    IF = r"if"
     THEN = r"then"
-    ELSE = r"else"
     DO = r"do"
     INFIXL = r"infixl"
     INFIXR = r"infixr"
@@ -62,26 +61,28 @@ class FineLexer(Lexer):
 
     OP = r"[~!@$%^&*/\-+?.<>:]"
 
+    UNIT = r"\(\)"
+
     OPAR = r"\("
     CPAR = r"\)"
 
     @_(r"\s+")
-    def SPACE(self, t):
+    def SPACE(self, t: Token):
         self.lineno += t.value.count("\n")
         return t
 
     ignore_comment = r"#.*"
 
-    def error(self, t):
+    def error(self, t: Token):
         print(f"lexer error: bad char at line {self.lineno}: '{t.value[0]}'")
         self.index += 1
 
     @staticmethod
-    def _drop_spaces(tokens):
+    def _drop_spaces(tokens: Generator[Token, None, None]):
         for t in tokens:
             if t.type != "SPACE":
                 yield t
 
-    def tokenize(self, text, lineno=1, index=0):
+    def tokenize(self, text: str, lineno=1, index=0):
         tokens = super().tokenize(text, lineno, index)
         return self._drop_spaces(tokens)

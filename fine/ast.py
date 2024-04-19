@@ -1,46 +1,85 @@
+from abc import ABC
+from typing import Protocol, runtime_checkable
 from dataclasses import dataclass, field
 
-from .tools.ast import AST, Expr
+from .tools.lexer import Token
+
+
+@runtime_checkable
+class Findable(Protocol):
+    lineno: int
+    index: int
+    end: int
+
+
+class AST(ABC):
+    pass
+
+
+class Expr(AST):
+    pass
 
 
 @dataclass
-class Literal(Expr):
-    value: str
+class Data(Expr):
+    _value_token: Token
+    value: str = field(init=False)
 
-    _lineno: int = field(kw_only=True)
-    _index: int = field(kw_only=True)
-    _end: int = field(kw_only=True)
+    def __post_init__(self):
+        self.value = self._value_token.value
 
     @property
     def lineno(self):
-        return self._lineno
+        return self._value_token.lineno
 
     @property
     def index(self):
-        return self._index
+        return self._value_token.index
 
     @property
     def end(self):
-        return self._end
+        return self._value_token.end
 
 
-class NaturalNumber(Literal):
+class NaturalNumber(Data):
     pass
 
 
-class DecimalNumber(Literal):
+class DecimalNumber(Data):
     pass
 
 
-class Identifier(Literal):
-    pass
+@dataclass
+class Identifier(Expr):
+    _value_token: Token
+    value: str = field(init=False)
+
+    def __post_init__(self):
+        self.value = self._value_token.value
+
+    @property
+    def lineno(self):
+        return self._value_token.lineno
+
+    @property
+    def index(self):
+        return self._value_token.index
+
+    @property
+    def end(self):
+        return self._value_token.end
 
 
 @dataclass
 class FunctionApp(Expr):
     target: Expr
     arg: Expr
-    arg_name: str | None
+    _arg_name_token: Token | None
+    arg_name: str | None = field(init=False)
+
+    def __post_init__(self):
+        t = self._arg_name_token
+        self.arg_name = t.value if isinstance(t, Token) else None
 
     @property
     def lineno(self):
@@ -51,32 +90,26 @@ class FunctionApp(Expr):
         return self.target.index
 
     @property
-    def index(self):
+    def end(self):
         return self.arg.end
 
 
 @dataclass
 class OpChain(Expr):
-    elements: list[Expr | str]
+    """Sugar for a tree of BinOp"""
 
-    @property
-    def lineno(self):
-        return self.elements[0].lineno
-
-    @property
-    def index(self):
-        return self.elements[0].index
-
-    @property
-    def end(self):
-        return self.elements[-1].end
+    elements: list[Expr | Token]
 
 
 @dataclass
 class BinOp(Expr):
     left: Expr
-    operator: str
+    _operator_token: Token
+    operator: str = field(init=False)
     right: Expr
+
+    def __post_init__(self):
+        self.operator = self._operator_token.value
 
     @property
     def lineno(self):
@@ -93,19 +126,14 @@ class BinOp(Expr):
 
 @dataclass
 class Function(Expr):
-    params: list[str]
+    _param_tokens: list[Token]
+    params: list[str] = field(init=False)
     body: Expr
+    lineno: int = field(kw_only=True)
+    index: int = field(kw_only=True)
 
-    _lineno: int = field(kw_only=True)
-    _index: int = field(kw_only=True)
-
-    @property
-    def lineno(self):
-        return self._lineno
-
-    @property
-    def index(self):
-        return self._index
+    def __post_init__(self):
+        self.params = [t.value for t in self._param_tokens]
 
     @property
     def end(self):
@@ -113,42 +141,11 @@ class Function(Expr):
 
 
 @dataclass
-class Conditional(Expr):
-    condition: Expr
-    body: Expr
-    fall_body: Expr
-
-    _lineno: int = field(kw_only=True)
-    _index: int = field(kw_only=True)
-
-    @property
-    def lineno(self):
-        return self._lineno
-
-    @property
-    def index(self):
-        return self._index
-
-    @property
-    def end(self):
-        return self.fall_body.end
-
-
-@dataclass
 class Block(Expr):
     actions: list[Expr]
     body: Expr
-
-    _lineno: int = field(kw_only=True)
-    _index: int = field(kw_only=True)
-
-    @property
-    def lineno(self):
-        return self._lineno
-
-    @property
-    def index(self):
-        return self._index
+    lineno: int = field(kw_only=True)
+    index: int = field(kw_only=True)
 
     @property
     def end(self):
@@ -157,19 +154,10 @@ class Block(Expr):
 
 @dataclass
 class LetExpr(Expr):
-    stmts: list[AST]
+    definitions: list[AST]
     body: Expr
-
-    _lineno: int = field(kw_only=True)
-    _index: int = field(kw_only=True)
-
-    @property
-    def lineno(self):
-        return self._lineno
-
-    @property
-    def index(self):
-        return self._index
+    lineno: int = field(kw_only=True)
+    index: int = field(kw_only=True)
 
     @property
     def end(self):
@@ -179,18 +167,9 @@ class LetExpr(Expr):
 @dataclass
 class PatternMatching(Expr):
     matchable: Expr
-    matches: list[tuple[Literal, Expr]]
-
-    _lineno: int = field(kw_only=True)
-    _index: int = field(kw_only=True)
-
-    @property
-    def lineno(self):
-        return self._lineno
-
-    @property
-    def index(self):
-        return self._index
+    matches: list[tuple[Identifier | Data, Expr]]
+    lineno: int = field(kw_only=True)
+    index: int = field(kw_only=True)
 
     @property
     def end(self):
@@ -199,15 +178,23 @@ class PatternMatching(Expr):
 
 @dataclass
 class ValueDefn(AST):
-    name: str
+    _name_token: Token
+    name: str = field(init=False)
     value: Expr
+
+    def __post_init__(self):
+        self.name = self._name_token.value
 
 
 @dataclass
 class BinOpInfo(AST):
-    operator: str
+    _operator_token: Token
+    operator: str = field(init=False)
     is_left_assoc: bool
     precedence: int
+
+    def __post_init__(self):
+        self.operator = self._operator_token.value
 
     # .tools.scope._Named protocol impl
     def name(self):
@@ -216,4 +203,4 @@ class BinOpInfo(AST):
 
 @dataclass
 class Program(AST):
-    stmts: list[AST]
+    definitions: list[AST]
