@@ -1,15 +1,7 @@
 from abc import ABC
-from typing import Protocol, runtime_checkable
 from dataclasses import dataclass, field
 
 from .lexer import Token
-
-
-@runtime_checkable
-class Findable(Protocol):
-    lineno: int
-    index: int
-    end: int
 
 
 class AST(ABC):
@@ -27,12 +19,12 @@ class InternalExpr(Expr):
     Therefore the evaluation of the expression depends
     entirely on the compiler."""
 
-    name: str
-    params: list[str] | None
+    id: str
 
-    @property
-    def is_literal(self):
-        self.params is None
+
+@dataclass
+class InternalFunction(InternalExpr):
+    params: list[str]
 
 
 @dataclass
@@ -42,18 +34,6 @@ class Data(Expr):
 
     def __post_init__(self):
         self.value = self._value_token.value
-
-    @property
-    def lineno(self):
-        return self._value_token.lineno
-
-    @property
-    def index(self):
-        return self._value_token.index
-
-    @property
-    def end(self):
-        return self._value_token.end
 
 
 class NaturalNumber(Data):
@@ -80,18 +60,6 @@ class Identifier(Expr):
     def __post_init__(self):
         self.value = self._value_token.value
 
-    @property
-    def lineno(self):
-        return self._value_token.lineno
-
-    @property
-    def index(self):
-        return self._value_token.index
-
-    @property
-    def end(self):
-        return self._value_token.end
-
 
 @dataclass
 class FunctionApp(Expr):
@@ -103,18 +71,6 @@ class FunctionApp(Expr):
     def __post_init__(self):
         t = self._arg_name_token
         self.arg_name = t.value if isinstance(t, Token) else None
-
-    @property
-    def lineno(self):
-        return self.target.lineno
-
-    @property
-    def index(self):
-        return self.target.index
-
-    @property
-    def end(self):
-        return self.arg.end
 
 
 @dataclass
@@ -134,69 +90,33 @@ class Operation(Expr):
     def __post_init__(self):
         self.operator = self._operator_token.value
 
-    @property
-    def lineno(self):
-        return self.left.lineno
-
-    @property
-    def index(self):
-        return self.left.index
-
-    @property
-    def end(self):
-        return self.right.end
-
 
 @dataclass
 class Function(Expr):
     _param_tokens: list[Token]
     params: list[str] = field(init=False)
     body: Expr
-    lineno: int = field(kw_only=True)
-    index: int = field(kw_only=True)
 
     def __post_init__(self):
         self.params = [t.value for t in self._param_tokens]
-
-    @property
-    def end(self):
-        return self.body.end
 
 
 @dataclass
 class Block(Expr):
     actions: list[Expr]
     body: Expr
-    lineno: int = field(kw_only=True)
-    index: int = field(kw_only=True)
-
-    @property
-    def end(self):
-        return self.body.end
 
 
 @dataclass
 class LetExpr(Expr):
     definitions: list[AST]
     body: Expr
-    lineno: int = field(kw_only=True)
-    index: int = field(kw_only=True)
-
-    @property
-    def end(self):
-        return self.body.end
 
 
 @dataclass
 class PatternMatching(Expr):
     matchable: Expr
     matches: list[tuple[Identifier | Data, Expr]]
-    lineno: int = field(kw_only=True)
-    index: int = field(kw_only=True)
-
-    @property
-    def end(self):
-        return self.matches[-1][1].end
 
 
 @dataclass

@@ -71,15 +71,11 @@ class Parser(_Parser):
 
     @_("FUN name params ASSIGN body_expr")
     def fun_defn(self, p):
-        return ast.ValueDefn(
-            p[1], ast.Function(p[2], p[4], lineno=p[0].lineno, index=p[0].index)
-        )
+        return ast.ValueDefn(p[1], ast.Function(p[2], p[4]))
 
     @_("FUN ID operator ID ASSIGN body_expr")
     def fun_defn(self, p):
-        return ast.ValueDefn(
-            p[2], ast.Function([p[1], p[3]], p[5], lineno=p[0].lineno, index=p[0].index)
-        )
+        return ast.ValueDefn(p[2], ast.Function([p[1], p[3]], p[5]))
 
     # body_expr
 
@@ -134,19 +130,19 @@ class Parser(_Parser):
 
     @_("BSLASH params ASSIGN expr")
     def expr(self, p):
-        return ast.Function(p[1], p[3], lineno=p[0].lineno, index=p[0].index)
+        return ast.Function(p[1], p[3])
 
     @_("DO expr_list THEN expr")
     def expr(self, p):
-        return ast.Block(p[1], p[3], lineno=p[0].lineno, index=p[0].index)
+        return ast.Block(p[1], p[3])
 
     @_("LET defn_list IN expr")
     def expr(self, p):
-        return ast.LetExpr(p[1], p[3], lineno=p[0].lineno, index=p[0].index)
+        return ast.LetExpr(p[1], p[3])
 
     @_("MATCH expr match_list")
     def expr(self, p):
-        return ast.PatternMatching(p[1], p[2], lineno=p[0].lineno, index=p[0].index)
+        return ast.PatternMatching(p[1], p[2])
 
     @_("op_chain")
     def expr(self, p):
