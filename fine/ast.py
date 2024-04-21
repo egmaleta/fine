@@ -96,13 +96,13 @@ class FunctionApp(Expr):
 
 @dataclass
 class OpChain(Expr):
-    """Sugar for a tree of BinOp"""
+    """Sugar for a tree of Operation"""
 
     elements: list[Expr | Token]
 
 
 @dataclass
-class BinOp(Expr):
+class Operation(Expr):
     left: Expr
     _operator_token: Token
     operator: str = field(init=False)
@@ -187,7 +187,7 @@ class ValueDefn(AST):
 
 
 @dataclass
-class BinOpInfo(AST):
+class OperationInfo(AST):
     _operator_token: Token
     operator: str = field(init=False)
     is_left_assoc: bool

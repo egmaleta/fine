@@ -1,11 +1,20 @@
+# Most of desugaring happens at grammar attributes.
+# Desugaring dependant of any context happens here.
+#
+# For example, desugaring a chain of operations requires
+# to know the precedence and associativity of an operator
+# at a given scope.
+
 from .tools import visitor
 from .tools.scope import Scope
 from .tools.lexer import Token
 from . import ast
 
 
-class BinOpBuilder:
-    def _build_binop(self, infixn: list[ast.Expr | Token], scope: Scope[ast.BinOpInfo]):
+class Desugarer:
+    def _build_operation(
+        self, infixn: list[ast.Expr | Token], scope: Scope[ast.OperationInfo]
+    ):
         rpn: list[ast.Expr | Token] = []
         op_stack: list[Token] = []
         for item in infixn:
@@ -42,7 +51,7 @@ class BinOpBuilder:
 
             right = operands.pop()
             left = operands.pop()
-            operands.append(ast.BinOp(left, item, right))
+            operands.append(ast.Operation(left, item, right))
 
         assert len(operands) == 1
         return operands[0]
@@ -52,40 +61,40 @@ class BinOpBuilder:
         pass
 
     @visitor.when(ast.Data)
-    def visit(self, node: ast.Data, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.Data, scope: Scope[ast.OperationInfo]):
         return node
 
     @visitor.when(ast.Identifier)
-    def visit(self, node: ast.Identifier, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.Identifier, scope: Scope[ast.OperationInfo]):
         return node
 
     @visitor.when(ast.FunctionApp)
-    def visit(self, node: ast.FunctionApp, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.FunctionApp, scope: Scope[ast.OperationInfo]):
         node.target = self.visit(node.target, scope)
         node.arg = self.visit(node.arg, scope)
         return node
 
     @visitor.when(ast.OpChain)
-    def visit(self, node: ast.OpChain, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.OpChain, scope: Scope[ast.OperationInfo]):
         elements = [
             self.visit(el, scope) if isinstance(el, ast.Expr) else el
             for el in node.elements
         ]
-        return self._build_binop(elements, scope)
+        return self._build_operation(elements, scope)
 
     @visitor.when(ast.Function)
-    def visit(self, node: ast.Function, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.Function, scope: Scope[ast.OperationInfo]):
         node.body = self.visit(node.body, scope)
         return node
 
     @visitor.when(ast.Block)
-    def visit(self, node: ast.Block, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.Block, scope: Scope[ast.OperationInfo]):
         node.actions = [self.visit(action, scope) for action in node.actions]
         node.body = self.visit(node.body, scope)
         return node
 
     @visitor.when(ast.LetExpr)
-    def visit(self, node: ast.LetExpr, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.LetExpr, scope: Scope[ast.OperationInfo]):
         child_scope = scope.new_child()
         for defn in node.definitions:
             self.visit(defn, child_scope)
@@ -93,7 +102,7 @@ class BinOpBuilder:
         return node
 
     @visitor.when(ast.PatternMatching)
-    def visit(self, node: ast.PatternMatching, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.PatternMatching, scope: Scope[ast.OperationInfo]):
         node.matchable = self.visit(node.matchable, scope)
         node.matches = [
             (pattern, self.visit(body, scope)) for pattern, body in node.matches
@@ -101,17 +110,17 @@ class BinOpBuilder:
         return node
 
     @visitor.when(ast.ValueDefn)
-    def visit(self, node: ast.ValueDefn, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.ValueDefn, scope: Scope[ast.OperationInfo]):
         node.value = self.visit(node.value, scope)
         return node
 
-    @visitor.when(ast.BinOpInfo)
-    def visit(self, node: ast.BinOpInfo, scope: Scope[ast.BinOpInfo]):
+    @visitor.when(ast.OperationInfo)
+    def visit(self, node: ast.OperationInfo, scope: Scope[ast.OperationInfo]):
         scope.add_item(node.operator, node)
         return node
 
     @visitor.when(ast.Program)
-    def visit(self, node: ast.Program, scope: Scope[ast.BinOpInfo]):
+    def visit(self, node: ast.Program, scope: Scope[ast.OperationInfo]):
         for defn in node.definitions:
             self.visit(defn, scope)
         return node

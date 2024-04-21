@@ -11,15 +11,15 @@ defn_list : defn defn_list
 
 defn : val_defn
      | fun_defn
-     | binop_info
+     | op_info
 
 val_defn : VAL name ASSIGN expr
 
 fun_defn : FUN name params ASSIGN expr
          | FUN ID operator ID ASSIGN expr
 
-binop_info : INFIXL NAT operator
-           | INFIXR NAT operator
+op_info : INFIXL NAT operator
+        | INFIXR NAT operator
 
 params : ID params
        | <empty>

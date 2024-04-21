@@ -56,7 +56,7 @@ class Parser(_Parser):
 
     # defn
 
-    @_("val_defn", "fun_defn", "binop_info")
+    @_("val_defn", "fun_defn", "op_info")
     def defn(self, p):
         return p[0]
 
@@ -80,11 +80,11 @@ class Parser(_Parser):
             p[2], ast.Function([p[1], p[3]], p[5], lineno=p[0].lineno, index=p[0].index)
         )
 
-    # binop_info
+    # op_info
 
     @_("INFIXL NAT operator", "INFIXR NAT operator")
-    def binop_info(self, p):
-        return ast.BinOpInfo(p[2], p[0].type == "INFIXL", int(p[1].value))
+    def op_info(self, p):
+        return ast.OperationInfo(p[2], p[0].type == "INFIXL", int(p[1].value))
 
     # params
 
