@@ -1,5 +1,6 @@
 _ = None  # to suppress pylance warning
 from vendor.sly.yacc import Parser as _Parser
+
 from .lexer import Lexer
 from . import ast
 

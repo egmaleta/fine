@@ -6,6 +6,7 @@
 # at a given scope.
 
 from vendor import visitor
+
 from .scope import Scope
 from .lexer import Token
 from . import ast
