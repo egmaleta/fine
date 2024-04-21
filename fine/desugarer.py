@@ -60,6 +60,10 @@ class Desugarer:
     def visit(self, node):
         pass
 
+    @visitor.when(ast.InternalExpr)
+    def visit(self, node: ast.InternalExpr, scope: Scope[ast.OperationInfo]):
+        return node
+
     @visitor.when(ast.Data)
     def visit(self, node: ast.Data, scope: Scope[ast.OperationInfo]):
         return node

@@ -6,6 +6,7 @@ from .tools.lexer import Lexer as _Lexer, Token
 
 class Lexer(_Lexer):
     TOKEN_TYPES = {
+        "INTERNAL",
         "FUN",
         "VAL",
         "THEN",
@@ -32,6 +33,8 @@ class Lexer(_Lexer):
     }
 
     tokens = TOKEN_TYPES | {"SPACE"}
+
+    INTERNAL = r"#internal"
 
     # precedence over id
     FUN = r"fun"

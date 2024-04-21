@@ -21,6 +21,21 @@ class Expr(AST):
 
 
 @dataclass
+class InternalExpr(Expr):
+    """Expression that cannot be represented in code.
+
+    Therefore the evaluation of the expression depends
+    entirely on the compiler."""
+
+    name: str
+    params: list[str] | None
+
+    @property
+    def is_literal(self):
+        self.params is None
+
+
+@dataclass
 class Data(Expr):
     _value_token: Token
     value: str = field(init=False)

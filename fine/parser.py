@@ -62,22 +62,35 @@ class Parser(_Parser):
 
     # val_defn
 
-    @_("VAL name ASSIGN expr")
+    @_("VAL name ASSIGN body_expr")
     def val_defn(self, p):
         return ast.ValueDefn(p[1], p[3])
 
     # fun_defn
 
-    @_("FUN name params ASSIGN expr")
+    @_("FUN name params ASSIGN body_expr")
     def fun_defn(self, p):
         return ast.ValueDefn(
             p[1], ast.Function(p[2], p[4], lineno=p[0].lineno, index=p[0].index)
         )
 
-    @_("FUN ID operator ID ASSIGN expr")
+    @_("FUN ID operator ID ASSIGN body_expr")
     def fun_defn(self, p):
         return ast.ValueDefn(
             p[2], ast.Function([p[1], p[3]], p[5], lineno=p[0].lineno, index=p[0].index)
+        )
+
+    # body_expr
+
+    @_("expr")
+    def body_expr(self, p):
+        return p[0]
+
+    @_("INTERNAL ID params")
+    def body_expr(self, p):
+        params = p[2]
+        return ast.InternalExpr(
+            p[1].value, [p.value for p in params] if len(params) > 0 else None
         )
 
     # op_info

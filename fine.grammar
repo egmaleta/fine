@@ -13,10 +13,13 @@ defn : val_defn
      | fun_defn
      | op_info
 
-val_defn : VAL name ASSIGN expr
+val_defn : VAL name ASSIGN body_expr
 
-fun_defn : FUN name params ASSIGN expr
-         | FUN ID operator ID ASSIGN expr
+fun_defn : FUN name params ASSIGN body_expr
+         | FUN ID operator ID ASSIGN body_expr
+
+body_expr : expr
+          | INTERNAL ID params
 
 op_info : INFIXL NAT operator
         | INFIXR NAT operator
