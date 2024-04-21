@@ -19,13 +19,13 @@ fun_defn : FUN name params ASSIGN body_expr
          | FUN ID operator ID ASSIGN body_expr
 
 body_expr : expr
-          | INTERNAL ID params
+          | INTERNAL params
 
 op_info : INFIXL NAT operator
         | INFIXR NAT operator
 
 params : ID params
-       | <empty>
+       | ID
 
 name : ID
      | OPAR EXT_OP CPAR

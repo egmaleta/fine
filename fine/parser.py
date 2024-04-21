@@ -86,11 +86,11 @@ class Parser(_Parser):
     def body_expr(self, p):
         return p[0]
 
-    @_("INTERNAL ID params")
+    @_("INTERNAL params")
     def body_expr(self, p):
-        params = p[2]
+        name, *params = p[1]
         return ast.InternalExpr(
-            p[1].value, [p.value for p in params] if len(params) > 0 else None
+            name.value, [p.value for p in params] if len(params) > 0 else None
         )
 
     # op_info
@@ -105,9 +105,9 @@ class Parser(_Parser):
     def params(self, p):
         return [p[0], *p[1]]
 
-    @_("empty")
+    @_("ID")
     def params(self, p):
-        return []
+        return [p[0]]
 
     # name
 
