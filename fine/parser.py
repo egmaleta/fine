@@ -41,54 +41,58 @@ class Parser(_Parser):
 
     # top_defn
 
+    @_("LET name ASSIGN internal_id")
+    def top_defn(self, p):
+        return ast.ValueDefn(p[1], ast.InternalExpr(p[3].value))
+
+    @_("LET name params ASSIGN internal_id")
+    def top_defn(self, p):
+        params = p[2]
+        return ast.ValueDefn(
+            p[1],
+            ast.Function(
+                params, ast.InternalFunction(p[4].value, [p.value for p in params])
+            ),
+        )
+
+    @_("LET ID operator ID ASSIGN internal_id")
+    def top_defn(self, p):
+        left, right = p[1], p[3]
+        return ast.ValueDefn(
+            p[2],
+            ast.Function(
+                [left, right],
+                ast.InternalFunction(p[5].value, [left.value, right.value]),
+            ),
+        )
+
     @_("defn")
     def top_defn(self, p):
         return p[0]
 
-    # defn_list
+    # internal_id
 
-    @_("defn defn_list")
-    def defn_list(self, p):
-        return [p[0], *p[1]]
-
-    @_("defn")
-    def defn_list(self, p):
-        return [p[0]]
+    @_("INTERNAL ID")
+    def internal_id(self, p):
+        return p[1]
 
     # defn
 
-    @_("val_defn", "fun_defn", "op_info")
+    @_("LET name ASSIGN expr")
     def defn(self, p):
-        return p[0]
-
-    # val_defn
-
-    @_("VAL name ASSIGN body_expr")
-    def val_defn(self, p):
         return ast.ValueDefn(p[1], p[3])
 
-    # fun_defn
-
-    @_("FUN name params ASSIGN body_expr")
-    def fun_defn(self, p):
+    @_("LET name params ASSIGN expr")
+    def defn(self, p):
         return ast.ValueDefn(p[1], ast.Function(p[2], p[4]))
 
-    @_("FUN ID operator ID ASSIGN body_expr")
-    def fun_defn(self, p):
+    @_("LET ID operator ID ASSIGN expr")
+    def defn(self, p):
         return ast.ValueDefn(p[2], ast.Function([p[1], p[3]], p[5]))
 
-    # body_expr
-
-    @_("expr")
-    def body_expr(self, p):
+    @_("op_info")
+    def defn(self, p):
         return p[0]
-
-    @_("INTERNAL params")
-    def body_expr(self, p):
-        name, *params = p[1]
-        return ast.InternalExpr(
-            name.value, [p.value for p in params] if len(params) > 0 else None
-        )
 
     # op_info
 
@@ -136,9 +140,9 @@ class Parser(_Parser):
     def expr(self, p):
         return ast.Block(p[1], p[3])
 
-    @_("LET defn_list IN expr")
+    @_("defn IN expr")
     def expr(self, p):
-        return ast.LetExpr(p[1], p[3])
+        return ast.LetExpr(p[0], p[2])
 
     @_("MATCH expr match_list")
     def expr(self, p):

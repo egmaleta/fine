@@ -6,8 +6,6 @@ from vendor.sly.lex import Lexer as _Lexer, Token
 class Lexer(_Lexer):
     TOKEN_TYPES = {
         "INTERNAL",
-        "FUN",
-        "VAL",
         "THEN",
         "DO",
         "INFIXL",
@@ -37,8 +35,6 @@ class Lexer(_Lexer):
     INTERNAL = r"#internal"
 
     # precedence over id
-    FUN = r"fun"
-    VAL = r"val"
     THEN = r"then"
     DO = r"do"
     INFIXL = r"infixl"

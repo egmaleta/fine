@@ -101,8 +101,7 @@ class Desugarer:
     @visitor.when(ast.LetExpr)
     def visit(self, node: ast.LetExpr, scope: Scope[ast.OperationInfo]):
         child_scope = scope.new_child()
-        for defn in node.definitions:
-            self.visit(defn, child_scope)
+        self.visit(node.definition, child_scope)
         node.body = self.visit(node.body, child_scope)
         return node
 

@@ -4,22 +4,17 @@ program : top_defn_list
 top_defn_list : top_defn top_defn_list
               | top_defn
 
-top_defn : defn
+top_defn : LET name ASSIGN internal_id
+         | LET name params ASSIGN internal_id
+         | LET ID operator ID ASSIGN internal_id
+         | defn
 
-defn_list : defn defn_list
-          | defn
+internal_id : INTERNAL ID
 
-defn : val_defn
-     | fun_defn
+defn : LET name ASSIGN expr
+     | LET name params ASSIGN expr
+     | LET ID operator ID ASSIGN expr
      | op_info
-
-val_defn : VAL name ASSIGN body_expr
-
-fun_defn : FUN name params ASSIGN body_expr
-         | FUN ID operator ID ASSIGN body_expr
-
-body_expr : expr
-          | INTERNAL params
 
 op_info : INFIXL NAT operator
         | INFIXR NAT operator
@@ -37,7 +32,7 @@ operator : BTICK ID BTICK
 
 expr : BSLASH params ASSIGN expr
      | DO expr_list THEN expr
-     | LET defn_list IN expr
+     | defn IN expr
      | MATCH expr match_list
      | op_chain
 
