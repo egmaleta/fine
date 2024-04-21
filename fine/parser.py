@@ -228,13 +228,15 @@ class Parser(_Parser):
 
     @_("DEC")
     def literal(self, p):
-        t = p[0]
         return ast.DecimalNumber(p[0])
 
     @_("NAT")
     def literal(self, p):
-        t = p[0]
         return ast.NaturalNumber(p[0])
+
+    @_("BOOL")
+    def literal(self, p):
+        return ast.Boolean(p[0])
 
     # data_ct
 

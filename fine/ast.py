@@ -64,6 +64,10 @@ class DecimalNumber(Data):
     pass
 
 
+class Boolean(Data):
+    pass
+
+
 @dataclass
 class Identifier(Expr):
     _value_token: Token

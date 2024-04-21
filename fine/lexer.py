@@ -15,6 +15,7 @@ class Lexer(_Lexer):
         "LET",
         "IN",
         "MATCH",
+        "BOOL",
         "TYPE_ID",
         "ID",
         "DEC",
@@ -45,6 +46,8 @@ class Lexer(_Lexer):
     LET = r"let"
     IN = r"in"
     MATCH = r"match"
+
+    BOOL = r"true|false"
 
     TYPE_ID = r"[A-Z][a-zA-Z0-9_]*"
     ID = r"[a-z_][a-zA-Z0-9_]*"

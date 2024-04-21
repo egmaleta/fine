@@ -64,10 +64,9 @@ atom : OPAR expr CPAR
      | literal
      | data_ct_id
 
-# literals represent data constructors that cannot be
-# enumerated finitely, such as numbers and strings
 literal : DEC
         | NAT
+        | BOOL
 
 data_ct : TYPE_ID
         | UNIT
