@@ -15,17 +15,14 @@ defn : val_defn
 
 val_defn : VAL name ASSIGN expr
 
-fun_defn : FUN name opt_params ASSIGN expr
+fun_defn : FUN name params ASSIGN expr
          | FUN ID operator ID ASSIGN expr
 
 binop_info : INFIXL NAT operator
            | INFIXR NAT operator
 
-opt_params : params
-           | <empty>
-
 params : ID params
-       | ID
+       | <empty>
 
 name : ID
      | OPAR EXT_OP CPAR
@@ -35,7 +32,7 @@ operator : BTICK ID BTICK
          | EXT_OP
          | OP
 
-expr : BSLASH opt_params ASSIGN expr
+expr : BSLASH params ASSIGN expr
      | DO expr_list THEN expr
      | LET defn_list IN expr
      | MATCH expr match_list

@@ -68,7 +68,7 @@ class Parser(_Parser):
 
     # fun_defn
 
-    @_("FUN name opt_params ASSIGN expr")
+    @_("FUN name params ASSIGN expr")
     def fun_defn(self, p):
         return ast.ValueDefn(
             p[1], ast.Function(p[2], p[4], lineno=p[0].lineno, index=p[0].index)
@@ -86,25 +86,15 @@ class Parser(_Parser):
     def binop_info(self, p):
         return ast.BinOpInfo(p[2], p[0].type == "INFIXL", int(p[1].value))
 
-    # opt_params
-
-    @_("params")
-    def opt_params(self, p):
-        return p[0]
-
-    @_("empty")
-    def opt_params(self, p):
-        return []
-
     # params
 
     @_("ID params")
     def params(self, p):
         return [p[0], *p[1]]
 
-    @_("ID")
+    @_("empty")
     def params(self, p):
-        return [p[0]]
+        return []
 
     # name
 
@@ -128,7 +118,7 @@ class Parser(_Parser):
 
     # expr
 
-    @_("BSLASH opt_params ASSIGN expr")
+    @_("BSLASH params ASSIGN expr")
     def expr(self, p):
         return ast.Function(p[1], p[3], lineno=p[0].lineno, index=p[0].index)
 
