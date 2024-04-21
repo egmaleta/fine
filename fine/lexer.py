@@ -1,7 +1,6 @@
 _ = None  # to suppress pylance warning
 from typing import Generator
-
-from .tools.lexer import Lexer as _Lexer, Token
+from vendor.sly.lex import Lexer as _Lexer, Token
 
 
 class Lexer(_Lexer):

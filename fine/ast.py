@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Protocol, runtime_checkable
 from dataclasses import dataclass, field
 
-from .tools.lexer import Token
+from .lexer import Token
 
 
 @runtime_checkable

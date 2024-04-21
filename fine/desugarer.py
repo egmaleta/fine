@@ -5,9 +5,9 @@
 # to know the precedence and associativity of an operator
 # at a given scope.
 
-from .tools import visitor
-from .tools.scope import Scope
-from .tools.lexer import Token
+from vendor import visitor
+from .scope import Scope
+from .lexer import Token
 from . import ast
 
 
