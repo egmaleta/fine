@@ -68,6 +68,10 @@ class Boolean(Data):
     pass
 
 
+class Unit(Data):
+    pass
+
+
 @dataclass
 class Identifier(Expr):
     _value_token: Token

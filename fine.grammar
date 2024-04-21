@@ -52,7 +52,7 @@ match : BAR pattern ASSIGN expr
 
 pattern : ID
         | literal
-        | data_ct
+        | TYPE_ID
 
 op_chain : operand operator op_chain
          | operand
@@ -62,17 +62,12 @@ operand : atom args
 atom : OPAR expr CPAR
      | name
      | literal
-     | data_ct_id
+     | TYPE_ID
 
 literal : DEC
         | NAT
         | BOOL
-
-data_ct : TYPE_ID
         | UNIT
-
-data_ct_id : TYPE_ID
-           | UNIT
 
 args : ID ASSIGN atom args
      | atom args

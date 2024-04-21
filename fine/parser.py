@@ -187,9 +187,13 @@ class Parser(_Parser):
     def pattern(self, p):
         return ast.Identifier(p[0])
 
-    @_("literal", "data_ct")
+    @_("literal")
     def pattern(self, p):
         return p[0]
+
+    @_("TYPE_ID")
+    def pattern(self, p):
+        return ast.Data(p[0])
 
     # op_chain
 
@@ -220,9 +224,13 @@ class Parser(_Parser):
     def atom(self, p):
         return ast.Identifier(p[0])
 
-    @_("literal", "data_ct_id")
+    @_("literal")
     def atom(self, p):
         return p[0]
+
+    @_("TYPE_ID")
+    def atom(self, p):
+        return ast.Identifier(p[0])
 
     # literal
 
@@ -238,17 +246,9 @@ class Parser(_Parser):
     def literal(self, p):
         return ast.Boolean(p[0])
 
-    # data_ct
-
-    @_("TYPE_ID", "UNIT")
-    def data_ct(self, p):
-        return ast.Data(p[0])
-
-    # data_ct_id
-
-    @_("TYPE_ID", "UNIT")
-    def data_ct_id(self, p):
-        return ast.Identifier(p[0])
+    @_("UNIT")
+    def literal(self, p):
+        return ast.Unit(p[0])
 
     # args
 
