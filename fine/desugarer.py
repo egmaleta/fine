@@ -57,7 +57,7 @@ class Desugarer:
         return operands[0]
 
     @visitor.on("node")
-    def visit(self, node):
+    def visit(self, node, scope):
         pass
 
     @visitor.when(ast.InternalExpr)
