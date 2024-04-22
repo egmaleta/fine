@@ -81,6 +81,23 @@ files = [
 ]
 
 [[package]]
+name = "lark"
+version = "1.1.9"
+description = "a modern parsing library"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "lark-1.1.9-py3-none-any.whl", hash = "sha256:a0dd3a87289f8ccbb325901e4222e723e7d745dbfc1803eaf5f3d2ace19cf2db"},
+    {file = "lark-1.1.9.tar.gz", hash = "sha256:15fa5236490824c2c4aba0e22d2d6d823575dcaf4cdd1848e34b6ad836240fba"},
+]
+
+[package.extras]
+atomic-cache = ["atomicwrites"]
+interegular = ["interegular (>=0.3.1,<0.4.0)"]
+nearley = ["js2py"]
+regex = ["regex"]
+
+[[package]]
 name = "mypy-extensions"
 version = "1.0.0"
 description = "Type system extensions for programs checked with the mypy type checker."
@@ -166,4 +183,4 @@ testing = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygm
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "96bc4b9b83490c7892ce08e8ffce661c5f6b5bf25446da23738800a06f11f612"
+content-hash = "77306b689a1cae01d52165bf3f2b8becfae216521a2a9fd7abd069bdc1097d41"
