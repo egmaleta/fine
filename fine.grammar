@@ -52,7 +52,8 @@ pattern : ID
 op_chain : operand operator op_chain
          | operand
 
-operand : atom args
+operand : operand atom
+        | atom
 
 atom : OPAR expr CPAR
      | name
@@ -63,7 +64,3 @@ literal : DEC
         | NAT
         | BOOL
         | UNIT
-
-args : ID ASSIGN atom args
-     | atom args
-     | <empty>

@@ -207,12 +207,13 @@ class Parser(_Parser):
 
     # operand
 
-    @_("atom args")
+    @_("operand atom")
     def operand(self, p):
-        fapp = p[0]
-        for arg, name in p[1]:
-            fapp = ast.FunctionApp(fapp, arg, name)
-        return fapp
+        return ast.FunctionApp(p[0], p[1])
+
+    @_("atom")
+    def operand(self, p):
+        return p[0]
 
     # atom
 
@@ -249,17 +250,3 @@ class Parser(_Parser):
     @_("UNIT")
     def literal(self, p):
         return ast.Unit(p[0])
-
-    # args
-
-    @_("ID ASSIGN atom args")
-    def args(self, p):
-        return [(p[2], p[0]), *p[3]]
-
-    @_("atom args")
-    def args(self, p):
-        return [(p[0], None), *p[1]]
-
-    @_("empty")
-    def args(self, p):
-        return []

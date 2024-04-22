@@ -65,12 +65,6 @@ class Identifier(Expr):
 class FunctionApp(Expr):
     target: Expr
     arg: Expr
-    _arg_name_token: Token | None
-    arg_name: str | None = field(init=False)
-
-    def __post_init__(self):
-        t = self._arg_name_token
-        self.arg_name = t.value if isinstance(t, Token) else None
 
 
 @dataclass
