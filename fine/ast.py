@@ -1,7 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass, field
 
-from .lexer import Token
+from lark.lexer import Token
 
 
 class AST(ABC):
@@ -29,7 +29,7 @@ class InternalFunction(InternalExpr):
 
 @dataclass
 class Data(Expr):
-    _value_token: Token
+    _value_token: Token = field(repr=False)
     value: str = field(init=False)
 
     def __post_init__(self):
@@ -54,7 +54,7 @@ class Unit(Data):
 
 @dataclass
 class Identifier(Expr):
-    _value_token: Token
+    _value_token: Token = field(repr=False)
     value: str = field(init=False)
 
     def __post_init__(self):
@@ -71,13 +71,13 @@ class FunctionApp(Expr):
 class OpChain(Expr):
     """Sugar for a tree of Operation"""
 
-    elements: list[Expr | Token]
+    elements: list[Token | Expr]
 
 
 @dataclass
 class Operation(Expr):
     left: Expr
-    _operator_token: Token
+    _operator_token: Token = field(repr=False)
     operator: str = field(init=False)
     right: Expr
 
@@ -87,7 +87,7 @@ class Operation(Expr):
 
 @dataclass
 class Function(Expr):
-    _param_tokens: list[Token]
+    _param_tokens: list[Token] = field(repr=False)
     params: list[str] = field(init=False)
     body: Expr
 
@@ -103,7 +103,7 @@ class Block(Expr):
 
 @dataclass
 class LetExpr(Expr):
-    definition: AST
+    definitions: list[AST]
     body: Expr
 
 
@@ -120,11 +120,11 @@ class ValueDefn(AST):
         is_left_associative: bool
         precedence: int
 
-    _name_token: Token
+    _name_token: Token = field(repr=False)
     name: str = field(init=False)
     value: Expr
 
-    _fixity_sig: tuple[bool, Token] | None
+    _fixity_sig: tuple[bool, Token] | None = field(repr=False)
     fixity_sig: FixitySignature | None = field(init=False, default=None)
 
     def __post_init__(self):
