@@ -41,29 +41,19 @@ class Parser(_Parser):
 
     # top_defn
 
-    @_("LET name ASSIGN internal_id")
+    @_("LET fixity name ASSIGN internal_id")
     def top_defn(self, p):
-        return ast.ValueDefn(p[1], ast.InternalExpr(p[3].value))
+        return ast.ValueDefn(p[2], ast.InternalExpr(p[4].value), p[1])
 
-    @_("LET name params ASSIGN internal_id")
+    @_("LET fixity name params ASSIGN internal_id")
     def top_defn(self, p):
-        params = p[2]
-        return ast.ValueDefn(
-            p[1],
-            ast.Function(
-                params, ast.InternalFunction(p[4].value, [p.value for p in params])
-            ),
-        )
-
-    @_("LET ID operator ID ASSIGN internal_id")
-    def top_defn(self, p):
-        left, right = p[1], p[3]
+        params = p[3]
         return ast.ValueDefn(
             p[2],
             ast.Function(
-                [left, right],
-                ast.InternalFunction(p[5].value, [left.value, right.value]),
+                params, ast.InternalFunction(p[5].value, [p.value for p in params])
             ),
+            p[1],
         )
 
     @_("defn")
@@ -78,27 +68,27 @@ class Parser(_Parser):
 
     # defn
 
-    @_("LET name ASSIGN expr")
+    @_("LET fixity name ASSIGN expr")
     def defn(self, p):
-        return ast.ValueDefn(p[1], p[3])
+        return ast.ValueDefn(p[2], p[4], p[1])
 
-    @_("LET name params ASSIGN expr")
+    @_("LET fixity name params ASSIGN expr")
     def defn(self, p):
-        return ast.ValueDefn(p[1], ast.Function(p[2], p[4]))
+        return ast.ValueDefn(p[2], ast.Function(p[3], p[5]), p[1])
 
-    @_("LET ID operator ID ASSIGN expr")
-    def defn(self, p):
-        return ast.ValueDefn(p[2], ast.Function([p[1], p[3]], p[5]))
+    # fixity
 
-    @_("op_info")
-    def defn(self, p):
-        return p[0]
+    @_("INFIXL NAT")
+    def fixity(self, p):
+        return (True, p[1])
 
-    # op_info
+    @_("INFIXR NAT")
+    def fixity(self, p):
+        return (False, p[1])
 
-    @_("INFIXL NAT operator", "INFIXR NAT operator")
-    def op_info(self, p):
-        return ast.OperationInfo(p[2], p[0].type == "INFIXL", int(p[1].value))
+    @_("empty")
+    def fixity(self, p):
+        return None
 
     # params
 

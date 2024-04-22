@@ -12,9 +12,12 @@ from .lexer import Token
 from . import ast
 
 
+type FixitySignature = ast.ValueDefn.FixitySignature
+
+
 class Desugarer:
     def _build_operation(
-        self, infixn: list[ast.Expr | Token], scope: Scope[ast.OperationInfo]
+        self, infixn: list[ast.Expr | Token], scope: Scope[FixitySignature]
     ):
         rpn: list[ast.Expr | Token] = []
         op_stack: list[Token] = []
@@ -33,7 +36,7 @@ class Desugarer:
                 if (
                     top.precedence > curr.precedence
                     or top.precedence == curr.precedence
-                    and curr.is_left_assoc
+                    and curr.is_left_associative
                 ):
                     rpn.append(op_stack.pop())
                 else:
@@ -62,25 +65,25 @@ class Desugarer:
         pass
 
     @visitor.when(ast.InternalExpr)
-    def visit(self, node: ast.InternalExpr, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.InternalExpr, scope: Scope[FixitySignature]):
         return node
 
     @visitor.when(ast.Data)
-    def visit(self, node: ast.Data, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.Data, scope: Scope[FixitySignature]):
         return node
 
     @visitor.when(ast.Identifier)
-    def visit(self, node: ast.Identifier, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.Identifier, scope: Scope[FixitySignature]):
         return node
 
     @visitor.when(ast.FunctionApp)
-    def visit(self, node: ast.FunctionApp, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.FunctionApp, scope: Scope[FixitySignature]):
         node.target = self.visit(node.target, scope)
         node.arg = self.visit(node.arg, scope)
         return node
 
     @visitor.when(ast.OpChain)
-    def visit(self, node: ast.OpChain, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.OpChain, scope: Scope[FixitySignature]):
         elements = [
             self.visit(el, scope) if isinstance(el, ast.Expr) else el
             for el in node.elements
@@ -88,25 +91,25 @@ class Desugarer:
         return self._build_operation(elements, scope)
 
     @visitor.when(ast.Function)
-    def visit(self, node: ast.Function, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.Function, scope: Scope[FixitySignature]):
         node.body = self.visit(node.body, scope)
         return node
 
     @visitor.when(ast.Block)
-    def visit(self, node: ast.Block, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.Block, scope: Scope[FixitySignature]):
         node.actions = [self.visit(action, scope) for action in node.actions]
         node.body = self.visit(node.body, scope)
         return node
 
     @visitor.when(ast.LetExpr)
-    def visit(self, node: ast.LetExpr, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.LetExpr, scope: Scope[FixitySignature]):
         child_scope = scope.new_child()
         self.visit(node.definition, child_scope)
         node.body = self.visit(node.body, child_scope)
         return node
 
     @visitor.when(ast.PatternMatching)
-    def visit(self, node: ast.PatternMatching, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.PatternMatching, scope: Scope[FixitySignature]):
         node.matchable = self.visit(node.matchable, scope)
         node.matches = [
             (pattern, self.visit(body, scope)) for pattern, body in node.matches
@@ -114,17 +117,19 @@ class Desugarer:
         return node
 
     @visitor.when(ast.ValueDefn)
-    def visit(self, node: ast.ValueDefn, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.ValueDefn, scope: Scope[FixitySignature]):
+        if node.fixity_sig is not None:
+            assert node.fixity_sig.precedence <= 10
+            scope.add_item(node.name, node.fixity_sig)
+        else:
+            sig = ast.ValueDefn.FixitySignature(True, 9)
+            scope.add_item(node.name, sig)
+
         node.value = self.visit(node.value, scope)
         return node
 
-    @visitor.when(ast.OperationInfo)
-    def visit(self, node: ast.OperationInfo, scope: Scope[ast.OperationInfo]):
-        scope.add_item(node.operator, node)
-        return node
-
     @visitor.when(ast.Program)
-    def visit(self, node: ast.Program, scope: Scope[ast.OperationInfo]):
+    def visit(self, node: ast.Program, scope: Scope[FixitySignature]):
         for defn in node.definitions:
             self.visit(defn, scope)
         return node

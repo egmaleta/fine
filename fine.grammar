@@ -4,20 +4,18 @@ program : top_defn_list
 top_defn_list : top_defn top_defn_list
               | top_defn
 
-top_defn : LET name ASSIGN internal_id
-         | LET name params ASSIGN internal_id
-         | LET ID operator ID ASSIGN internal_id
+top_defn : LET fixity name ASSIGN internal_id
+         | LET fixity name params ASSIGN internal_id
          | defn
 
 internal_id : INTERNAL ID
 
-defn : LET name ASSIGN expr
-     | LET name params ASSIGN expr
-     | LET ID operator ID ASSIGN expr
-     | op_info
+defn : LET fixity name ASSIGN expr
+     | LET fixity name params ASSIGN expr
 
-op_info : INFIXL NAT operator
-        | INFIXR NAT operator
+fixity : INFIXL NAT
+       | INFIXR NAT
+       | <empty>
 
 params : ID params
        | ID
