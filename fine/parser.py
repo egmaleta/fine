@@ -74,7 +74,11 @@ class ASTBuilder(Transformer):
         return [p[0], *p[1]]
 
     def let_expr(self, p):
-        return ast.LetExpr(p[0], p[1])
+        *definitions, expr = p
+        for defn in definitions[::-1]:
+            expr = ast.LetExpr(defn, expr)
+
+        return expr
 
     def match_expr(self, p):
         return ast.PatternMatching(p[0], p[1])

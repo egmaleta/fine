@@ -102,7 +102,7 @@ class Block(Expr):
 
 @dataclass
 class LetExpr(Expr):
-    definitions: list[AST]
+    definition: AST
     body: Expr
 
 
