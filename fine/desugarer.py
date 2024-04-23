@@ -6,10 +6,10 @@
 # at a given scope.
 
 from lark.lexer import Token
-from vendor import visitor
 
 from .scope import Scope
 from . import ast
+from . import visitor
 
 
 type FixitySignature = ast.ValueDefn.FixitySignature

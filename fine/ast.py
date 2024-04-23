@@ -1,6 +1,5 @@
 from abc import ABC
 from dataclasses import dataclass, field
-
 from lark.lexer import Token
 
 
