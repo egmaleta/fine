@@ -116,6 +116,13 @@ class Desugarer:
         ]
         return node
 
+    @visitor.when(ast.Conditional)
+    def visit(self, node: ast.Conditional, scope: Scope[FixitySignature]):
+        node.condition = self.visit(node.condition, scope)
+        node.body = self.visit(node.body, scope)
+        node.fall_body = self.visit(node.fall_body, scope)
+        return node
+
     @visitor.when(ast.ValueDefn)
     def visit(self, node: ast.ValueDefn, scope: Scope[FixitySignature]):
         if node.fixity_sig is not None:

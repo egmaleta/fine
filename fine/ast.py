@@ -113,6 +113,13 @@ class PatternMatching(Expr):
 
 
 @dataclass
+class Conditional(Expr):
+    condition: Expr
+    body: Expr
+    fall_body: Expr
+
+
+@dataclass
 class ValueDefn(AST):
     @dataclass
     class FixitySignature:

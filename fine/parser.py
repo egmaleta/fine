@@ -83,6 +83,9 @@ class ASTBuilder(Transformer):
     def match_expr(self, p):
         return ast.PatternMatching(p[0], p[1])
 
+    def cond_expr(self, p):
+        return ast.Conditional(p[0], p[1], p[2])
+
     def matches(self, p):
         if len(p) == 2:
             return [(p[0], p[1])]
