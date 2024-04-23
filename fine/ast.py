@@ -135,5 +135,5 @@ class ValueDefn(AST):
 
 
 @dataclass
-class Program(AST):
+class Module(AST):
     definitions: list[AST]

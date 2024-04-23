@@ -5,7 +5,7 @@ from . import ast
 
 class ASTBuilder(Transformer):
     def module(self, p):
-        return ast.Program(p)
+        return ast.Module(p)
 
     def internal_value_defn(self, p):
         if len(p) == 3:
@@ -142,5 +142,5 @@ PARSER = Lark.open(
 )
 
 
-def parse(text: str) -> ast.Program:
+def parse(text: str) -> ast.Module:
     return PARSER.parse(text)

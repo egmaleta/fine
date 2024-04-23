@@ -128,8 +128,8 @@ class Desugarer:
         node.value = self.visit(node.value, scope)
         return node
 
-    @visitor.when(ast.Program)
-    def visit(self, node: ast.Program, scope: Scope[FixitySignature]):
+    @visitor.when(ast.Module)
+    def visit(self, node: ast.Module, scope: Scope[FixitySignature]):
         for defn in node.definitions:
             self.visit(defn, scope)
             scope = scope.new_child()
