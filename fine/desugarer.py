@@ -132,4 +132,5 @@ class Desugarer:
     def visit(self, node: ast.Program, scope: Scope[FixitySignature]):
         for defn in node.definitions:
             self.visit(defn, scope)
+            scope = scope.new_child()
         return node
