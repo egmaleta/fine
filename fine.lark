@@ -26,7 +26,7 @@ name: ID
 
 actions: expr ( _SEMI actions )*
 
-matches: pattern _ASSIGN expr ( _SEMI matches )*
+matches: pattern _ARROW expr ( _SEMI matches )*
 
 ?pattern: ID -> id_pattern
         | TYPE_ID -> ct_pattern
@@ -77,6 +77,7 @@ _BTICK: "`"
 _BSLASH: "\\"
 _SEMI: ";"
 
+_ARROW.1: "->" // over LARGE_OP
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 _ASSIGN: "="
 OP: /[~!@$%^&*\/\-+|?.<>:]/
