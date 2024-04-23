@@ -29,7 +29,7 @@ actions: expr ( _SEMI actions )* _SEMI?
 
 matches: pattern _ARROW expr ( _SEMI matches )* _SEMI?
 
-?pattern: ID -> id_pattern
+?pattern: ID      -> id_pattern
         | TYPE_ID -> ct_pattern
         | literal
 
@@ -42,14 +42,14 @@ operator: _BTICK ID _BTICK
 ?operand: operand atom -> func_app
         | atom
 
-?atom: _OPAR expr _CPAR     -> expr_atom
-     | ( TYPE_ID | name )   -> id_atom
+?atom: _OPAR expr _CPAR   -> expr_atom
+     | ( TYPE_ID | name ) -> id_atom
      | literal
 
-?literal: DEC   -> dec_literal
-        | NAT   -> nat_literal
-        | BOOL  -> bool_literal
-        | UNIT  -> unit_literal
+?literal: DEC  -> dec_literal
+        | NAT  -> nat_literal
+        | BOOL -> bool_literal
+        | UNIT -> unit_literal
 
 // LEXER GRAMMAR
 
