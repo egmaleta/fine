@@ -24,9 +24,9 @@ name: ID
      | _MATCH expr _WITH matches   -> match_expr
      | op_chain
 
-actions: expr ( _SEMI actions )*
+actions: expr ( _SEMI actions )* _SEMI?
 
-matches: pattern _ARROW expr ( _SEMI matches )*
+matches: pattern _ARROW expr ( _SEMI matches )* _SEMI?
 
 ?pattern: ID -> id_pattern
         | TYPE_ID -> ct_pattern
