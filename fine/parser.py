@@ -1,242 +1,142 @@
-_ = None  # to suppress pylance warning
-from vendor.sly.yacc import Parser as _Parser
+from lark import Transformer, Lark
 
-from .lexer import Lexer
 from . import ast
 
 
-class Parser(_Parser):
-    tokens = Lexer.TOKEN_TYPES
-    debugfile = "parse.debug"
-    start = "program"
+class ASTBuilder(Transformer):
+    def module(self, p):
+        return ast.Program(p)
 
-    def parse(self, tokens) -> ast.Program | None:
-        return super().parse(tokens)
+    def internal_value_defn(self, p):
+        if len(p) == 3:
+            fixity, name, id = p
+        else:
+            fixity = None
+            name, id = p
 
-    ## grammar
+        return ast.ValueDefn(name, ast.InternalExpr(id.value), fixity)
 
-    @_("")
-    def empty(self, p):
-        pass
+    def internal_func_defn(self, p):
+        if len(p) == 4:
+            fixity, name, params, id = p
+        else:
+            fixity = None
+            name, params, id = p
 
-    # program
-
-    @_("top_defn_list")
-    def program(self, p):
-        return ast.Program(p[0])
-
-    @_("empty")
-    def program(self, p):
-        return None
-
-    # top_defn_list
-
-    @_("top_defn top_defn_list")
-    def top_defn_list(self, p):
-        return [p[0], *p[1]]
-
-    @_("top_defn")
-    def top_defn_list(self, p):
-        return [p[0]]
-
-    # top_defn
-
-    @_("LET fixity name ASSIGN internal_id")
-    def top_defn(self, p):
-        return ast.ValueDefn(p[2], ast.InternalExpr(p[4].value), p[1])
-
-    @_("LET fixity name params ASSIGN internal_id")
-    def top_defn(self, p):
-        params = p[3]
         return ast.ValueDefn(
-            p[2],
+            name,
             ast.Function(
-                params, ast.InternalFunction(p[5].value, [p.value for p in params])
+                params, ast.InternalFunction(id.value, [p.value for p in params])
             ),
-            p[1],
+            fixity,
         )
 
-    @_("defn")
-    def top_defn(self, p):
+    def internal(self, p):
         return p[0]
 
-    # internal_id
+    def value_defn(self, p):
+        if len(p) == 3:
+            fixity, name, value = p
+        else:
+            fixity = None
+            name, value = p
 
-    @_("INTERNAL ID")
-    def internal_id(self, p):
-        return p[1]
+        return ast.ValueDefn(name, value, fixity)
 
-    # defn
+    def func_defn(self, p):
+        if len(p) == 4:
+            fixity, name, params, value = p
+        else:
+            fixity = None
+            name, params, value = p
 
-    @_("LET fixity name ASSIGN expr")
-    def defn(self, p):
-        return ast.ValueDefn(p[2], p[4], p[1])
+        return ast.ValueDefn(name, ast.Function(params, value), fixity)
 
-    @_("LET fixity name params ASSIGN expr")
-    def defn(self, p):
-        return ast.ValueDefn(p[2], ast.Function(p[3], p[5]), p[1])
-
-    # fixity
-
-    @_("INFIXL NAT")
     def fixity(self, p):
-        return (True, p[1])
+        return (p[0].type == "INFIXL", p[1])
 
-    @_("INFIXR NAT")
-    def fixity(self, p):
-        return (False, p[1])
-
-    @_("empty")
-    def fixity(self, p):
-        return None
-
-    # params
-
-    @_("ID params")
     def params(self, p):
-        return [p[0], *p[1]]
+        return p
 
-    @_("ID")
-    def params(self, p):
-        return [p[0]]
-
-    # name
-
-    @_("ID")
     def name(self, p):
         return p[0]
 
-    @_("OPAR EXT_OP CPAR", "OPAR OP CPAR")
-    def name(self, p):
-        return p[1]
+    def func_expr(self, p):
+        return ast.Function(p[0], p[1])
 
-    # operator
+    def block_expr(self, p):
+        return ast.Block(p[0], p[1])
 
-    @_("BTICK ID BTICK")
-    def operator(self, p):
-        return p[1]
+    def actions(self, p):
+        if len(p) == 1:
+            return [p[0]]
 
-    @_("EXT_OP", "OP")
-    def operator(self, p):
-        return p[0]
-
-    # expr
-
-    @_("BSLASH params ASSIGN expr")
-    def expr(self, p):
-        return ast.Function(p[1], p[3])
-
-    @_("DO expr_list THEN expr")
-    def expr(self, p):
-        return ast.Block(p[1], p[3])
-
-    @_("defn IN expr")
-    def expr(self, p):
-        return ast.LetExpr(p[0], p[2])
-
-    @_("MATCH expr match_list")
-    def expr(self, p):
-        return ast.PatternMatching(p[1], p[2])
-
-    @_("op_chain")
-    def expr(self, p):
-        chain = p[0]
-        if len(chain) == 1:
-            return chain[0]
-        return ast.OpChain(chain)
-
-    # expr_list
-
-    @_("expr SEMI expr_list")
-    def expr_list(self, p):
-        return [p[0], *p[2]]
-
-    @_("expr SEMI", "expr")
-    def expr_list(self, p):
-        return [p[0]]
-
-    # match_list
-
-    @_("match match_list")
-    def match_list(self, p):
         return [p[0], *p[1]]
 
-    @_("match")
-    def match_list(self, p):
-        return [p[0]]
+    def let_expr(self, p):
+        return ast.LetExpr(p[0], p[1])
 
-    # match
+    def match_expr(self, p):
+        return ast.PatternMatching(p[0], p[1])
 
-    @_("BAR pattern ASSIGN expr")
-    def match(self, p):
-        return (p[1], p[3])
+    def matches(self, p):
+        if len(p) == 2:
+            return [(p[0], p[1])]
 
-    # pattern
+        return [(p[0], p[1]), *p[2]]
 
-    @_("ID")
-    def pattern(self, p):
+    def id_pattern(self, p):
         return ast.Identifier(p[0])
 
-    @_("literal")
-    def pattern(self, p):
-        return p[0]
-
-    @_("TYPE_ID")
-    def pattern(self, p):
+    def ct_pattern(self, p):
         return ast.Data(p[0])
 
-    # op_chain
-
-    @_("operand operator op_chain")
     def op_chain(self, p):
-        return [p[0], p[1], *p[2]]
+        if len(p) == 1:
+            return p[0]
 
-    @_("operand")
-    def op_chain(self, p):
-        return [p[0]]
+        operand, op, rest = p
+        elements = [operand, op]
+        if isinstance(rest, ast.OpChain):
+            elements.extend(rest.elements)
+        else:
+            elements.append(rest)
 
-    # operand
+        return ast.OpChain(elements)
 
-    @_("operand atom")
-    def operand(self, p):
-        return ast.FunctionApp(p[0], p[1])
-
-    @_("atom")
-    def operand(self, p):
+    def operator(self, p):
         return p[0]
 
-    # atom
+    def func_app(self, p):
+        target, arg = p
+        return ast.FunctionApp(target, arg)
 
-    @_("OPAR expr CPAR")
-    def atom(self, p):
-        return p[1]
-
-    @_("name")
-    def atom(self, p):
-        return ast.Identifier(p[0])
-
-    @_("literal")
-    def atom(self, p):
+    def expr_atom(self, p):
         return p[0]
 
-    @_("TYPE_ID")
-    def atom(self, p):
+    def id_atom(self, p):
         return ast.Identifier(p[0])
 
-    # literal
-
-    @_("DEC")
-    def literal(self, p):
+    def dec_literal(self, p):
         return ast.DecimalNumber(p[0])
 
-    @_("NAT")
-    def literal(self, p):
+    def nat_literal(self, p):
         return ast.NaturalNumber(p[0])
 
-    @_("BOOL")
-    def literal(self, p):
+    def bool_literal(self, p):
         return ast.Boolean(p[0])
 
-    @_("UNIT")
-    def literal(self, p):
+    def unit_literal(self, p):
         return ast.Unit(p[0])
+
+
+PARSER = Lark.open(
+    "fine.lark",
+    start="module",
+    parser="lalr",
+    transformer=ASTBuilder(),
+)
+
+
+def parse(text: str) -> ast.Program:
+    return PARSER.parse(text)

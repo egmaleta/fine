@@ -1,0 +1,92 @@
+// PARSER GRAMMAR
+
+module: top_defn*
+
+?top_defn: _LET fixity? name _ASSIGN internal        -> internal_value_defn
+         | _LET fixity? name params _ASSIGN internal -> internal_func_defn
+         | defn
+
+internal: _INTERNAL ID
+
+?defn: _LET fixity? name _ASSIGN expr        -> value_defn
+     | _LET fixity? name params _ASSIGN expr -> func_defn
+
+fixity: ( INFIXL | INFIXR ) NAT
+
+params: ID+
+
+name: ID
+    | _OPAR ( LARGE_OP | OP ) _CPAR
+
+?expr: _BSLASH params _ASSIGN expr -> func_expr
+     | _DO actions _THEN expr      -> block_expr
+     | defn+ _IN expr              -> let_expr
+     | _MATCH expr _WITH matches   -> match_expr
+     | op_chain
+
+actions: expr ( _SEMI actions )*
+
+matches: pattern _ASSIGN expr ( _SEMI matches )*
+
+?pattern: ID -> id_pattern
+        | TYPE_ID -> ct_pattern
+        | literal
+
+op_chain: operand ( operator op_chain )*
+
+operator: _BTICK ID _BTICK
+        | LARGE_OP
+        | OP
+
+?operand: operand atom -> func_app
+        | atom
+
+?atom: _OPAR expr _CPAR     -> expr_atom
+     | ( TYPE_ID | name )   -> id_atom
+     | literal
+
+?literal: DEC   -> dec_literal
+        | NAT   -> nat_literal
+        | BOOL  -> bool_literal
+        | UNIT  -> unit_literal
+
+// LEXER GRAMMAR
+
+_INTERNAL.1: "#internal" // over COMMENT
+COMMENT: /#[^\n]*/
+
+TYPE_ID: /[A-Z][a-zA-Z0-9_]*/
+
+// keywords (all over ID)
+INFIXL.2: "infixl" // over IN
+INFIXR.2: "infixr" // over IN
+_IN.1: "in"
+_LET.1: "let"
+_THEN.1: "then"
+_DO.1: "do"
+_MATCH.1: "match"
+_WITH.1: "with"
+BOOL.1: "true" | "false"
+
+ID: /[a-z_][a-zA-Z0-9_]*/
+
+DEC: /(0|[1-9][0-9]*)\.[0-9]*/
+NAT: /0|[1-9][0-9]*/
+
+_BTICK: "`"
+_BSLASH: "\\"
+_SEMI: ";"
+
+LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
+_ASSIGN: "="
+OP: /[~!@$%^&*\/\-+|?.<>:]/
+
+UNIT: "()"
+
+_OPAR: "("
+_CPAR: ")"
+
+SPACE: /[ \t\f\r\n]+/
+
+%ignore COMMENT
+%ignore SPACE

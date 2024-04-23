@@ -5,10 +5,10 @@
 # to know the precedence and associativity of an operator
 # at a given scope.
 
+from lark.lexer import Token
 from vendor import visitor
 
 from .scope import Scope
-from .lexer import Token
 from . import ast
 
 
@@ -104,7 +104,8 @@ class Desugarer:
     @visitor.when(ast.LetExpr)
     def visit(self, node: ast.LetExpr, scope: Scope[FixitySignature]):
         child_scope = scope.new_child()
-        self.visit(node.definition, child_scope)
+        for defn in node.definitions:
+            self.visit(defn, child_scope)
         node.body = self.visit(node.body, child_scope)
         return node
 
