@@ -2,11 +2,11 @@
 
 module: top_defn*
 
-?top_defn: _LET fixity? name _ASSIGN internal        -> internal_value_defn
-         | _LET fixity? name params _ASSIGN internal -> internal_func_defn
+?top_defn: _LET fixity? name _ASSIGN external        -> external_value_defn
+         | _LET fixity? name params _ASSIGN external -> external_func_defn
          | defn
 
-internal: _INTERNAL ID
+external: _EXTERNAL ID
 
 ?defn: _LET fixity? name _ASSIGN expr        -> value_defn
      | _LET fixity? name params _ASSIGN expr -> func_defn
@@ -53,7 +53,7 @@ operator: _BTICK ID _BTICK
 
 // LEXER GRAMMAR
 
-_INTERNAL.1: "#internal" // over COMMENT
+_EXTERNAL.1: "#external" // over COMMENT
 COMMENT: /#[^\n]*/
 
 TYPE_ID: /[A-Z][a-zA-Z0-9_]*/

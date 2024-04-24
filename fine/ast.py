@@ -12,7 +12,7 @@ class Expr(AST):
 
 
 @dataclass
-class InternalExpr(Expr):
+class ExternalExpr(Expr):
     """Expression that cannot be represented in code.
 
     Therefore the evaluation of the expression depends
@@ -22,7 +22,7 @@ class InternalExpr(Expr):
 
 
 @dataclass
-class InternalFunction(InternalExpr):
+class ExternalFunction(ExternalExpr):
     params: list[str]
 
 

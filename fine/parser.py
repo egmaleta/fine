@@ -7,16 +7,16 @@ class ASTBuilder(Transformer):
     def module(self, p):
         return ast.Module(p)
 
-    def internal_value_defn(self, p):
+    def external_value_defn(self, p):
         if len(p) == 3:
             fixity, name, id = p
         else:
             fixity = None
             name, id = p
 
-        return ast.ValueDefn(name, ast.InternalExpr(id.value), fixity)
+        return ast.ValueDefn(name, ast.ExternalExpr(id.value), fixity)
 
-    def internal_func_defn(self, p):
+    def external_func_defn(self, p):
         if len(p) == 4:
             fixity, name, params, id = p
         else:
@@ -26,12 +26,12 @@ class ASTBuilder(Transformer):
         return ast.ValueDefn(
             name,
             ast.Function(
-                params, ast.InternalFunction(id.value, [p.value for p in params])
+                params, ast.ExternalFunction(id.value, [p.value for p in params])
             ),
             fixity,
         )
 
-    def internal(self, p):
+    def external(self, p):
         return p[0]
 
     def value_defn(self, p):
@@ -67,12 +67,6 @@ class ASTBuilder(Transformer):
     def block_expr(self, p):
         return ast.Block(p[0], p[1])
 
-    def actions(self, p):
-        if len(p) == 1:
-            return [p[0]]
-
-        return [p[0], *p[1]]
-
     def let_expr(self, p):
         *definitions, expr = p
         for defn in definitions[::-1]:
@@ -85,6 +79,12 @@ class ASTBuilder(Transformer):
 
     def cond_expr(self, p):
         return ast.Conditional(p[0], p[1], p[2])
+
+    def actions(self, p):
+        if len(p) == 1:
+            return [p[0]]
+
+        return [p[0], *p[1]]
 
     def matches(self, p):
         if len(p) == 2:

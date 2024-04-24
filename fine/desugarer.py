@@ -64,8 +64,8 @@ class Desugarer:
     def visit(self, node, scope):
         pass
 
-    @visitor.when(ast.InternalExpr)
-    def visit(self, node: ast.InternalExpr, scope: Scope[FixitySignature]):
+    @visitor.when(ast.ExternalExpr)
+    def visit(self, node: ast.ExternalExpr, scope: Scope[FixitySignature]):
         return node
 
     @visitor.when(ast.Data)
