@@ -5,53 +5,62 @@ from . import ast
 
 class ASTBuilder(Transformer):
     def module(self, p):
-        return ast.Module(p)
+        defn_list = []
+        for defn in p:
+            # fixity signatures
+            if isinstance(defn, list):
+                defn_list.extend(defn)
+            else:
+                defn_list.append(defn)
+
+        return ast.Module(defn_list)
 
     def external_value_defn(self, p):
-        fixity, name, id = p
-        return ast.ValueDefn(name, ast.ExternalExpr(id.value), fixity)
+        name, id = p
+        return ast.ValueDefn(name, ast.ExternalExpr(id.value))
 
     def external_func_defn(self, p):
-        fixity, name, params, id = p
+        name, params, id = p
         return ast.ValueDefn(
             name,
             ast.Function(
                 params, ast.ExternalFunction(id.value, [p.value for p in params])
             ),
-            fixity,
         )
 
     def external_op_defn(self, p):
-        fixity, left, name, right, id = p
+        left, name, right, id = p
         params = [left, right]
         return ast.ValueDefn(
             name,
             ast.Function(
                 params, ast.ExternalFunction(id.value, [p.value for p in params])
             ),
-            fixity,
         )
 
     def external(self, p):
         return p[0]
 
     def value_defn(self, p):
-        fixity, name, value = p
-        return ast.ValueDefn(name, value, fixity)
+        name, value = p
+        return ast.ValueDefn(name, value)
 
     def func_defn(self, p):
-        fixity, name, params, value = p
-        return ast.ValueDefn(name, ast.Function(params, value), fixity)
+        name, params, value = p
+        return ast.ValueDefn(name, ast.Function(params, value))
 
     def op_defn(self, p):
-        fixity, left, name, right, value = p
+        left, name, right, value = p
         params = [left, right]
-        return ast.ValueDefn(name, ast.Function(params, value), fixity)
+        return ast.ValueDefn(name, ast.Function(params, value))
 
-    def fixity(self, p):
-        if len(p) > 0:
-            return (p[0].type == "INFIXL", p[1])
-        return None
+    def fixity_defn(self, p):
+        print(p)
+        fixity, prec, *operators = p
+        is_left_assoc = fixity.type == "INFIXL"
+        prec = int(prec)
+
+        return [ast.FixitySignature(op, is_left_assoc, prec) for op in operators]
 
     def params(self, p):
         return p

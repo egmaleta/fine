@@ -121,24 +121,23 @@ class Conditional(Expr):
 
 @dataclass
 class ValueDefn(AST):
-    @dataclass
-    class FixitySignature:
-        is_left_associative: bool
-        precedence: int
-
     _name_token: Token = field(repr=False)
     name: str = field(init=False)
     value: Expr
 
-    _fixity_sig: tuple[bool, Token] | None = field(repr=False)
-    fixity_sig: FixitySignature | None = field(init=False, default=None)
-
     def __post_init__(self):
         self.name = self._name_token.value
 
-        if self._fixity_sig is not None:
-            is_left_assoc, precd = self._fixity_sig
-            self.fixity_sig = self.FixitySignature(is_left_assoc, int(precd.value))
+
+@dataclass
+class FixitySignature(AST):
+    _operator_token: Token = field(repr=False)
+    operator: str = field(init=False)
+    is_left_associative: bool
+    precedence: int
+
+    def __post_init__(self):
+        self.operator = self._operator_token.value
 
 
 @dataclass
