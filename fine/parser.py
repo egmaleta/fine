@@ -150,6 +150,7 @@ PARSER = Lark.open(
     "fine.lark",
     start="module",
     parser="lalr",
+    lexer="basic",
     transformer=ASTBuilder(),
 )
 

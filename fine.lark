@@ -19,16 +19,20 @@ params: ID+
 name: ID
     | _OPAR ( LARGE_OP | OP ) _CPAR
 
-?expr: _BSLASH params? _ASSIGN expr     -> func_expr
-     | _DO actions _THEN expr           -> block_expr
-     | defn+ _IN expr                   -> let_expr
-     | _MATCH expr _WITH _BAR? matches  -> match_expr
-     | _IF expr _THEN expr _ELSE expr   -> cond_expr
-     | op_chain
+?expr: no_match_expr
+     | match_expr
+
+?no_match_expr: _BSLASH params? _ASSIGN expr     -> func_expr
+              | _DO actions _THEN expr           -> block_expr
+              | defn+ _IN expr                   -> let_expr
+              | _IF expr _THEN expr _ELSE expr   -> cond_expr
+              | op_chain
+
+match_expr: _MATCH ( no_match_expr | _OPAR match_expr _CPAR ) matches
 
 actions: expr ( _SEMI actions )* _SEMI?
 
-matches: pattern _ARROW expr ( _BAR matches )*
+matches: _BAR pattern _ARROW ( no_match_expr | _OPAR match_expr _CPAR ) matches?
 
 ?pattern: ID      -> id_pattern
         | TYPE_ID -> ct_pattern
@@ -67,7 +71,6 @@ _LET.1: "let"
 _THEN.1: "then"
 _DO.1: "do"
 _MATCH.1: "match"
-_WITH.1: "with"
 _IF.1: "if"
 _ELSE.1: "else"
 BOOL.1: "true" | "false"
