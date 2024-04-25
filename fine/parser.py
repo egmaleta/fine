@@ -62,7 +62,9 @@ class ASTBuilder(Transformer):
         return p[0]
 
     def func_expr(self, p):
-        return ast.Function(p[0], p[1])
+        if len(p) > 1:
+            return ast.Function(p[0], p[1])
+        return ast.Function([], p[0])
 
     def block_expr(self, p):
         return ast.Block(p[0], p[1])
