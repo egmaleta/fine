@@ -2,16 +2,18 @@
 
 module: top_defn*
 
-?top_defn: _LET fixity? name _ASSIGN external        -> external_value_defn
-         | _LET fixity? name params _ASSIGN external -> external_func_defn
+?top_defn: _LET fixity name _ASSIGN external           -> external_value_defn
+         | _LET fixity name params _ASSIGN external    -> external_func_defn
+         | _LET fixity ID operator ID _ASSIGN external -> external_op_defn
          | defn
 
 external: _EXTERNAL ID
 
-?defn: _LET fixity? name _ASSIGN expr        -> value_defn
-     | _LET fixity? name params _ASSIGN expr -> func_defn
+?defn: _LET fixity name _ASSIGN expr           -> value_defn
+     | _LET fixity name params _ASSIGN expr    -> func_defn
+     | _LET fixity ID operator ID _ASSIGN expr -> op_defn
 
-fixity: ( INFIXL | INFIXR ) NAT
+fixity: ( ( INFIXL | INFIXR ) NAT )?
 
 params: ID+
 

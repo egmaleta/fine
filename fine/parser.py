@@ -8,21 +8,22 @@ class ASTBuilder(Transformer):
         return ast.Module(p)
 
     def external_value_defn(self, p):
-        if len(p) == 3:
-            fixity, name, id = p
-        else:
-            fixity = None
-            name, id = p
-
+        fixity, name, id = p
         return ast.ValueDefn(name, ast.ExternalExpr(id.value), fixity)
 
     def external_func_defn(self, p):
-        if len(p) == 4:
-            fixity, name, params, id = p
-        else:
-            fixity = None
-            name, params, id = p
+        fixity, name, params, id = p
+        return ast.ValueDefn(
+            name,
+            ast.Function(
+                params, ast.ExternalFunction(id.value, [p.value for p in params])
+            ),
+            fixity,
+        )
 
+    def external_op_defn(self, p):
+        fixity, left, name, right, id = p
+        params = [left, right]
         return ast.ValueDefn(
             name,
             ast.Function(
@@ -35,25 +36,22 @@ class ASTBuilder(Transformer):
         return p[0]
 
     def value_defn(self, p):
-        if len(p) == 3:
-            fixity, name, value = p
-        else:
-            fixity = None
-            name, value = p
-
+        fixity, name, value = p
         return ast.ValueDefn(name, value, fixity)
 
     def func_defn(self, p):
-        if len(p) == 4:
-            fixity, name, params, value = p
-        else:
-            fixity = None
-            name, params, value = p
+        fixity, name, params, value = p
+        return ast.ValueDefn(name, ast.Function(params, value), fixity)
 
+    def op_defn(self, p):
+        fixity, left, name, right, value = p
+        params = [left, right]
         return ast.ValueDefn(name, ast.Function(params, value), fixity)
 
     def fixity(self, p):
-        return (p[0].type == "INFIXL", p[1])
+        if len(p) > 0:
+            return (p[0].type == "INFIXL", p[1])
+        return None
 
     def params(self, p):
         return p
