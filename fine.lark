@@ -1,54 +1,69 @@
 // PARSER GRAMMAR
 
-module: top_defn*
+module: glob_defn_list
 
-?top_defn: _LET name _ASSIGN external           -> external_value_defn
-         | _LET name params _ASSIGN external    -> external_func_defn
-         | _LET ID operator ID _ASSIGN external -> external_op_defn
-         | defn
+glob_defn_list: glob_defn_list glob_defn
+              | glob_defn
 
-external: _EXTERNAL ID
+?glob_defn: _LET _name _ASSIGN _external            -> ext_val_defn
+          | _LET _name param_list _ASSIGN _external -> ext_fun_defn
+          | _LET ID _operator ID _ASSIGN _external  -> ext_op_defn
+          | defn
 
-?defn: _LET name _ASSIGN expr            -> value_defn
-     | _LET name params _ASSIGN expr     -> func_defn
-     | _LET ID operator ID _ASSIGN expr  -> op_defn
-     | ( INFIXL | INFIXR ) NAT operator+ -> fixity_defn
+_external: _EXTERNAL ID
 
-params: ID+
+?defn: _LET _name _ASSIGN _expr              -> val_defn
+     | _LET _name param_list _ASSIGN _expr   -> fun_defn
+     | _LET ID _operator ID _ASSIGN _expr    -> op_defn
+     | ( INFIXL | INFIXR ) NAT operator_list -> fix_defn
 
-name: ID
-    | _OPAR ( LARGE_OP | OP ) _CPAR
+_name: ID
+     | _OPAR ( LARGE_OP | OP ) _CPAR
 
-?expr: no_match_expr
+operator_list: operator_list _operator
+             | _operator
+
+_operator: _BTICK ID _BTICK
+         | LARGE_OP
+         | OP
+
+param_list: param_list ID
+          | ID
+
+_expr: no_match_expr
      | match_expr
 
-?no_match_expr: _BSLASH params? _ASSIGN expr     -> func_expr
-              | _DO actions _THEN expr           -> block_expr
-              | defn+ _IN expr                   -> let_expr
-              | _IF expr _THEN expr _ELSE expr   -> cond_expr
-              | op_chain
+match_expr: _MATCH ( no_match_expr | _OPAR match_expr _CPAR ) match_list
 
-match_expr: _MATCH ( no_match_expr | _OPAR match_expr _CPAR ) matches
+?no_match_expr: _BSLASH param_list? _ASSIGN _expr  -> func_expr
+              | _DO action_list _SEMI? _THEN _expr -> block_expr
+              | defn_list _IN _expr                -> let_expr
+              | _IF _expr _THEN _expr _ELSE _expr  -> cond_expr
+              | op_chain                           -> op_chain_expr
 
-actions: expr ( _SEMI actions )* _SEMI?
+action_list: action_list _SEMI _expr
+           | _expr
 
-matches: _BAR pattern _ARROW ( no_match_expr | _OPAR match_expr _CPAR ) matches?
+defn_list: defn_list defn
+         | defn
+
+match_list: match_list match
+          | match
+
+match: _BAR pattern _ARROW ( no_match_expr | _OPAR match_expr _CPAR )
 
 ?pattern: ID      -> id_pattern
         | TYPE_ID -> ct_pattern
         | literal
 
-op_chain: operand ( operator op_chain )*
+op_chain: op_chain _operator operand
+        | operand
 
-operator: _BTICK ID _BTICK
-        | LARGE_OP
-        | OP
+operand: operand atom
+       | atom
 
-?operand: operand atom -> func_app
-        | atom
-
-?atom: _OPAR expr _CPAR   -> expr_atom
-     | ( TYPE_ID | name ) -> id_atom
+?atom: _OPAR _expr _CPAR   -> expr_atom
+     | ( TYPE_ID | _name ) -> id_atom
      | literal
 
 ?literal: DEC  -> dec_literal

@@ -6,7 +6,7 @@ from . import ast
 class ASTBuilder(Transformer):
     def module(self, p):
         defn_list = []
-        for defn in p:
+        for defn in p[0]:
             # fixity signatures
             if isinstance(defn, list):
                 defn_list.extend(defn)
@@ -15,11 +15,16 @@ class ASTBuilder(Transformer):
 
         return ast.Module(defn_list)
 
-    def external_value_defn(self, p):
+    def glob_defn_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
+
+    def ext_val_defn(self, p):
         name, id = p
         return ast.ValueDefn(name, ast.ExternalExpr(id.value))
 
-    def external_func_defn(self, p):
+    def ext_fun_defn(self, p):
         name, params, id = p
         return ast.ValueDefn(
             name,
@@ -28,7 +33,7 @@ class ASTBuilder(Transformer):
             ),
         )
 
-    def external_op_defn(self, p):
+    def ext_op_defn(self, p):
         left, name, right, id = p
         params = [left, right]
         return ast.ValueDefn(
@@ -38,14 +43,11 @@ class ASTBuilder(Transformer):
             ),
         )
 
-    def external(self, p):
-        return p[0]
-
-    def value_defn(self, p):
+    def val_defn(self, p):
         name, value = p
         return ast.ValueDefn(name, value)
 
-    def func_defn(self, p):
+    def fun_defn(self, p):
         name, params, value = p
         return ast.ValueDefn(name, ast.Function(params, value))
 
@@ -54,22 +56,28 @@ class ASTBuilder(Transformer):
         params = [left, right]
         return ast.ValueDefn(name, ast.Function(params, value))
 
-    def fixity_defn(self, p):
-        print(p)
-        fixity, prec, *operators = p
+    def fix_defn(self, p):
+        fixity, prec, operators = p
         is_left_assoc = fixity.type == "INFIXL"
         prec = int(prec)
 
         return [ast.FixitySignature(op, is_left_assoc, prec) for op in operators]
 
-    def params(self, p):
-        return p
+    def operator_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
 
-    def name(self, p):
-        return p[0]
+    def param_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
+
+    def match_expr(self, p):
+        return ast.PatternMatching(p[0], p[1])
 
     def func_expr(self, p):
-        if len(p) > 1:
+        if len(p) == 2:
             return ast.Function(p[0], p[1])
         return ast.Function([], p[0])
 
@@ -77,29 +85,46 @@ class ASTBuilder(Transformer):
         return ast.Block(p[0], p[1])
 
     def let_expr(self, p):
-        *definitions, expr = p
-        for defn in definitions[::-1]:
+        defn_list = []
+        for defn in p[0]:
+            # fixity signatures
+            if isinstance(defn, list):
+                defn_list.extend(defn)
+            else:
+                defn_list.append(defn)
+
+        expr = p[1]
+        for defn in defn_list[::-1]:
             expr = ast.LetExpr(defn, expr)
 
         return expr
 
-    def match_expr(self, p):
-        return ast.PatternMatching(p[0], p[1])
-
     def cond_expr(self, p):
         return ast.Conditional(p[0], p[1], p[2])
 
-    def actions(self, p):
+    def op_chain_expr(self, p):
+        chain = p[0]
+        if len(chain) == 1:
+            return chain[0]
+        return ast.OpChain(chain)
+
+    def action_list(self, p):
         if len(p) == 1:
-            return [p[0]]
+            return p
+        return [*p[0], p[1]]
 
-        return [p[0], *p[1]]
+    def defn_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
 
-    def matches(self, p):
-        if len(p) == 2:
-            return [(p[0], p[1])]
+    def match_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
 
-        return [(p[0], p[1]), *p[2]]
+    def match(self, p):
+        return (p[0], p[1])
 
     def id_pattern(self, p):
         return ast.Identifier(p[0])
@@ -109,23 +134,13 @@ class ASTBuilder(Transformer):
 
     def op_chain(self, p):
         if len(p) == 1:
+            return p
+        return [*p[0], p[1], p[2]]
+
+    def operand(self, p):
+        if len(p) == 1:
             return p[0]
-
-        operand, op, rest = p
-        elements = [operand, op]
-        if isinstance(rest, ast.OpChain):
-            elements.extend(rest.elements)
-        else:
-            elements.append(rest)
-
-        return ast.OpChain(elements)
-
-    def operator(self, p):
-        return p[0]
-
-    def func_app(self, p):
-        target, arg = p
-        return ast.FunctionApp(target, arg)
+        return ast.FunctionApp(p[0], p[1])
 
     def expr_atom(self, p):
         return p[0]
