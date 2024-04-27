@@ -86,12 +86,12 @@ class Operation(Expr):
 
 @dataclass
 class Function(Expr):
-    _param_tokens: list[Token] = field(repr=False)
-    params: list[str] = field(init=False)
+    _param_token: Token = field(repr=False)
+    param: str = field(init=False)
     body: Expr
 
     def __post_init__(self):
-        self.params = [t.value for t in self._param_tokens]
+        self.param = self._param_token.value
 
 
 @dataclass

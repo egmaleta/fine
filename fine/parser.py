@@ -26,22 +26,22 @@ class ASTBuilder(Transformer):
 
     def ext_fun_defn(self, p):
         name, params, id = p
-        return ast.ValueDefn(
-            name,
-            ast.Function(
-                params, ast.ExternalFunction(id.value, [p.value for p in params])
-            ),
-        )
+
+        value = ast.ExternalFunction(id.value, [p.value for p in params])
+        for p in params[::-1]:
+            value = ast.Function(p, value)
+
+        return ast.ValueDefn(name, value)
 
     def ext_op_defn(self, p):
         left, name, right, id = p
         params = [left, right]
-        return ast.ValueDefn(
-            name,
-            ast.Function(
-                params, ast.ExternalFunction(id.value, [p.value for p in params])
-            ),
-        )
+
+        value = ast.ExternalFunction(id.value, [p.value for p in params])
+        for p in params[::-1]:
+            value = ast.Function(p, value)
+
+        return ast.ValueDefn(name, value)
 
     def val_defn(self, p):
         name, value = p
@@ -49,7 +49,11 @@ class ASTBuilder(Transformer):
 
     def fun_defn(self, p):
         name, params, value = p
-        return ast.ValueDefn(name, ast.Function(params, value))
+
+        for p in params[::-1]:
+            value = ast.Function(p, value)
+
+        return ast.ValueDefn(name, value)
 
     def op_defn(self, p):
         left, name, right, value = p
