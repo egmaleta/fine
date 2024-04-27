@@ -104,7 +104,8 @@ class Desugarer:
     @visitor.when(ast.LetExpr)
     def visit(self, node: ast.LetExpr, scope: Scope[FixitySignature]):
         child_scope = scope.new_child()
-        self.visit(node.definition, child_scope)
+        for defn in node.definitions:
+            self.visit(defn, child_scope)
         node.body = self.visit(node.body, child_scope)
         return node
 
@@ -139,5 +140,4 @@ class Desugarer:
     def visit(self, node: ast.Module, scope: Scope[FixitySignature]):
         for defn in node.definitions:
             self.visit(defn, scope)
-            scope = scope.new_child()
         return node

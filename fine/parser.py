@@ -94,10 +94,8 @@ class ASTBuilder(Transformer):
                 defn_list.append(defn)
 
         expr = p[1]
-        for defn in defn_list[::-1]:
-            expr = ast.LetExpr(defn, expr)
 
-        return expr
+        return ast.LetExpr(defn_list, expr)
 
     def cond_expr(self, p):
         return ast.Conditional(p[0], p[1], p[2])
