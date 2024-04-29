@@ -8,13 +8,36 @@ glob_defn_list: glob_defn_list glob_defn
 ?glob_defn: _LET _name _ASSIGN _external            -> ext_val_defn
           | _LET _name param_list _ASSIGN _external -> ext_fun_defn
           | _LET ID _operator ID _ASSIGN _external  -> ext_op_defn
+          | poly_type_defn
+          | type_defn
           | defn
+
+poly_type_defn: _TYPE TYPE_ID param_list _ASSIGN ( _BAR? data_ct_list | _EXTERNAL )
+
+type_defn: _TYPE TYPE_ID _ASSIGN ( _BAR? data_ct_list | _EXTERNAL )
+
+data_ct_list: data_ct_list _BAR data_ct
+            | data_ct
+
+data_ct: TYPE_ID ( _COLON fun_type_arg )?
+
+fun_type_arg: type_arg ARROW fun_type_arg
+            | type_arg
+
+?type_arg: ID                                -> var_type_arg
+         | TYPE_ID                           -> null_type_arg
+         | _OPAR TYPE_ID type_arg_list _CPAR -> poly_type_arg
+         | _OPAR fun_type_arg _CPAR
+
+type_arg_list: type_arg_list type_arg
+             | type_arg
 
 _external: _EXTERNAL ID
 
 ?defn: _LET _name _ASSIGN _expr              -> val_defn
      | _LET _name param_list _ASSIGN _expr   -> fun_defn
      | _LET ID _operator ID _ASSIGN _expr    -> op_defn
+     | _LET _name _COLON fun_type_arg        -> typeof_defn
      | ( INFIXL | INFIXR ) NAT operator_list -> fix_defn
 
 _name: ID
@@ -50,7 +73,7 @@ defn_list: defn_list defn
 match_list: match_list match
           | match
 
-match: _BAR pattern _ARROW ( no_match_expr | _OPAR match_expr _CPAR )
+match: _BAR pattern ARROW ( no_match_expr | _OPAR match_expr _CPAR )
 
 ?pattern: ID      -> id_pattern
         | TYPE_ID -> ct_pattern
@@ -88,6 +111,7 @@ _DO.1: "do"
 _MATCH.1: "match"
 _IF.1: "if"
 _ELSE.1: "else"
+_TYPE.1: "type"
 BOOL.1: "true" | "false"
 
 ID: /[a-z_][a-zA-Z0-9_]*/
@@ -99,11 +123,12 @@ _BTICK: "`"
 _BSLASH: "\\"
 _SEMI: ";"
 
-_ARROW.1: "->" // over LARGE_OP
+ARROW.1: "->" // over LARGE_OP
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 _ASSIGN: "="
 _BAR: "|"
-OP: /[~!@$%^&*\/\-+?.<>:]/
+_COLON: ":"
+OP: /[~!@$%^&*\/\-+?.<>]/
 
 UNIT: "()"
 

@@ -43,6 +43,58 @@ class ASTBuilder(Transformer):
 
         return ast.ValueDefn(name, value)
 
+    def poly_type_defn(self, p):
+        if len(p) == 3:
+            type, args, cts = p
+        else:
+            type, args = p
+            cts = []
+
+        args = [ast.TypeVar(a) for a in args]
+        return ast.TypeDefn(ast.PolyType(type, args), cts)
+
+    def type_defn(self, p):
+        if len(p) == 2:
+            type, cts = p
+        else:
+            type = p[0]
+            cts = []
+
+        args = [ast.TypeVar(a) for a in args]
+        return ast.TypeDefn(ast.Type(type), cts)
+
+    def data_ct_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
+
+    def data_ct(self, p):
+        if len(p) == 1:
+            return (p[0], None)
+
+        return (p[0], p[1])
+
+    def fun_type_arg(self, p):
+        if len(p) == 1:
+            return p[0]
+
+        left, t, right = p
+        return ast.PolyType(t, [left, right])
+
+    def var_type_arg(self, p):
+        return ast.TypeVar(p[0])
+
+    def null_type_arg(self, p):
+        return ast.Type(p[0])
+
+    def poly_type_arg(self, p):
+        return ast.PolyType(p[0], p[1])
+
+    def type_arg_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
+
     def val_defn(self, p):
         name, value = p
         return ast.ValueDefn(name, value)
@@ -59,6 +111,9 @@ class ASTBuilder(Transformer):
         left, name, right, value = p
         params = [left, right]
         return ast.ValueDefn(name, ast.Function(params, value))
+
+    def typeof_defn(self, p):
+        pass
 
     def fix_defn(self, p):
         fixity, prec, operators = p
@@ -126,7 +181,7 @@ class ASTBuilder(Transformer):
         return [*p[0], p[1]]
 
     def match(self, p):
-        return (p[0], p[1])
+        return (p[0], p[2])
 
     def id_pattern(self, p):
         return ast.Identifier(p[0])

@@ -12,6 +12,24 @@ class Expr(AST):
 
 
 @dataclass
+class Type(AST):
+    _name_token: Token = field(repr=False)
+    name: str = field(init=False)
+
+    def __post_init__(self):
+        self.name = self._name_token.value
+
+
+class TypeVar(Type):
+    pass
+
+
+@dataclass
+class PolyType(Type):
+    args: list[Type]
+
+
+@dataclass
 class ExternalExpr(Expr):
     """Expression that cannot be represented in code.
 
@@ -88,6 +106,7 @@ class Operation(Expr):
 class Function(Expr):
     _param_token: Token = field(repr=False)
     param: str = field(init=False)
+    param_type: Type | None = field(init=False, default=None)
     body: Expr
 
     def __post_init__(self):
@@ -124,6 +143,7 @@ class ValueDefn(AST):
     _name_token: Token = field(repr=False)
     name: str = field(init=False)
     value: Expr
+    is_constructor: bool = False
 
     def __post_init__(self):
         self.name = self._name_token.value
@@ -138,6 +158,12 @@ class FixitySignature(AST):
 
     def __post_init__(self):
         self.operator = self._operator_token.value
+
+
+@dataclass
+class TypeDefn(AST):
+    type: Type
+    constructors: list[tuple[Token, Type | None]]
 
 
 @dataclass
