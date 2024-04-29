@@ -113,7 +113,7 @@ class ASTBuilder(Transformer):
         return ast.ValueDefn(name, ast.Function(params, value))
 
     def typeof_defn(self, p):
-        pass
+        return ast.TypeOfDefn(p[0], p[1])
 
     def fix_defn(self, p):
         fixity, prec, operators = p

@@ -161,6 +161,16 @@ class FixitySignature(AST):
 
 
 @dataclass
+class TypeOfDefn(AST):
+    _name_token: Token = field(repr=False)
+    name: str = field(init=False)
+    type: Type
+
+    def __post_init__(self):
+        self.name = self._name_token.value
+
+
+@dataclass
 class TypeDefn(AST):
     type: Type
     constructors: list[tuple[Token, Type | None]]
