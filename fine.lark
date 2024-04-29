@@ -24,9 +24,9 @@ data_ct: TYPE_ID ( _COLON fun_type_arg )?
 fun_type_arg: type_arg ARROW fun_type_arg
             | type_arg
 
-?type_arg: ID                                -> var_type_arg
-         | TYPE_ID                           -> null_type_arg
-         | _OPAR TYPE_ID type_arg_list _CPAR -> poly_type_arg
+?type_arg: ID                       -> var_type_arg
+         | TYPE_ID                  -> null_type_arg
+         | TYPE_ID type_arg_list    -> poly_type_arg
          | _OPAR fun_type_arg _CPAR
 
 type_arg_list: type_arg_list type_arg
