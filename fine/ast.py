@@ -2,6 +2,8 @@ from abc import ABC
 from dataclasses import dataclass, field
 from lark.lexer import Token
 
+from .types import Type, ConcreteType, TypeVar, PolyType
+
 
 class AST(ABC):
     pass
@@ -11,22 +13,25 @@ class Expr(AST):
     pass
 
 
-@dataclass
-class Type(AST):
-    _name_token: Token = field(repr=False)
-    name: str = field(init=False)
-
-    def __post_init__(self):
-        self.name = self._name_token.value
+type TypeAST = ConcreteTypeAST | TypeVarAST | PolyTypeAST
 
 
-class TypeVar(Type):
-    pass
+class ConcreteTypeAST(ConcreteType, AST):
+    def __init__(self, _name_token: Token):
+        super().__init__(_name_token.value)
+        self._name_token = _name_token
 
 
-@dataclass
-class PolyType(Type):
-    args: list[Type]
+class TypeVarAST(TypeVar, AST):
+    def __init__(self, _name_token: Token):
+        super().__init__(_name_token.value)
+        self._name_token = _name_token
+
+
+class PolyTypeAST(PolyType, AST):
+    def __init__(self, _name_token: Token, args: list[TypeAST]):
+        super().__init__(_name_token.value, args)
+        self._name_token = _name_token
 
 
 @dataclass
@@ -164,7 +169,7 @@ class FixitySignature(AST):
 class TypeOfDefn(AST):
     _name_token: Token = field(repr=False)
     name: str = field(init=False)
-    type: Type
+    type: TypeAST
 
     def __post_init__(self):
         self.name = self._name_token.value
@@ -172,8 +177,8 @@ class TypeOfDefn(AST):
 
 @dataclass
 class TypeDefn(AST):
-    type: Type
-    constructors: list[tuple[Token, Type | None]]
+    type: TypeAST
+    constructors: list[tuple[Token, TypeAST | None]]
 
 
 @dataclass
