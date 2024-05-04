@@ -33,9 +33,6 @@ class NullaryData(Expr):
     value: String
     type: Type
 
-    def __post_init__(self):
-        assert self.type.is_concrete
-
 
 class IntegerNumber(NullaryData):
     def __init__(self, value: String):
@@ -62,9 +59,6 @@ class Data(Expr):
     name: String
     value_names: list[String]
     type: Type
-
-    def __post_init__(self):
-        assert self.type.is_concrete
 
 
 @dataclass
