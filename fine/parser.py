@@ -166,7 +166,7 @@ class ASTBuilder(Transformer):
         return [*p[0], p[1]]
 
     def match_expr(self, p):
-        pass
+        return ast.PatternMatching(p[0], p[1])
 
     def func_expr(self, p):
         return ast.Function(p[0], p[1])
@@ -213,11 +213,16 @@ class ASTBuilder(Transformer):
     def match(self, p):
         return (p[0], p[1])
 
-    def id_pattern(self, p):
-        pass
-
     def ct_pattern(self, p):
-        pass
+        if len(p) == 1:
+            return ast.DataPattern(p[0])
+
+        return ast.DataPattern(p[0], p[1])
+
+    def single_pattern_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
 
     def op_chain(self, p):
         if len(p) == 1:

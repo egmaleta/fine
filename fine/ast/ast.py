@@ -103,10 +103,20 @@ class LetExpr(Expr):
     body: Expr
 
 
+type SinglePattern = String | NullaryData
+type Pattern = SinglePattern | DataPattern
+
+
+@dataclass
+class DataPattern(AST):
+    name: String
+    inner_patterns: list[SinglePattern] | None = None
+
+
 @dataclass
 class PatternMatching(Expr):
     matchable: Expr
-    matches: list[tuple[Identifier | Data, Expr]]
+    matches: list[tuple[Pattern, Expr]]
 
 
 @dataclass

@@ -77,9 +77,14 @@ match_list: match_list match
 
 match: _BAR pattern _ARROW ( no_match_expr | _OPAR match_expr _CPAR )
 
-?pattern: ID      -> id_pattern
-        | TYPE_ID -> ct_pattern
-        | literal
+?pattern: _single_pattern
+        | TYPE_ID single_pattern_list? -> ct_pattern
+
+_single_pattern: ID
+               | literal
+
+single_pattern_list: single_pattern_list _single_pattern
+                   | _single_pattern
 
 op_chain: op_chain _operator operand
         | operand
