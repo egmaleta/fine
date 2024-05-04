@@ -1,13 +1,13 @@
 from lark import Transformer, Lark
 
 from . import ast
+from .ast.utils import create_function, create_typed_function, typelist_of_ftype
 
 
 class ASTBuilder(Transformer):
     def module(self, p):
         defn_list = []
         for defn in p[0]:
-            # fixity signatures
             if isinstance(defn, list):
                 defn_list.extend(defn)
             else:
@@ -20,74 +20,110 @@ class ASTBuilder(Transformer):
             return p
         return [*p[0], p[1]]
 
-    def ext_val_defn(self, p):
+    def int_val_defn(self, p):
         name, id = p
-        return ast.ValueDefn(name, ast.ExternalExpr(id.value))
+        return ast.ValueDefn(name, ast.InternalValue(id))
 
-    def ext_fun_defn(self, p):
+    def int_fun_defn(self, p):
         name, params, id = p
+        value = ast.InternalFunction(id, params)
+        return ast.ValueDefn(name, create_function(params, value))
 
-        value = ast.ExternalFunction(id.value, [p.value for p in params])
-        for p in params[::-1]:
-            value = ast.Function(p, value)
-
-        return ast.ValueDefn(name, value)
-
-    def ext_op_defn(self, p):
+    def int_op_defn(self, p):
         left, name, right, id = p
         params = [left, right]
+        value = ast.InternalFunction(id, params)
+        return ast.ValueDefn(name, create_function(params, value))
 
-        value = ast.ExternalFunction(id.value, [p.value for p in params])
-        for p in params[::-1]:
-            value = ast.Function(p, value)
+    def int_adt_defn(self, p):
+        return ast.ConcreteType(p[0])
 
-        return ast.ValueDefn(name, value)
-
-    def poly_type_defn(self, p):
+    def adt_defn(self, p):
         if len(p) == 3:
-            type, args, cts = p
+            name, params, pairs = p
         else:
-            type, args = p
-            cts = []
+            name, pairs = p
+            params = []
 
-        args = [ast.TypeVarAST(a) for a in args]
-        return ast.TypeDefn(ast.PolyTypeAST(type, args), cts)
-
-    def type_defn(self, p):
-        if len(p) == 2:
-            type, cts = p
+        if len(params) > 0:
+            type = ast.PolyType(name, [ast.TypeVar(p) for p in params])
         else:
-            type = p[0]
-            cts = []
+            type = ast.ConcreteType(name)
 
-        return ast.TypeDefn(ast.ConcreteTypeAST(type), cts)
+        defn_list = [type]
+        for ct, t in pairs:
+            if t is None:
+                value = ast.NullaryData(ct, type)
+            elif not isinstance(t, ast.FunctionType):
+                param = "p1"
+                data = ast.Data(ct, [param], type)
 
-    def data_ct_list(self, p):
+                value = ast.Function(param, data, type)
+            else:
+                param_types = typelist_of_ftype(t)
+                params = [f"p{i+1}" for i in range(len(param_types))]
+                data = ast.Data(ct, params, type)
+
+                value = create_typed_function(params, param_types, data)
+
+            defn_list.append(ast.Constructor(ct, value))
+
+        return defn_list
+
+    def gadt_defn(self, p):
+        name, params, pairs = p
+
+        type = ast.PolyType(name, [ast.TypeVar(p) for p in params])
+
+        defn_list = [type]
+        for ct, t in pairs:
+            if not isinstance(t, ast.FunctionType):
+                value = ast.NullaryData(ct, t)
+            else:
+                *param_types, return_type = typelist_of_ftype(t)
+                params = [f"p{i+1}" for i in range(len(param_types))]
+                data = ast.Data(ct, params, return_type)
+
+                value = create_typed_function(params, param_types, data)
+
+            defn_list.append(ast.Constructor(ct, value))
+
+        return defn_list
+
+    def adt_ct_list(self, p):
         if len(p) == 1:
             return p
         return [*p[0], p[1]]
 
-    def data_ct(self, p):
+    def adt_ct(self, p):
         if len(p) == 1:
             return (p[0], None)
 
+        return (p[0], p[1])
+
+    def gadt_ct_list(self, p):
+        if len(p) == 1:
+            return p
+        return [*p[0], p[1]]
+
+    def gadt_ct(self, p):
         return (p[0], p[1])
 
     def fun_type_arg(self, p):
         if len(p) == 1:
             return p[0]
 
-        left, t, right = p
-        return ast.PolyTypeAST(t, [left, right])
+        left, right = p
+        return ast.FunctionType(left, right)
 
     def var_type_arg(self, p):
-        return ast.TypeVarAST(p[0])
+        return ast.TypeVar(p[0])
 
     def null_type_arg(self, p):
-        return ast.ConcreteTypeAST(p[0])
+        return ast.ConcreteType(p[0])
 
     def poly_type_arg(self, p):
-        return ast.PolyTypeAST(p[0], p[1])
+        return ast.PolyType(p[0], p[1])
 
     def type_arg_list(self, p):
         if len(p) == 1:
@@ -100,24 +136,22 @@ class ASTBuilder(Transformer):
 
     def fun_defn(self, p):
         name, params, value = p
-
-        for p in params[::-1]:
-            value = ast.Function(p, value)
-
-        return ast.ValueDefn(name, value)
+        return ast.ValueDefn(name, create_function(params, value))
 
     def op_defn(self, p):
         left, name, right, value = p
-        params = [left, right]
-        return ast.ValueDefn(name, ast.Function(params, value))
+        return ast.ValueDefn(name, create_function([left, right], value))
 
     def typeof_defn(self, p):
-        return ast.TypeOfDefn(p[0], p[1])
+        return ast.ValueTypeDefn(p[0], p[1])
 
     def fix_defn(self, p):
         fixity, prec, operators = p
         is_left_assoc = fixity.type == "INFIXL"
         prec = int(prec)
+
+        if len(operators) == 1:
+            return ast.FixitySignature(operators[0], is_left_assoc, prec)
 
         return [ast.FixitySignature(op, is_left_assoc, prec) for op in operators]
 
@@ -132,12 +166,10 @@ class ASTBuilder(Transformer):
         return [*p[0], p[1]]
 
     def match_expr(self, p):
-        return ast.PatternMatching(p[0], p[1])
+        pass
 
     def func_expr(self, p):
-        if len(p) == 2:
-            return ast.Function(p[0], p[1])
-        return ast.Function([], p[0])
+        return ast.Function(p[0], p[1])
 
     def block_expr(self, p):
         return ast.Block(p[0], p[1])
@@ -145,7 +177,6 @@ class ASTBuilder(Transformer):
     def let_expr(self, p):
         defn_list = []
         for defn in p[0]:
-            # fixity signatures
             if isinstance(defn, list):
                 defn_list.extend(defn)
             else:
@@ -180,13 +211,13 @@ class ASTBuilder(Transformer):
         return [*p[0], p[1]]
 
     def match(self, p):
-        return (p[0], p[2])
+        return (p[0], p[1])
 
     def id_pattern(self, p):
-        return ast.Identifier(p[0])
+        pass
 
     def ct_pattern(self, p):
-        return ast.Data(p[0])
+        pass
 
     def op_chain(self, p):
         if len(p) == 1:
@@ -208,7 +239,7 @@ class ASTBuilder(Transformer):
         return ast.DecimalNumber(p[0])
 
     def nat_literal(self, p):
-        return ast.NaturalNumber(p[0])
+        return ast.IntegerNumber(p[0])
 
     def bool_literal(self, p):
         return ast.Boolean(p[0])
