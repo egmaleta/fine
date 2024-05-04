@@ -58,7 +58,7 @@ class ASTBuilder(Transformer):
                 param = "p1"
                 data = ast.Data(ct, [param], type)
 
-                value = ast.Function(param, data, type)
+                value = ast.Function(param, data, t)
             else:
                 param_types = typelist_of_ftype(t)
                 params = [f"p{i+1}" for i in range(len(param_types))]
