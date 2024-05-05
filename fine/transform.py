@@ -58,6 +58,10 @@ class Transformer:
     def visit(self, node, scope):
         pass
 
+    @visitor.when(ast.Type)
+    def visit(self, node: ast.Type, scope):
+        return node
+
     @visitor.when(ast.InternalValue)
     def visit(self, node, scope):
         return node
@@ -128,19 +132,9 @@ class Transformer:
 
         return node
 
-    @visitor.when(ast.Constructor)
-    def visit(self, node: ast.Constructor, scope):
-        return node
-
     @visitor.when(ast.ValueDefn)
     def visit(self, node: ast.ValueDefn, scope: Scope[ast.FixitySignature]):
         node.value = self.visit(node.value, scope)
-
-        return node
-
-    @visitor.when(ast.FixitySignature)
-    def visit(self, node: ast.FixitySignature, scope: Scope[ast.FixitySignature]):
-        scope.add_item(node.operator, node)
 
         return node
 
@@ -148,8 +142,10 @@ class Transformer:
     def visit(self, node: ast.ValueTypeDefn, scope):
         return node
 
-    @visitor.when(ast.Type)
-    def visit(self, node: ast.Type, scope):
+    @visitor.when(ast.FixitySignature)
+    def visit(self, node: ast.FixitySignature, scope: Scope[ast.FixitySignature]):
+        scope.add_item(node.operator, node)
+
         return node
 
     @visitor.when(ast.Module)

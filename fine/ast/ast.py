@@ -127,15 +127,23 @@ class Conditional(Expr):
 
 
 @dataclass
-class Constructor(AST):
-    name: String
-    value: Expr
-
-
-@dataclass
 class ValueDefn(AST):
     name: String
     value: Expr
+
+
+class Constructor(ValueDefn):
+    pass
+
+
+@dataclass
+class ValueTypeDefn(AST):
+    name: String
+    type: Type
+
+
+class ConstructorTypeDefn(ValueTypeDefn):
+    pass
 
 
 @dataclass
@@ -143,12 +151,6 @@ class FixitySignature(AST):
     operator: String
     is_left_associative: bool
     precedence: int
-
-
-@dataclass
-class ValueTypeDefn(AST):
-    name: String
-    type: Type
 
 
 @dataclass
