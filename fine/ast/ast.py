@@ -34,7 +34,7 @@ class NullaryData(Expr):
     type: Type
 
 
-class IntegerNumber(NullaryData):
+class NaturalNumber(NullaryData):
     def __init__(self, value: String):
         super().__init__(value, INT_TYPE)
 

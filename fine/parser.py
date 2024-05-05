@@ -216,7 +216,7 @@ class ASTBuilder(Transformer):
         return ast.DecimalNumber(p[0])
 
     def nat_literal(self, p):
-        return ast.IntegerNumber(p[0])
+        return ast.NaturalNumber(p[0])
 
     def bool_literal(self, p):
         return ast.Boolean(p[0])
