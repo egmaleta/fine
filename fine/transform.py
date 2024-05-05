@@ -70,7 +70,7 @@ class Transformer:
     def visit(self, node, scope):
         return node
 
-    @visitor.when(ast.Identifier)
+    @visitor.when(ast.Id)
     def visit(self, node, scope):
         return node
 

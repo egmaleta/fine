@@ -238,7 +238,7 @@ class ASTBuilder(Transformer):
         return p[0]
 
     def id_atom(self, p):
-        return ast.Identifier(p[0])
+        return ast.Id(p[0])
 
     def dec_literal(self, p):
         return ast.DecimalNumber(p[0])

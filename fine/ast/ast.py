@@ -62,7 +62,7 @@ class Data(Expr):
 
 
 @dataclass
-class Identifier(Expr):
+class Id(Expr):
     value: String
 
 
