@@ -8,20 +8,14 @@ glob_defn_list: glob_defn_list glob_defn
 ?glob_defn: _LET _name _ASSIGN _internal                        -> int_val_defn
           | _LET _name param_list _ASSIGN _internal             -> int_fun_defn
           | _LET ID _operator ID _ASSIGN _internal              -> int_op_defn
-          | _ADT TYPE_ID _ASSIGN _INTERNAL                      -> int_adt_defn
-          | _ADT TYPE_ID param_list? _ASSIGN _BAR? adt_ct_list  -> adt_defn
-          | _GADT TYPE_ID param_list _ASSIGN _BAR? gadt_ct_list -> gadt_defn
+          | _DATA TYPE_ID _ASSIGN _INTERNAL                     -> int_adt_defn
+          | _DATA TYPE_ID param_list? _ASSIGN _BAR? adt_ct_list -> adt_defn
           | defn
 
 adt_ct_list: adt_ct_list _BAR adt_ct
            | adt_ct
 
 adt_ct: TYPE_ID ( _COLON fun_type_arg )?
-
-gadt_ct_list: gadt_ct_list _BAR gadt_ct
-           | gadt_ct
-
-gadt_ct: TYPE_ID _COLON fun_type_arg
 
 fun_type_arg: type_arg _ARROW fun_type_arg
             | type_arg
@@ -118,8 +112,7 @@ _DO.1: "do"
 _MATCH.1: "match"
 _IF.1: "if"
 _ELSE.1: "else"
-_ADT.1: "adt"
-_GADT.1: "gadt"
+_DATA.1: "data"
 BOOL.1: "true" | "false"
 
 ID: /[a-z_][a-zA-Z0-9_]*/

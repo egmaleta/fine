@@ -70,26 +70,6 @@ class ASTBuilder(Transformer):
 
         return defn_list
 
-    def gadt_defn(self, p):
-        name, params, pairs = p
-
-        type = ast.PolyType(name, [ast.TypeVar(p) for p in params])
-
-        defn_list = [type]
-        for ct, t in pairs:
-            if not isinstance(t, ast.FunctionType):
-                value = ast.NullaryData(ct, t)
-            else:
-                *param_types, return_type = typelist_of_ftype(t)
-                params = [f"p{i+1}" for i in range(len(param_types))]
-                data = ast.Data(ct, params, return_type)
-
-                value = create_typed_function(params, param_types, data)
-
-            defn_list.append(ast.Constructor(ct, value))
-
-        return defn_list
-
     def adt_ct_list(self, p):
         if len(p) == 1:
             return p
@@ -99,14 +79,6 @@ class ASTBuilder(Transformer):
         if len(p) == 1:
             return (p[0], None)
 
-        return (p[0], p[1])
-
-    def gadt_ct_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
-
-    def gadt_ct(self, p):
         return (p[0], p[1])
 
     def fun_type_arg(self, p):
