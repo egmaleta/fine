@@ -62,14 +62,6 @@ class NameChecker:
     def visit(self, node: ast.Function, scope):
         pass  # TODO
 
-    @visitor.when(ast.Block)
-    def visit(self, node: ast.Block, scope):
-        for a in node.actions:
-            self.visit(a, scope)
-        self.visit(node.body, scope)
-
-        return node
-
     @visitor.when(ast.LetExpr)
     def visit(self, node: ast.LetExpr, scope: Scope[bool]):
         scope = scope.new_child()

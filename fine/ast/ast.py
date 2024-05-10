@@ -92,12 +92,6 @@ class Function(Expr):
 
 
 @dataclass
-class Block(Expr):
-    actions: list[Expr]
-    body: Expr
-
-
-@dataclass
 class LetExpr(Expr):
     definitions: list[AST]
     body: Expr

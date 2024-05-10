@@ -143,9 +143,6 @@ class ASTBuilder(Transformer):
     def func_expr(self, p):
         return ast.Function(p[0], p[1])
 
-    def block_expr(self, p):
-        return ast.Block(p[0], p[1])
-
     def let_expr(self, p):
         defn_list = []
         for defn in p[0]:
@@ -166,11 +163,6 @@ class ASTBuilder(Transformer):
         if len(chain) == 1:
             return chain[0]
         return ast.OpChain(chain)
-
-    def action_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
 
     def defn_list(self, p):
         if len(p) == 1:

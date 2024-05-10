@@ -100,13 +100,6 @@ class Transformer:
 
         return node
 
-    @visitor.when(ast.Block)
-    def visit(self, node: ast.Block, scope):
-        node.actions = [self.visit(a, scope) for a in node.actions]
-        node.body = self.visit(node.body, scope)
-
-        return node
-
     @visitor.when(ast.LetExpr)
     def visit(self, node: ast.LetExpr, scope: Scope[ast.FixitySignature]):
         scope = scope.new_child()
