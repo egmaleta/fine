@@ -7,6 +7,9 @@ class KindAtom(Kind):
     def __repr__(self):
         return "*"
 
+    def __len__(self):
+        return 1
+
 
 class KindFunction(Kind):
     def __init__(self, left: Kind, right: Kind):
@@ -24,5 +27,19 @@ class KindFunction(Kind):
             and self.right == other.right
         )
 
+    def __len__(self):
+        return 1 + len(self.right)
+
 
 KIND_ATOM = KindAtom()
+
+
+def apply(f: KindFunction, args: list[Kind]):
+    assert 0 < len(args) < len(f)
+
+    k = f
+    for arg in args:
+        assert f.left == arg
+        k = f.right
+
+    return k
