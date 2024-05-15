@@ -81,6 +81,7 @@ class ASTBuilder(Transformer):
 
         return (p[0], p[1])
 
+    # FIXME: ARROW token is relevant
     def fun_type_arg(self, p):
         if len(p) == 1:
             return p[0]
@@ -175,7 +176,7 @@ class ASTBuilder(Transformer):
         return [*p[0], p[1]]
 
     def match(self, p):
-        return (p[0], p[1])
+        return (p[0], p[2])
 
     def ct_pattern(self, p):
         if len(p) == 1:

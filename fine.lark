@@ -17,7 +17,7 @@ adt_ct_list: adt_ct_list _BAR adt_ct
 
 adt_ct: TYPE_ID ( _COLON fun_type_arg )?
 
-fun_type_arg: type_arg _ARROW fun_type_arg
+fun_type_arg: type_arg ARROW fun_type_arg
             | type_arg
 
 ?type_arg: ID                       -> var_type_arg
@@ -65,7 +65,7 @@ defn_list: defn_list _SEMI defn
 match_list: match_list match
           | match
 
-match: _BAR pattern _ARROW ( no_match_expr | _OPAR match_expr _CPAR )
+match: _BAR pattern ARROW ( no_match_expr | _OPAR match_expr _CPAR )
 
 ?pattern: _single_pattern
         | TYPE_ID single_pattern_list? -> ct_pattern
@@ -120,7 +120,7 @@ _BTICK: "`"
 _BSLASH: "\\"
 _SEMI: ";"
 
-_ARROW.1: "->" // over LARGE_OP
+ARROW.1: "->" // over LARGE_OP
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 _ASSIGN: "="
 _BAR: "|"
