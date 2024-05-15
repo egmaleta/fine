@@ -1,6 +1,7 @@
-from .base import String, Expr
+from .base import Expr
 from .ast import Function
 from .type import Type, FunctionType
+from ..utils import String
 
 
 def typelist_of_ftype(ft: FunctionType):

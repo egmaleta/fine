@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
-from .base import String, AST, Expr
+from .base import AST, Expr
 from .type import Type, INT_TYPE, FLOAT_TYPE, BOOL_TYPE, UNIT_TYPE
+from ..utils import String
 
 
 @dataclass

@@ -1,7 +1,8 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 
-from .base import String, AST
+from .base import AST
+from ..utils import String
 
 
 class Type(AST):

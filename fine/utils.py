@@ -1,4 +1,8 @@
 from typing import Self
+from lark.lexer import Token
+
+
+type String = Token | str
 
 
 class Scope[K, V]:

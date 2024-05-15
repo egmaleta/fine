@@ -4,8 +4,8 @@
 """
 
 from . import ast, visitor
-from .ast.base import String, Expr
-from .utils import Scope
+from .ast.base import Expr
+from .utils import Scope, String
 
 
 type SigScope = Scope[str, ast.FixitySignature]
