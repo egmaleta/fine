@@ -16,7 +16,10 @@
 """
 
 from .. import ast, visitor
-from ..scope import Scope
+from ..utils import Scope
+
+
+type NameScope = Scope[str, bool]
 
 
 class NameChecker:
@@ -63,8 +66,8 @@ class NameChecker:
         pass  # TODO
 
     @visitor.when(ast.LetExpr)
-    def visit(self, node: ast.LetExpr, scope: Scope[bool]):
-        scope = scope.new_child()
+    def visit(self, node: ast.LetExpr, scope: NameScope):
+        scope = scope.new_scope()
 
         for defn in node.definitions:
             self.visit(defn, scope)
@@ -92,14 +95,14 @@ class NameChecker:
         return node
 
     @visitor.when(ast.ValueDefn)
-    def visit(self, node: ast.ValueDefn, scope: Scope[bool]):
+    def visit(self, node: ast.ValueDefn, scope: NameScope):
         node.value = self.visit(node.value, scope)
 
         return node
 
     @visitor.when(ast.FixitySignature)
-    def visit(self, node: ast.FixitySignature, scope: Scope[bool]):
-        scope.add_item(node.operator, node)
+    def visit(self, node: ast.FixitySignature, scope: NameScope):
+        scope.add(node.operator, node)
 
         return node
 

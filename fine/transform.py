@@ -5,7 +5,10 @@
 
 from . import ast, visitor
 from .ast.base import String, Expr
-from .scope import Scope
+from .utils import Scope
+
+
+type SigScope = Scope[str, ast.FixitySignature]
 
 
 IS_LEFT_ASSOC = True
@@ -13,9 +16,7 @@ PRECEDENCE = 10
 
 
 class Transformer:
-    def _create_binop(
-        self, infixn: list[Expr | String], scope: Scope[ast.FixitySignature]
-    ):
+    def _create_binop(self, infixn: list[Expr | String], scope: SigScope):
         rpn: list[Expr | String] = []
         op_stack: list[String] = []
         for item in infixn:
@@ -23,12 +24,12 @@ class Transformer:
                 rpn.append(item)
                 continue
 
-            curr = scope.get_item(item)
+            curr = scope.get(item)
             curr_prec = curr.precedence if curr else PRECEDENCE
             is_curr_lassoc = curr.is_left_associative if curr else IS_LEFT_ASSOC
 
             while len(op_stack) > 0:
-                top = scope.get_item(op_stack[-1])
+                top = scope.get(op_stack[-1])
                 top_prec = top.precedence if top else PRECEDENCE
 
                 if top_prec > curr_prec or top_prec == curr_prec and is_curr_lassoc:
@@ -86,7 +87,7 @@ class Transformer:
         return node
 
     @visitor.when(ast.OpChain)
-    def visit(self, node: ast.OpChain, scope: Scope[ast.FixitySignature]):
+    def visit(self, node: ast.OpChain, scope: SigScope):
         elements = [
             self.visit(el, scope) if isinstance(el, Expr) else el
             for el in node.elements
@@ -101,8 +102,8 @@ class Transformer:
         return node
 
     @visitor.when(ast.LetExpr)
-    def visit(self, node: ast.LetExpr, scope: Scope[ast.FixitySignature]):
-        scope = scope.new_child()
+    def visit(self, node: ast.LetExpr, scope: SigScope):
+        scope = scope.new_scope()
 
         for defn in node.definitions:
             self.visit(defn, scope)
@@ -126,7 +127,7 @@ class Transformer:
         return node
 
     @visitor.when(ast.ValueDefn)
-    def visit(self, node: ast.ValueDefn, scope: Scope[ast.FixitySignature]):
+    def visit(self, node: ast.ValueDefn, scope: SigScope):
         node.value = self.visit(node.value, scope)
 
         return node
@@ -136,8 +137,8 @@ class Transformer:
         return node
 
     @visitor.when(ast.FixitySignature)
-    def visit(self, node: ast.FixitySignature, scope: Scope[ast.FixitySignature]):
-        scope.add_item(node.operator, node)
+    def visit(self, node: ast.FixitySignature, scope: SigScope):
+        scope.add(node.operator, node)
 
         return node
 
