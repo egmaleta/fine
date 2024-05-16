@@ -24,13 +24,13 @@ class Transformer:
                 rpn.append(item)
                 continue
 
-            curr = scope.get(item)
-            curr_prec = curr.precedence if curr else PRECEDENCE
-            is_curr_lassoc = curr.is_left_associative if curr else IS_LEFT_ASSOC
+            curr, has_curr = scope.get(item)
+            curr_prec = curr.precedence if has_curr else PRECEDENCE
+            is_curr_lassoc = curr.is_left_associative if has_curr else IS_LEFT_ASSOC
 
             while len(op_stack) > 0:
-                top = scope.get(op_stack[-1])
-                top_prec = top.precedence if top else PRECEDENCE
+                top, has_top = scope.get(op_stack[-1])
+                top_prec = top.precedence if has_top else PRECEDENCE
 
                 if top_prec > curr_prec or top_prec == curr_prec and is_curr_lassoc:
                     rpn.append(op_stack.pop())
@@ -138,7 +138,7 @@ class Transformer:
 
     @visitor.when(ast.FixitySignature)
     def visit(self, node: ast.FixitySignature, scope: SigScope):
-        scope.add(node.operator, node)
+        scope.set(node.operator, node)
 
         return node
 

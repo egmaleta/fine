@@ -102,7 +102,7 @@ class NameChecker:
 
     @visitor.when(ast.FixitySignature)
     def visit(self, node: ast.FixitySignature, scope: NameScope):
-        scope.add(node.operator, node)
+        scope.set(node.operator, node)
 
         return node
 

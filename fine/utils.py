@@ -10,25 +10,31 @@ class Scope[K, V]:
         self._values: dict[K, V] = {}
         self._parent = parent
 
-    def new_scope(self):
-        return Scope(self)
-
-    def get(self, key: K, local=False) -> V | None:
-        value = self._values.get(key)
-        if value is not None:
-            return value
+    def _search(self, key: K, local: bool):
+        if key in self._values:
+            return self._values
 
         if not local and self._parent is not None:
-            return self._parent.get(key, local)
+            return self._parent._search(key, local)
 
         return None
 
-    def has(self, key: K, local=False):
-        return self.get(key, local) is not None
+    def get(self, key: K, local=False) -> tuple[V, bool]:
+        values = self._search(key, local)
 
-    def add(self, key: K, value: V):
-        if not self.has(key, True):
+        if values is not None:
+            return values[key], True
+
+        return None, False
+
+    def set(self, key: K, value: V, local=True, override=False):
+        values = self._search(key, local)
+        found = values is not None
+
+        if found and override:
+            values[key] = value
+        elif not found:
             self._values[key] = value
-            return True
 
-        return False
+    def new_scope(self):
+        return Scope(self)
