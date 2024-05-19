@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
-from .kind import Kind, apply
+from .kind import Kind, FunctionKind, apply
 from ..utils import String
 
 
@@ -39,12 +39,15 @@ class TypeVar(AtomType):
 
 @dataclass
 class TypeApp(Type):
-    f: TypeConstant | TypeVar
-    args: list[Type]
+    f: Type
+    arg: Type
 
     @property
     def kind(self):
-        return apply(self.f.kind, [arg.kind for arg in self.args])
+        k = self.f.kind
+        assert isinstance(k, FunctionKind)
+
+        return apply(k, self.arg.kind)
 
 
 @dataclass

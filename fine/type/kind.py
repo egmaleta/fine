@@ -7,9 +7,6 @@ class AtomKind(Kind):
     def __repr__(self):
         return "Type"
 
-    def __len__(self):
-        return 1
-
 
 class FunctionKind(Kind):
     def __init__(self, left: Kind, right: Kind):
@@ -27,20 +24,10 @@ class FunctionKind(Kind):
             and self.right == other.right
         )
 
-    def __len__(self):
-        return 1 + len(self.right)
-
 
 ATOM = AtomKind()
 
 
-def apply(f: Kind, args: list[Kind]):
-    assert isinstance(f, FunctionKind)
-    assert 0 < len(args) < len(f)
-
-    k = f
-    for arg in args:
-        assert f.left == arg
-        k = f.right
-
-    return k
+def apply(f: FunctionKind, arg: Kind):
+    assert f.left == arg
+    return f.right
