@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 
 from .kind import Kind, apply
+from ..utils import String
 
 
 class Type(ABC):
@@ -28,12 +29,12 @@ class AtomType(Type):
 
 @dataclass
 class TypeConstant(AtomType):
-    name: str
+    name: String
 
 
 @dataclass
 class TypeVar(AtomType):
-    name: str
+    name: String
 
 
 @dataclass
