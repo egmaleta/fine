@@ -26,8 +26,3 @@ class FunctionKind(Kind):
 
 
 ATOM = AtomKind()
-
-
-def apply(f: FunctionKind, arg: Kind):
-    assert f.left == arg
-    return f.right
