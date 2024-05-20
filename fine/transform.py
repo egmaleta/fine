@@ -1,23 +1,15 @@
-"""Transformer:
-
-- tranforms 'OpChain' ASTs in 'BinaryOperation' ASTs
-"""
-
-from . import ast, visitor
-from .ast.base import Expr
+from . import ast
 from .utils import Scope, String
 
 
-type SigScope = Scope[str, ast.FixitySignature]
-
-
-IS_LEFT_ASSOC = True
-PRECEDENCE = 10
-
-
 class Transformer:
-    def _create_binop(self, infixn: list[Expr | String], scope: SigScope):
-        rpn: list[Expr | String] = []
+    IS_LEFT_ASSOC = True
+    PRECEDENCE = 10
+
+    def _create_binop(
+        self, infixn: list[ast.Expr | String], scope: Scope[str, ast.FixitySignature]
+    ) -> ast.BinaryOperation:
+        rpn: list[ast.Expr | String] = []
         op_stack: list[String] = []
         for item in infixn:
             if isinstance(item, ast.Expr):
@@ -25,12 +17,14 @@ class Transformer:
                 continue
 
             curr, has_curr = scope.get(item)
-            curr_prec = curr.precedence if has_curr else PRECEDENCE
-            is_curr_lassoc = curr.is_left_associative if has_curr else IS_LEFT_ASSOC
+            curr_prec = curr.precedence if has_curr else self.PRECEDENCE
+            is_curr_lassoc = (
+                curr.is_left_associative if has_curr else self.IS_LEFT_ASSOC
+            )
 
             while len(op_stack) > 0:
                 top, has_top = scope.get(op_stack[-1])
-                top_prec = top.precedence if has_top else PRECEDENCE
+                top_prec = top.precedence if has_top else self.PRECEDENCE
 
                 if top_prec > curr_prec or top_prec == curr_prec and is_curr_lassoc:
                     rpn.append(op_stack.pop())
@@ -42,9 +36,9 @@ class Transformer:
         while len(op_stack) > 0:
             rpn.append(op_stack.pop())
 
-        operands: list[Expr] = []
+        operands: list[ast.Expr] = []
         for item in rpn:
-            if isinstance(item, Expr):
+            if isinstance(item, ast.Expr):
                 operands.append(item)
                 continue
 
@@ -55,96 +49,66 @@ class Transformer:
         assert len(operands) == 1
         return operands[0]
 
-    @visitor.on("node")
-    def visit(self, node, scope):
-        pass
+    def transform(
+        self, node: ast.AST, scope: Scope[str, ast.FixitySignature]
+    ) -> ast.AST:
+        match node:
+            case ast.FunctionApp(f, arg):
+                return ast.FunctionApp(
+                    self.transform(f, scope), self.transform(arg, scope)
+                )
 
-    @visitor.when(ast.Type)
-    def visit(self, node: ast.Type, scope):
-        return node
+            case ast.OpChain(chain):
+                return self._create_binop(
+                    [
+                        self.transform(el, scope) if isinstance(el, ast.Expr) else el
+                        for el in chain
+                    ],
+                    scope,
+                )
 
-    @visitor.when(ast.InternalValue)
-    def visit(self, node, scope):
-        return node
+            case ast.BinaryOperation(left, operator, right):
+                return ast.BinaryOperation(
+                    self.transform(left, scope), operator, self.transform(right, scope)
+                )
 
-    @visitor.when(ast.NullaryData)
-    def visit(self, node, scope):
-        return node
+            case ast.LetExpr(definitions, body):
+                scope = scope.new_scope()
+                return ast.LetExpr(
+                    [self.transform(defn, scope) for defn in definitions],
+                    self.transform(body, scope),
+                )
 
-    @visitor.when(ast.Data)
-    def visit(self, node, scope):
-        return node
+            case ast.PatternMatching(matchable, matches):
+                return ast.PatternMatching(
+                    self.transform(matchable, scope),
+                    [(p, self.transform(e, scope)) for p, e in matches],
+                )
 
-    @visitor.when(ast.Id)
-    def visit(self, node, scope):
-        return node
+            case ast.MultiFunction(params, body):
+                f = self.transform(body, scope)
+                for p in reversed(params):
+                    f = ast.Function(p, f)
+                return f
 
-    @visitor.when(ast.FunctionApp)
-    def visit(self, node: ast.FunctionApp, scope):
-        node.target = self.visit(node.target, scope)
-        node.arg = self.visit(node.arg, scope)
+            case ast.Function(param, body):
+                return ast.Function(param, self.transform(body, scope))
 
-        return node
+            case ast.ValueDefn(name, value):
+                return ast.ValueDefn(name, self.transform(value, scope))
 
-    @visitor.when(ast.OpChain)
-    def visit(self, node: ast.OpChain, scope: SigScope):
-        elements = [
-            self.visit(el, scope) if isinstance(el, Expr) else el
-            for el in node.elements
-        ]
+            case ast.DatatypeDefn(typename, constructors):
+                return ast.DatatypeDefn(
+                    typename, [self.transform(ct, scope) for ct in constructors]
+                )
 
-        return self._create_binop(elements, scope)
+            case ast.FixitySignature(op):
+                scope.set(op, node)
+                return node
 
-    @visitor.when(ast.Function)
-    def visit(self, node: ast.Function, scope):
-        node.body = self.visit(node.body, scope)
+            case ast.Module(definitions):
+                return ast.Module([self.transform(defn, scope) for defn in definitions])
 
-        return node
-
-    @visitor.when(ast.LetExpr)
-    def visit(self, node: ast.LetExpr, scope: SigScope):
-        scope = scope.new_scope()
-
-        for defn in node.definitions:
-            self.visit(defn, scope)
-        node.body = self.visit(node.body, scope)
-
-        return node
-
-    @visitor.when(ast.PatternMatching)
-    def visit(self, node: ast.PatternMatching, scope):
-        node.matchable = self.visit(node.matchable, scope)
-        node.matches = [(p, self.visit(expr, scope)) for p, expr in node.matches]
-
-        return node
-
-    @visitor.when(ast.Conditional)
-    def visit(self, node: ast.Conditional, scope):
-        node.condition = self.visit(node.condition, scope)
-        node.body = self.visit(node.body, scope)
-        node.fall_body = self.visit(node.fall_body, scope)
-
-        return node
-
-    @visitor.when(ast.ValueDefn)
-    def visit(self, node: ast.ValueDefn, scope: SigScope):
-        node.value = self.visit(node.value, scope)
-
-        return node
-
-    @visitor.when(ast.ValueTypeDefn)
-    def visit(self, node: ast.ValueTypeDefn, scope):
-        return node
-
-    @visitor.when(ast.FixitySignature)
-    def visit(self, node: ast.FixitySignature, scope: SigScope):
-        scope.set(node.operator, node)
-
-        return node
-
-    @visitor.when(ast.Module)
-    def visit(self, node: ast.Module, scope):
-        for defn in node.definitions:
-            self.visit(defn, scope)
-
-        return node
+            case _:
+                # internal, data, id, literal and typedefn nodes
+                return node
