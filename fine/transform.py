@@ -97,9 +97,9 @@ class Transformer:
             case ast.ValueDefn(name, value):
                 return ast.ValueDefn(name, self.transform(value, scope))
 
-            case ast.DatatypeDefn(typename, constructors):
+            case ast.DatatypeDefn(type, constructors):
                 return ast.DatatypeDefn(
-                    typename, [self.transform(ct, scope) for ct in constructors]
+                    type, [self.transform(ct, scope) for ct in constructors]
                 )
 
             case ast.FixitySignature(op):

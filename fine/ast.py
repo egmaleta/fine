@@ -1,7 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .pattern import Pattern
-from .type import Type
+from .type import Type, TypeConstant, TypeApp
 from .utils import String
 
 
@@ -146,8 +146,18 @@ class ValueTypeDefn(Defn):
 
 @dataclass
 class DatatypeDefn(Defn):
-    typename: String
+    type: TypeConstant | TypeApp
     constructors: list[ValueDefn] = []
+
+    typename: str = field(init=False)
+
+    def __post_init__(self):
+        t = self.type
+        if isinstance(t, TypeApp):
+            assert isinstance(t.f, TypeConstant)
+            self.typename = t.f.name
+        else:
+            self.typename = t.name
 
 
 @dataclass
