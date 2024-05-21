@@ -7,6 +7,7 @@ class Pattern:
     pass
 
 
+@dataclass
 class CapturePattern(Pattern):
     name: String
 
