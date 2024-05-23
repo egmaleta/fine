@@ -1,7 +1,8 @@
 from lark import Transformer, Lark
 
 from . import ast
-from .ast.utils import create_function, create_typed_function, typelist_of_ftype
+from . import pattern as pat
+from . import type as t
 
 
 class ASTBuilder(Transformer):
@@ -27,48 +28,69 @@ class ASTBuilder(Transformer):
     def int_fun_defn(self, p):
         name, params, id = p
         value = ast.InternalFunction(id, params)
-        return ast.ValueDefn(name, create_function(params, value))
+        return ast.ValueDefn(name, ast.MultiFunction(params, value))
 
     def int_op_defn(self, p):
         left, name, right, id = p
         params = [left, right]
         value = ast.InternalFunction(id, params)
-        return ast.ValueDefn(name, create_function(params, value))
+        return ast.ValueDefn(name, ast.MultiFunction(params, value))
 
     def int_adt_defn(self, p):
-        return ast.ConcreteType(p[0])
+        match p:
+            case [name]:
+                return t.TypeConstant(name)
+            case [name, params]:
+                return t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
+
+    @staticmethod
+    def _create_datatype_defn(ct_type, cts):
+        constructors = []
+
+        for ct, type in cts:
+            match type:
+                case None:
+                    value_defn = ast.ValueDefn(ct, ast.Data(ct))
+                    constructors.append((value_defn, ct_type))
+
+                case t.FunctionType():
+                    params_len = len(type)
+
+                    last_f = type
+                    while isinstance(last_f.right, t.FunctionType):
+                        last_f = last_f.right
+                    last_f.right = t.FunctionType(
+                        t.TypeConstant(t.FunctionType.NAME), [last_f.right, ct_type]
+                    )
+
+                    params = [f"param_{i+1}" for i in range(params_len)]
+                    value = ast.MultiFunction(params, ast.PolyData(ct, params))
+                    value_defn = ast.ValueDefn(ct, value)
+
+                    constructors.append((value_defn, type))
+
+                case _:
+                    type = t.FunctionType(
+                        t.TypeConstant(t.FunctionType.NAME), [type, ct_type]
+                    )
+
+                    params = ["param_1"]
+                    value = ast.MultiFunction(params, ast.PolyData(ct, params))
+                    value_defn = ast.ValueDefn(ct, value)
+
+                    constructors.append((value_defn, type))
+
+        return ast.DatatypeDefn(ct_type, constructors)
 
     def adt_defn(self, p):
-        if len(p) == 3:
-            name, params, pairs = p
-        else:
-            name, pairs = p
-            params = []
+        match p:
+            case [name, pairs]:
+                type = t.TypeConstant(name)
+                return self._create_datatype_defn(type, pairs)
 
-        if len(params) > 0:
-            type = ast.PolyType(name, [ast.TypeVar(p) for p in params])
-        else:
-            type = ast.ConcreteType(name)
-
-        defn_list = [type]
-        for ct, t in pairs:
-            if t is None:
-                value = ast.NullaryData(ct, type)
-            elif not isinstance(t, ast.FunctionType):
-                param = "p1"
-                data = ast.Data(ct, [param], type)
-
-                value = ast.Function(param, data, t)
-            else:
-                param_types = typelist_of_ftype(t)
-                params = [f"p{i+1}" for i in range(len(param_types))]
-                data = ast.Data(ct, params, type)
-
-                value = create_typed_function(params, param_types, data)
-
-            defn_list.append(ast.Constructor(ct, value))
-
-        return defn_list
+            case [name, params, pairs]:
+                type = t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
+                return self._create_datatype_defn(type, pairs)
 
     def adt_ct_list(self, p):
         if len(p) == 1:
@@ -81,22 +103,21 @@ class ASTBuilder(Transformer):
 
         return (p[0], p[1])
 
-    # FIXME: ARROW token is relevant
     def fun_type_arg(self, p):
         if len(p) == 1:
             return p[0]
 
-        left, right = p
-        return ast.FunctionType(left, right)
+        left, arrow, right = p
+        return t.FunctionType(t.TypeConstant(arrow), [left, right])
 
     def var_type_arg(self, p):
-        return ast.TypeVar(p[0])
+        return t.TypeVar(p[0])
 
     def null_type_arg(self, p):
-        return ast.ConcreteType(p[0])
+        return t.TypeConstant(p[0])
 
     def poly_type_arg(self, p):
-        return ast.PolyType(p[0], p[1])
+        return t.TypeApp(p[0], p[1])
 
     def type_arg_list(self, p):
         if len(p) == 1:
@@ -109,11 +130,11 @@ class ASTBuilder(Transformer):
 
     def fun_defn(self, p):
         name, params, value = p
-        return ast.ValueDefn(name, create_function(params, value))
+        return ast.ValueDefn(name, ast.MultiFunction(params, value))
 
     def op_defn(self, p):
         left, name, right, value = p
-        return ast.ValueDefn(name, create_function([left, right], value))
+        return ast.ValueDefn(name, ast.MultiFunction([left, right], value))
 
     def typeof_defn(self, p):
         return ast.ValueTypeDefn(p[0], p[1])
@@ -160,10 +181,13 @@ class ASTBuilder(Transformer):
         return ast.Conditional(p[0], p[1], p[2])
 
     def op_chain_expr(self, p):
-        chain = p[0]
-        if len(chain) == 1:
-            return chain[0]
-        return ast.OpChain(chain)
+        match p:
+            case [operand]:
+                return operand
+            case [left, op, right]:
+                return ast.BinaryOperation(left, op, right)
+            case _:
+                return ast.OpChain(p)
 
     def defn_list(self, p):
         if len(p) == 1:
@@ -178,21 +202,15 @@ class ASTBuilder(Transformer):
     def match(self, p):
         return (p[0], p[2])
 
-    def ct_pattern(self, p):
-        if len(p) == 1:
-            return ast.DataPattern(p[0])
+    def capture_pattern(self, p):
+        return pat.CapturePattern(p[0])
 
-        return ast.DataPattern(p[0], p[1])
+    def data_pattern(self, p):
+        tag, *patterns = p
+        return pat.DataPattern(tag, patterns)
 
-    def single_pattern_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
-
-    def op_chain(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1], p[2]]
+    def literal_pattern(self, p):
+        return pat.LiteralPattern(p[0])
 
     def operand(self, p):
         if len(p) == 1:

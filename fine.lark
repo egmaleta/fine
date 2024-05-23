@@ -8,7 +8,7 @@ glob_defn_list: glob_defn_list _SEMI glob_defn
 ?glob_defn: _name _ASSIGN _internal                             -> int_val_defn
           | _name param_list _ASSIGN _internal                  -> int_fun_defn
           | ID _operator ID _ASSIGN _internal                   -> int_op_defn
-          | _DATA TYPE_ID _ASSIGN _INTERNAL                     -> int_adt_defn
+          | _DATA TYPE_ID param_list? _ASSIGN _INTERNAL         -> int_adt_defn
           | _DATA TYPE_ID param_list? _ASSIGN _BAR? adt_ct_list -> adt_defn
           | defn
 
@@ -20,9 +20,9 @@ adt_ct: TYPE_ID ( _COLON fun_type_arg )?
 fun_type_arg: type_arg ARROW fun_type_arg
             | type_arg
 
-?type_arg: ID                       -> var_type_arg
-         | TYPE_ID                  -> null_type_arg
-         | TYPE_ID type_arg_list    -> poly_type_arg
+?type_arg: ID                                             -> var_type_arg
+         | TYPE_ID                                        -> null_type_arg
+         | ( var_type_arg | null_type_arg ) type_arg_list -> poly_type_arg
          | _OPAR fun_type_arg _CPAR
 
 type_arg_list: type_arg_list type_arg
@@ -54,10 +54,9 @@ _expr: no_match_expr
 
 match_expr: _MATCH ( no_match_expr | _OPAR match_expr _CPAR ) match_list
 
-?no_match_expr: _BSLASH param_list _ASSIGN _expr   -> func_expr
-              | _LET defn_list _SEMI? _IN _expr    -> let_expr
-              | _IF _expr _THEN _expr _ELSE _expr  -> cond_expr
-              | op_chain                           -> op_chain_expr
+?no_match_expr: _BSLASH param_list _ASSIGN _expr -> func_expr
+              | _LET defn_list _SEMI? _IN _expr  -> let_expr
+              | operand ( _operator operand )*   -> op_chain_expr
 
 defn_list: defn_list _SEMI defn
          | defn
@@ -67,17 +66,9 @@ match_list: match_list match
 
 match: _BAR pattern ARROW ( no_match_expr | _OPAR match_expr _CPAR )
 
-?pattern: _single_pattern
-        | TYPE_ID single_pattern_list? -> ct_pattern
-
-_single_pattern: ID
-               | literal
-
-single_pattern_list: single_pattern_list _single_pattern
-                   | _single_pattern
-
-op_chain: op_chain _operator operand
-        | operand
+?pattern: ID                          -> capture_pattern
+        | TYPE_ID capture_pattern*    -> data_pattern
+        | ( DEC | NAT | BOOL | UNIT ) -> literal_pattern
 
 operand: operand atom
        | atom
@@ -103,11 +94,7 @@ INFIXL.2: "infixl" // over IN
 INFIXR.2: "infixr" // over IN
 _IN.1: "in"
 _LET.1: "let"
-_THEN.1: "then"
-_DO.1: "do"
 _MATCH.1: "match"
-_IF.1: "if"
-_ELSE.1: "else"
 _DATA.1: "data"
 BOOL.1: "true" | "false"
 
