@@ -15,7 +15,7 @@ class Type(ABC):
 
 @dataclass
 class AtomType(Type):
-    _kind: Kind | None = field(init=False, default=None)
+    _kind: Kind | None = field(init=False, default=None, repr=False)
 
     @property
     def kind(self):
