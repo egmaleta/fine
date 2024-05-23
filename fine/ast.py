@@ -147,7 +147,7 @@ class ValueTypeDefn(Defn):
 @dataclass
 class DatatypeDefn(Defn):
     type: TypeConstant | TypeApp
-    constructors: list[ValueDefn] = []
+    constructors: list[tuple[ValueDefn, Type]]
 
     typename: str = field(init=False)
 
