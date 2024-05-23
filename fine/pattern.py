@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .utils import String
 
@@ -15,7 +15,7 @@ class CapturePattern(Pattern):
 @dataclass
 class DataPattern(Pattern):
     tag: String
-    patterns: list[CapturePattern] = []
+    patterns: list[CapturePattern] = field(default_factory=lambda: [])
 
 
 @dataclass
