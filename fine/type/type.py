@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+from typing import ClassVar
 
 from .kind import Kind, FunctionKind
 from ..utils import String
@@ -51,6 +52,28 @@ class TypeApp(Type):
             k = k.right
 
         return k
+
+
+@dataclass
+class FunctionType(TypeApp):
+    NAME: ClassVar[str] = "->"
+
+    def __post_init__(self):
+        assert isinstance(self.f, TypeConstant)
+        assert self.f.name == self.NAME
+        assert len(self.args) == 2
+
+    @property
+    def left(self):
+        return self.args[0]
+
+    @property
+    def right(self):
+        return self.args[1]
+
+    def __len__(self):
+        l = len(self.right) if isinstance(self.right, FunctionType) else 1
+        return 1 + l
 
 
 @dataclass
