@@ -20,10 +20,14 @@ adt_ct: TYPE_ID ( _COLON fun_type_arg )?
 fun_type_arg: type_arg ARROW fun_type_arg
             | type_arg
 
-?type_arg: ID                                             -> var_type_arg
-         | TYPE_ID                                        -> null_type_arg
+?type_arg: var_type_arg
+         | null_type_arg
          | ( var_type_arg | null_type_arg ) type_arg_list -> poly_type_arg
          | _OPAR fun_type_arg _CPAR
+
+var_type_arg: ID
+
+null_type_arg: TYPE_ID
 
 type_arg_list: type_arg_list type_arg
              | type_arg
@@ -66,9 +70,11 @@ match_list: match_list match
 
 match: _BAR pattern ARROW ( no_match_expr | _OPAR match_expr _CPAR )
 
-?pattern: ID                          -> capture_pattern
+?pattern: capture_pattern
         | TYPE_ID capture_pattern*    -> data_pattern
         | ( DEC | NAT | BOOL | UNIT ) -> literal_pattern
+
+capture_pattern: ID
 
 operand: operand atom
        | atom
