@@ -71,6 +71,10 @@ class FunctionType(TypeApp):
     def right(self):
         return self.args[1]
 
+    @right.setter
+    def right(self, t):
+        self.args[1] = t
+
     def __len__(self):
         l = len(self.right) if isinstance(self.right, FunctionType) else 1
         return 1 + l
