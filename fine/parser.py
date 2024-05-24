@@ -105,12 +105,8 @@ class ASTBuilder(Transformer):
 
         return (p[0], p[1])
 
-    def fun_type_arg(self, p):
-        if len(p) == 1:
-            return p[0]
-
-        left, arrow, right = p
-        return t.FunctionType(t.TypeConstant(arrow), [left, right])
+    def fun_type_arg(self, p):  # TODO
+        pass
 
     def var_type_arg(self, p):
         return t.TypeVar(p[0])
@@ -202,14 +198,14 @@ class ASTBuilder(Transformer):
         return [*p[0], p[1]]
 
     def match(self, p):
-        return (p[0], p[2])
-
-    def capture_pattern(self, p):
-        return pat.CapturePattern(p[0])
+        return (p[0], p[1])
 
     def data_pattern(self, p):
-        tag, *patterns = p
-        return pat.DataPattern(tag, patterns)
+        match p:
+            case [name]:
+                return pat.CapturePattern(name)
+            case [tag, *names]:
+                return pat.DataPattern(tag, [pat.CapturePattern(n) for n in names])
 
     def literal_pattern(self, p):
         return pat.LiteralPattern(p[0])

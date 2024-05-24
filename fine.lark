@@ -17,7 +17,7 @@ adt_ct_list: adt_ct_list _BAR adt_ct
 
 adt_ct: TYPE_ID ( _COLON fun_type_arg )?
 
-fun_type_arg: type_arg ARROW fun_type_arg
+fun_type_arg: type_arg _ARROW fun_type_arg
             | type_arg
 
 ?type_arg: var_type_arg
@@ -53,34 +53,27 @@ _operator: _BTICK ID _BTICK
 param_list: param_list ID
           | ID
 
-_expr: no_match_expr
-     | match_expr
-
-match_expr: _MATCH ( no_match_expr | _OPAR match_expr _CPAR ) match_list
-
-?no_match_expr: _BSLASH param_list _ASSIGN _expr -> func_expr
-              | defn_list _IN _expr              -> let_expr
-              | operand ( _operator operand )*   -> op_chain_expr
+_expr: _BSLASH param_list _ASSIGN _expr                -> func_expr
+     | defn_list _IN _expr                             -> let_expr
+     | _MATCH _expr _OCURLY match_list _COMMA? _CCURLY -> match_expr
+     | operand ( _operator operand )*                  -> op_chain_expr
 
 defn_list: defn_list defn
          | defn
 
-match_list: match_list match
+match_list: match_list _COMMA match
           | match
 
-match: _BAR pattern ARROW ( no_match_expr | _OPAR match_expr _CPAR )
+match: pattern _ARROW _expr
 
-?pattern: capture_pattern
-        | TYPE_ID capture_pattern*    -> data_pattern
+?pattern: ID+                         -> data_pattern
         | ( DEC | NAT | BOOL | UNIT ) -> literal_pattern
-
-capture_pattern: ID
 
 operand: operand atom
        | atom
 
-?atom: _OPAR _expr _CPAR   -> expr_atom
-     | ( TYPE_ID | _name ) -> id_atom
+?atom: _OPAR _expr _CPAR -> expr_atom
+     | _name             -> id_atom
      | literal
 
 ?literal: DEC  -> dec_literal
@@ -111,8 +104,11 @@ NAT: /0|[1-9][0-9]*/
 
 _BTICK: "`"
 _BSLASH: "\\"
+_COMMA: ","
+_OCURLY: "{"
+_CCURLY: "}"
 
-ARROW.1: "->" // over LARGE_OP
+_ARROW.1: "->" // over LARGE_OP
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 _ASSIGN: "="
 _BAR: "|"
