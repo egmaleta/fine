@@ -72,11 +72,6 @@ class DecimalNumber(Expr):
 
 
 @dataclass
-class Boolean(Expr):
-    value: String
-
-
-@dataclass
 class Unit(Expr):
     value: String
 

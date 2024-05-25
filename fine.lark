@@ -63,8 +63,8 @@ match_list: match_list _COMMA match
 match: pattern _ARROW expr
 
 ?pattern: capture_pattern
-        | TYPE_ID capture_pattern*    -> data_pattern
-        | ( DEC | NAT | BOOL | UNIT ) -> literal_pattern
+        | TYPE_ID capture_pattern* -> data_pattern
+        | ( DEC | NAT | UNIT )     -> literal_pattern
 
 capture_pattern: ID
 
@@ -77,7 +77,6 @@ operand: operand atom
 
 ?literal: DEC  -> dec_literal
         | NAT  -> nat_literal
-        | BOOL -> bool_literal
         | UNIT -> unit_literal
 
 // LEXER GRAMMAR
@@ -94,7 +93,6 @@ _IN.1: "in"
 _LET.1: "let"
 _MATCH.1: "match"
 _DATA.1: "data"
-BOOL.1: "true" | "false"
 
 ID: /[a-z_][a-zA-Z0-9_]*/
 
