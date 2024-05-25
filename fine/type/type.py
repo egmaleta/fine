@@ -1,90 +1,52 @@
-from dataclasses import dataclass, field
-from abc import ABC, abstractmethod
-from typing import ClassVar
+from dataclasses import dataclass
 
-from .kind import Kind, FunctionKind
 from ..utils import String
 
 
-class Type(ABC):
-    @property
-    @abstractmethod
-    def kind(self) -> Kind:
-        pass
+class Type:
+    pass
 
 
 @dataclass
-class AtomType(Type):
-    _kind: Kind | None = field(init=False, default=None, repr=False)
-
-    @property
-    def kind(self):
-        assert self._kind is not None
-        return self._kind
-
-    @kind.setter
-    def kind(self, kind: Kind):
-        assert self._kind is None
-        self._kind = kind
-
-
-@dataclass
-class TypeConstant(AtomType):
+class TypeConstant(Type):
     name: String
 
 
 @dataclass
-class TypeVar(AtomType):
+class TypeVar(Type):
     name: String
 
 
 @dataclass
 class TypeApp(Type):
-    f: TypeConstant | TypeVar
+    fname: String
     args: list[Type]
-
-    @property
-    def kind(self):
-        k = self.f.kind
-        for arg in self.args:
-            assert isinstance(k, FunctionKind)
-            assert k.left == arg.kind
-            k = k.right
-
-        return k
 
 
 @dataclass
-class FunctionType(TypeApp):
-    NAME: ClassVar[str] = "->"
+class FunctionType(Type):
+    inner_types: list[Type]
 
     def __post_init__(self):
-        assert isinstance(self.f, TypeConstant)
-        assert self.f.name == self.NAME
-        assert len(self.args) == 2
+        assert len(self.inner_types) >= 2
 
     @property
     def left(self):
-        return self.args[0]
+        return self.inner_types[0]
 
     @property
     def right(self):
-        return self.args[1]
-
-    @right.setter
-    def right(self, t):
-        self.args[1] = t
+        match self.inner_types[1:]:
+            case [type]:
+                return type
+            case types:
+                return FunctionType(types)
 
     def __len__(self):
-        l = len(self.right) if isinstance(self.right, FunctionType) else 1
-        return 1 + l
+        return len(self.inner_types)
 
 
 @dataclass
 class QuantifiedType(Type):
     quantified: set[str]
-    inner: Type
-
-    @property
-    def kind(self):
-        return self.inner.kind
+    inner_type: Type

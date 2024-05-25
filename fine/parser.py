@@ -55,44 +55,33 @@ class ASTBuilder(Transformer):
                     value_defn = ast.ValueDefn(ct, ast.Data(ct))
                     constructors.append((value_defn, ct_type))
 
-                case t.FunctionType():
-                    params_len = len(type)
-
-                    last_f = type
-                    while isinstance(last_f.right, t.FunctionType):
-                        last_f = last_f.right
-                    last_f.right = t.FunctionType(
-                        t.TypeConstant(t.FunctionType.NAME), [last_f.right, ct_type]
-                    )
-
-                    params = [f"param_{i+1}" for i in range(params_len)]
+                case t.FunctionType(inner_types):
+                    params = [f"param_{i+1}" for i in range(len(inner_types))]
                     value = ast.MultiFunction(params, ast.PolyData(ct, params))
                     value_defn = ast.ValueDefn(ct, value)
 
-                    constructors.append((value_defn, type))
-
-                case _:
-                    type = t.FunctionType(
-                        t.TypeConstant(t.FunctionType.NAME), [type, ct_type]
+                    constructors.append(
+                        (value_defn, t.FunctionType([*inner_types, ct_type]))
                     )
 
+                case _:
                     params = ["param_1"]
                     value = ast.MultiFunction(params, ast.PolyData(ct, params))
                     value_defn = ast.ValueDefn(ct, value)
 
-                    constructors.append((value_defn, type))
+                    constructors.append((value_defn, t.FunctionType([type, ct_type])))
 
         return ast.DatatypeDefn(ct_type, constructors)
 
     def adt_defn(self, p):
         match p:
-            case [name, pairs]:
+            case [name, cts]:
                 type = t.TypeConstant(name)
-                return self._create_datatype_defn(type, pairs)
+                return self._create_datatype_defn(type, cts)
 
-            case [name, params, pairs]:
-                type = t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
-                return self._create_datatype_defn(type, pairs)
+            case [name, params, cts]:
+                type = t.TypeApp(name, [t.TypeVar(p) for p in params])
+                return self._create_datatype_defn(type, cts)
 
     def adt_ct_list(self, p):
         if len(p) == 1:
@@ -105,22 +94,22 @@ class ASTBuilder(Transformer):
 
         return (p[0], p[1])
 
-    def fun_type_arg(self, p):  # TODO
-        pass
+    def fun_type(self, p):
+        match p:
+            case [type]:
+                return type
+            case _:
+                return t.FunctionType(p)
 
-    def var_type_arg(self, p):
+    def type_var(self, p):
         return t.TypeVar(p[0])
 
-    def null_type_arg(self, p):
+    def mono_type(self, p):
         return t.TypeConstant(p[0])
 
-    def poly_type_arg(self, p):
-        return t.TypeApp(p[0], p[1])
-
-    def type_arg_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
+    def poly_type(self, p):
+        fname, *args = p
+        return t.TypeApp(fname, args)
 
     def val_defn(self, p):
         name, value = p
@@ -200,12 +189,12 @@ class ASTBuilder(Transformer):
     def match(self, p):
         return (p[0], p[1])
 
+    def capture_pattern(self, p):
+        return pat.CapturePattern(p[0])
+
     def data_pattern(self, p):
-        match p:
-            case [name]:
-                return pat.CapturePattern(name)
-            case [tag, *names]:
-                return pat.DataPattern(tag, [pat.CapturePattern(n) for n in names])
+        tag, *patterns = p
+        return pat.DataPattern(tag, patterns)
 
     def literal_pattern(self, p):
         return pat.LiteralPattern(p[0])

@@ -5,39 +5,35 @@ module: glob_defn_list
 glob_defn_list: glob_defn_list glob_defn
               | glob_defn
 
-?glob_defn: _LET _name _ASSIGN _internal                        -> int_val_defn
-          | _LET _name param_list _ASSIGN _internal             -> int_fun_defn
-          | _LET ID _operator ID _ASSIGN _internal              -> int_op_defn
-          | _DATA TYPE_ID param_list? _ASSIGN _INTERNAL         -> int_adt_defn
-          | _DATA TYPE_ID param_list? _ASSIGN _BAR? adt_ct_list -> adt_defn
+?glob_defn: _LET _name _ASSIGN _internal                                  -> int_val_defn
+          | _LET _name param_list _ASSIGN _internal                       -> int_fun_defn
+          | _LET ID _operator ID _ASSIGN _internal                        -> int_op_defn
+          | _DATA TYPE_ID param_list? _OCURLY _INTERNAL _CCURLY           -> int_adt_defn
+          | _DATA TYPE_ID param_list? _OCURLY adt_ct_list _COMMA? _CCURLY -> adt_defn
           | defn
 
-adt_ct_list: adt_ct_list _BAR adt_ct
+adt_ct_list: adt_ct_list _COMMA adt_ct
            | adt_ct
 
-adt_ct: TYPE_ID ( _COLON fun_type_arg )?
+adt_ct: TYPE_ID ( _COLON fun_type )?
 
-fun_type_arg: type_arg _ARROW fun_type_arg
-            | type_arg
+fun_type: type ( _ARROW type )*
 
-?type_arg: var_type_arg
-         | null_type_arg
-         | ( var_type_arg | null_type_arg ) type_arg_list -> poly_type_arg
-         | _OPAR fun_type_arg _CPAR
+?type: type_var
+     | mono_type
+     | ( ID | TYPE_ID ) type+ -> poly_type
+     | _OPAR fun_type _CPAR
 
-var_type_arg: ID
+type_var: ID
 
-null_type_arg: TYPE_ID
-
-type_arg_list: type_arg_list type_arg
-             | type_arg
+mono_type: TYPE_ID
 
 _internal: _INTERNAL ID
 
-?defn: _LET _name _ASSIGN _expr              -> val_defn
-     | _LET _name param_list _ASSIGN _expr   -> fun_defn
-     | _LET ID _operator ID _ASSIGN _expr    -> op_defn
-     | _LET _name _COLON fun_type_arg        -> typeof_defn
+?defn: _LET _name _ASSIGN expr               -> val_defn
+     | _LET _name param_list _ASSIGN expr    -> fun_defn
+     | _LET ID _operator ID _ASSIGN expr     -> op_defn
+     | _LET _name _COLON fun_type            -> typeof_defn
      | ( INFIXL | INFIXR ) NAT operator_list -> fix_defn
 
 _name: ID
@@ -53,10 +49,10 @@ _operator: _BTICK ID _BTICK
 param_list: param_list ID
           | ID
 
-_expr: _BSLASH param_list _ASSIGN _expr                -> func_expr
-     | defn_list _IN _expr                             -> let_expr
-     | _MATCH _expr _OCURLY match_list _COMMA? _CCURLY -> match_expr
-     | operand ( _operator operand )*                  -> op_chain_expr
+?expr: _BSLASH param_list _ASSIGN expr                -> func_expr
+     | defn_list _IN expr                             -> let_expr
+     | _MATCH expr _OCURLY match_list _COMMA? _CCURLY -> match_expr
+     | operand ( _operator operand )*                 -> op_chain_expr
 
 defn_list: defn_list defn
          | defn
@@ -64,16 +60,19 @@ defn_list: defn_list defn
 match_list: match_list _COMMA match
           | match
 
-match: pattern _ARROW _expr
+match: pattern _ARROW expr
 
-?pattern: ID+                         -> data_pattern
+?pattern: capture_pattern
+        | TYPE_ID capture_pattern*    -> data_pattern
         | ( DEC | NAT | BOOL | UNIT ) -> literal_pattern
+
+capture_pattern: ID
 
 operand: operand atom
        | atom
 
-?atom: _OPAR _expr _CPAR -> expr_atom
-     | _name             -> id_atom
+?atom: _OPAR expr _CPAR    -> expr_atom
+     | ( TYPE_ID | _name ) -> id_atom
      | literal
 
 ?literal: DEC  -> dec_literal

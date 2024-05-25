@@ -13,15 +13,22 @@ class Quantifier:
             case t.TypeVar(name):
                 return {name}
 
-            case t.TypeApp(f, args):
-                names = self._quantify(f)
+            case t.TypeApp(fname, args):
+                names = {fname}
                 for arg in args:
                     names |= self._quantify(arg)
 
                 return names
 
-            case t.QuantifiedType(quantified, inner):
-                names = self._quantify(inner)
+            case t.FunctionType(inner_types):
+                names = {}
+                for type in inner_types:
+                    names |= self._quantify(type)
+
+                return names
+
+            case t.QuantifiedType(quantified, inner_type):
+                names = self._quantify(inner_type)
 
                 captured = quantified & names
                 free = quantified - names
