@@ -7,14 +7,7 @@ from . import type as t
 
 class ASTBuilder(Transformer):
     def module(self, p):
-        defn_list = []
-        for defn in p[0]:
-            if isinstance(defn, list):
-                defn_list.extend(defn)
-            else:
-                defn_list.append(defn)
-
-        return ast.Module(defn_list)
+        return ast.Module(p[0])
 
     def glob_defn_list(self, p):
         if len(p) == 1:
@@ -128,13 +121,8 @@ class ASTBuilder(Transformer):
 
     def fix_defn(self, p):
         fixity, prec, operators = p
-        is_left_assoc = fixity.type == "INFIXL"
-        prec = int(prec)
 
-        if len(operators) == 1:
-            return ast.FixitySignature(operators[0], is_left_assoc, prec)
-
-        return [ast.FixitySignature(op, is_left_assoc, prec) for op in operators]
+        return ast.FixitySignature(operators, fixity.type == "INFIXL", int(prec))
 
     def operator_list(self, p):
         if len(p) == 1:
@@ -154,16 +142,7 @@ class ASTBuilder(Transformer):
         return ast.Function(p[0], p[1])
 
     def let_expr(self, p):
-        defn_list = []
-        for defn in p[0]:
-            if isinstance(defn, list):
-                defn_list.extend(defn)
-            else:
-                defn_list.append(defn)
-
-        expr = p[1]
-
-        return ast.LetExpr(defn_list, expr)
+        return ast.LetExpr(p[0], p[1])
 
     def cond_expr(self, p):
         return ast.Conditional(p[0], p[1], p[2])

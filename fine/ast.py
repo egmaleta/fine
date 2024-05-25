@@ -156,7 +156,7 @@ class DatatypeDefn(Defn):
 
 @dataclass
 class FixitySignature(Defn):
-    operator: Token
+    operators: list[Token]
     is_left_associative: bool
     precedence: int
 

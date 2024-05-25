@@ -4,13 +4,14 @@ from . import ast
 from .utils import Scope
 
 
+type Sig = tuple[Token, bool, int]
+
+
 class Transformer:
     IS_LEFT_ASSOC = True
     PRECEDENCE = 10
 
-    def _create_binop(
-        self, infixn: list[ast.Expr | Token], scope: Scope[str, ast.FixitySignature]
-    ) -> ast.BinaryOperation:
+    def _create_binop(self, infixn: list[ast.Expr | Token], scope: Scope[Token, Sig]):
         rpn: list[ast.Expr | Token] = []
         op_stack: list[Token] = []
         for item in infixn:
@@ -19,14 +20,12 @@ class Transformer:
                 continue
 
             curr, has_curr = scope.get(item)
-            curr_prec = curr.precedence if has_curr else self.PRECEDENCE
-            is_curr_lassoc = (
-                curr.is_left_associative if has_curr else self.IS_LEFT_ASSOC
-            )
+            curr_prec = curr[2] if has_curr else self.PRECEDENCE
+            is_curr_lassoc = curr[1] if has_curr else self.IS_LEFT_ASSOC
 
             while len(op_stack) > 0:
                 top, has_top = scope.get(op_stack[-1])
-                top_prec = top.precedence if has_top else self.PRECEDENCE
+                top_prec = top[2] if has_top else self.PRECEDENCE
 
                 if top_prec > curr_prec or top_prec == curr_prec and is_curr_lassoc:
                     rpn.append(op_stack.pop())
@@ -51,9 +50,7 @@ class Transformer:
         assert len(operands) == 1
         return operands[0]
 
-    def transform(
-        self, node: ast.AST, scope: Scope[str, ast.FixitySignature]
-    ) -> ast.AST:
+    def transform(self, node: ast.AST, scope: Scope[Token, Sig]) -> ast.AST:
         match node:
             case ast.FunctionApp(f, arg):
                 return ast.FunctionApp(
@@ -104,8 +101,10 @@ class Transformer:
                     type, [self.transform(ct, scope) for ct in constructors]
                 )
 
-            case ast.FixitySignature(op):
-                scope.set(op, node)
+            case ast.FixitySignature(ops, left_assoc, prec):
+                for op in ops:
+                    scope.set(op, (op, left_assoc, prec))
+
                 return node
 
             case ast.Module(definitions):
