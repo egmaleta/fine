@@ -7,12 +7,7 @@ from . import type as t
 
 class ASTBuilder(Transformer):
     def module(self, p):
-        return ast.Module(p[0])
-
-    def glob_defn_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
+        return ast.Module(p)
 
     def int_val_defn(self, p):
         name, id = p
@@ -77,20 +72,21 @@ class ASTBuilder(Transformer):
                 return self._create_datatype_defn(type, cts)
 
     def adt_ct_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
+        return p
 
     def adt_ct(self, p):
-        if len(p) == 1:
-            return (p[0], None)
+        match p:
+            case [ct]:
+                return (ct, None)
 
-        return (p[0], p[1])
+            case [ct, type]:
+                return (ct, type)
 
     def fun_type(self, p):
         match p:
             case [type]:
                 return type
+
             case _:
                 return t.FunctionType(p)
 
@@ -120,19 +116,12 @@ class ASTBuilder(Transformer):
         return ast.ValueTypeDefn(p[0], p[1])
 
     def fix_defn(self, p):
-        fixity, prec, operators = p
+        fixity, prec, *operators = p
 
         return ast.FixitySignature(operators, fixity.type == "INFIXL", int(prec))
 
-    def operator_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
-
     def param_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
+        return p
 
     def match_expr(self, p):
         matchable, *matches = p
@@ -142,7 +131,8 @@ class ASTBuilder(Transformer):
         return ast.Function(p[0], p[1])
 
     def let_expr(self, p):
-        return ast.LetExpr(p[0], p[1])
+        *defns, body = p
+        return ast.LetExpr(defns, body)
 
     def cond_expr(self, p):
         return ast.Conditional(p[0], p[1], p[2])
@@ -151,15 +141,12 @@ class ASTBuilder(Transformer):
         match p:
             case [operand]:
                 return operand
+
             case [left, op, right]:
                 return ast.BinaryOperation(left, op, right)
+
             case _:
                 return ast.OpChain(p)
-
-    def defn_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
 
     def match(self, p):
         return (p[0], p[1])
