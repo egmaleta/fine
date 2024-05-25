@@ -147,7 +147,8 @@ class ASTBuilder(Transformer):
         return [*p[0], p[1]]
 
     def match_expr(self, p):
-        return ast.PatternMatching(p[0], p[1])
+        matchable, *matches = p
+        return ast.PatternMatching(matchable, matches)
 
     def func_expr(self, p):
         return ast.Function(p[0], p[1])
@@ -181,11 +182,6 @@ class ASTBuilder(Transformer):
             return p
         return [*p[0], p[1]]
 
-    def match_list(self, p):
-        if len(p) == 1:
-            return p
-        return [*p[0], p[1]]
-
     def match(self, p):
         return (p[0], p[1])
 
@@ -200,9 +196,12 @@ class ASTBuilder(Transformer):
         return pat.LiteralPattern(p[0])
 
     def operand(self, p):
-        if len(p) == 1:
-            return p[0]
-        return ast.FunctionApp(p[0], p[1])
+        match p:
+            case [f, arg]:
+                return ast.FunctionApp(f, arg)
+
+            case [atom]:
+                return atom
 
     def expr_atom(self, p):
         return p[0]

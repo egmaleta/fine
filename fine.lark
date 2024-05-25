@@ -49,16 +49,13 @@ _operator: _BTICK ID _BTICK
 param_list: param_list ID
           | ID
 
-?expr: _BSLASH param_list _ASSIGN expr                -> func_expr
-     | defn_list _IN expr                             -> let_expr
-     | _MATCH expr _OCURLY match_list _COMMA? _CCURLY -> match_expr
-     | operand ( _operator operand )*                 -> op_chain_expr
+?expr: _BSLASH param_list _ASSIGN expr                             -> func_expr
+     | defn_list _IN expr                                          -> let_expr
+     | _MATCH expr _OCURLY match ( _COMMA match )* _COMMA? _CCURLY -> match_expr
+     | operand ( _operator operand )*                              -> op_chain_expr
 
 defn_list: defn_list defn
          | defn
-
-match_list: match_list _COMMA match
-          | match
 
 match: pattern _ARROW expr
 
