@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
+from lark.lexer import Token
 
 from .pattern import Pattern
 from .type import Type, TypeConstant, TypeApp
-from .utils import String
 
 
 class AST:
@@ -23,7 +23,7 @@ class InternalValue(Expr):
 
     `name` is the identifier of the value."""
 
-    name: String
+    name: Token
 
 
 @dataclass
@@ -35,8 +35,8 @@ class InternalFunction(Expr):
     `arg_names` are the names of the values in scope expected to be passed to the function.
     """
 
-    name: String
-    arg_names: list[String]
+    name: Token
+    arg_names: list[Token]
 
 
 @dataclass
@@ -45,7 +45,7 @@ class Data(Expr):
 
     `tag` is the name of the constructor and the actual data."""
 
-    tag: String
+    tag: Token
 
 
 @dataclass
@@ -57,28 +57,28 @@ class PolyData(Expr):
     `value_names` are the names of the values in scope used to create the piece of data.
     """
 
-    tag: String
-    value_names: list[String]
+    tag: Token
+    value_names: list[Token]
 
 
 @dataclass
 class NaturalNumber(Expr):
-    value: String
+    value: Token
 
 
 @dataclass
 class DecimalNumber(Expr):
-    value: String
+    value: Token
 
 
 @dataclass
 class Unit(Expr):
-    value: String
+    value: Token
 
 
 @dataclass
 class Id(Expr):
-    name: String
+    name: Token
 
 
 @dataclass
@@ -91,13 +91,13 @@ class FunctionApp(Expr):
 class OpChain(Expr):
     """Expected to be transformed in a tree of `BinaryOperation`."""
 
-    chain: list[String | Expr]
+    chain: list[Token | Expr]
 
 
 @dataclass
 class BinaryOperation(Expr):
     left: Expr
-    operator: String
+    operator: Token
     right: Expr
 
 
@@ -117,25 +117,25 @@ class PatternMatching(Expr):
 class MultiFunction(Expr):
     """Expected to be transformed in a nested `Function`."""
 
-    params: list[String]
+    params: list[Token]
     body: Expr
 
 
 @dataclass
 class Function(Expr):
-    param: String
+    param: Token
     body: Expr
 
 
 @dataclass
 class ValueDefn(Defn):
-    name: String
+    name: Token
     value: Expr
 
 
 @dataclass
 class ValueTypeDefn(Defn):
-    name: String
+    name: Token
     type: Type
 
 
@@ -156,7 +156,7 @@ class DatatypeDefn(Defn):
 
 @dataclass
 class FixitySignature(Defn):
-    operator: String
+    operator: Token
     is_left_associative: bool
     precedence: int
 

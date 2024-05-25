@@ -1,5 +1,7 @@
+from lark.lexer import Token
+
 from . import ast
-from .utils import Scope, String
+from .utils import Scope
 
 
 class Transformer:
@@ -7,10 +9,10 @@ class Transformer:
     PRECEDENCE = 10
 
     def _create_binop(
-        self, infixn: list[ast.Expr | String], scope: Scope[str, ast.FixitySignature]
+        self, infixn: list[ast.Expr | Token], scope: Scope[str, ast.FixitySignature]
     ) -> ast.BinaryOperation:
-        rpn: list[ast.Expr | String] = []
-        op_stack: list[String] = []
+        rpn: list[ast.Expr | Token] = []
+        op_stack: list[Token] = []
         for item in infixn:
             if isinstance(item, ast.Expr):
                 rpn.append(item)
