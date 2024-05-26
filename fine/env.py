@@ -1,12 +1,12 @@
 from typing import Self
 
 
-class Env[K, V]:
+class Env[V]:
     def __init__(self, parent: Self | None = None):
-        self._values: dict[K, V] = {}
+        self._values: dict[str, V] = {}
         self._parent = parent
 
-    def _search(self, key: K, local: bool):
+    def _search(self, key: str, local: bool):
         if key in self._values:
             return self._values
 
@@ -15,7 +15,7 @@ class Env[K, V]:
 
         return None
 
-    def get(self, key: K, local=False) -> tuple[V, bool]:
+    def get(self, key: str, local=False) -> tuple[V, bool]:
         values = self._search(key, local)
 
         if values is not None:
@@ -23,7 +23,7 @@ class Env[K, V]:
 
         return None, False
 
-    def set(self, key: K, value: V, local=True, override=False):
+    def set(self, key: str, value: V, local=True, override=False):
         values = self._search(key, local)
         found = values is not None
 

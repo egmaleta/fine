@@ -11,7 +11,7 @@ class Transformer:
     IS_LEFT_ASSOC = True
     PRECEDENCE = 10
 
-    def _create_binop(self, infixn: list[ast.Expr | Token], env: Env[Token, Sig]):
+    def _create_binop(self, infixn: list[ast.Expr | Token], env: Env[Sig]):
         rpn: list[ast.Expr | Token] = []
         op_stack: list[Token] = []
         for item in infixn:
@@ -50,7 +50,7 @@ class Transformer:
         assert len(operands) == 1
         return operands[0]
 
-    def transform(self, node: ast.AST, env: Env[Token, Sig]) -> ast.AST:
+    def transform(self, node: ast.AST, env: Env[Sig]) -> ast.AST:
         match node:
             case ast.FunctionApp(f, arg):
                 return ast.FunctionApp(self.transform(f, env), self.transform(arg, env))
