@@ -6,7 +6,7 @@ class Env[V]:
         self._values: dict[str, V] = {}
         self._parent = parent
 
-    def _search(self, key: str, local: bool):
+    def _search(self, key: str, local: bool) -> dict[str, V] | None:
         if key in self._values:
             return self._values
 
@@ -15,7 +15,7 @@ class Env[V]:
 
         return None
 
-    def get(self, key: str, local=False) -> tuple[V, bool]:
+    def get(self, key: str, *, local=False) -> tuple[V, bool]:
         values = self._search(key, local)
 
         if values is not None:
@@ -23,14 +23,21 @@ class Env[V]:
 
         return None, False
 
-    def set(self, key: str, value: V, local=True, override=False):
+    def set(self, key: str, value: V, *, local=False):
         values = self._search(key, local)
-        found = values is not None
 
-        if found and override:
+        if values is not None:
             values[key] = value
-        elif not found:
+            return True
+
+        return False
+
+    def add(self, key: str, value: V):
+        if key not in self._values:
             self._values[key] = value
+            return True
+
+        return False
 
     def child_env(self):
         return Env(self)

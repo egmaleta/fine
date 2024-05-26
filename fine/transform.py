@@ -101,7 +101,7 @@ class Transformer:
 
             case ast.FixitySignature(ops, left_assoc, prec):
                 for op in ops:
-                    env.set(op, (op, left_assoc, prec))
+                    env.add(op, (op, left_assoc, prec))
 
                 return node
 
