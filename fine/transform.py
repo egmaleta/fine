@@ -1,7 +1,7 @@
 from lark.lexer import Token
 
 from . import ast
-from .utils import Scope
+from .env import Env
 
 
 type Sig = tuple[Token, bool, int]
@@ -11,7 +11,7 @@ class Transformer:
     IS_LEFT_ASSOC = True
     PRECEDENCE = 10
 
-    def _create_binop(self, infixn: list[ast.Expr | Token], scope: Scope[Token, Sig]):
+    def _create_binop(self, infixn: list[ast.Expr | Token], env: Env[Token, Sig]):
         rpn: list[ast.Expr | Token] = []
         op_stack: list[Token] = []
         for item in infixn:
@@ -19,12 +19,12 @@ class Transformer:
                 rpn.append(item)
                 continue
 
-            curr, has_curr = scope.get(item)
+            curr, has_curr = env.get(item)
             curr_prec = curr[2] if has_curr else self.PRECEDENCE
             is_curr_lassoc = curr[1] if has_curr else self.IS_LEFT_ASSOC
 
             while len(op_stack) > 0:
-                top, has_top = scope.get(op_stack[-1])
+                top, has_top = env.get(op_stack[-1])
                 top_prec = top[2] if has_top else self.PRECEDENCE
 
                 if top_prec > curr_prec or top_prec == curr_prec and is_curr_lassoc:
@@ -50,65 +50,63 @@ class Transformer:
         assert len(operands) == 1
         return operands[0]
 
-    def transform(self, node: ast.AST, scope: Scope[Token, Sig]) -> ast.AST:
+    def transform(self, node: ast.AST, env: Env[Token, Sig]) -> ast.AST:
         match node:
             case ast.FunctionApp(f, arg):
-                return ast.FunctionApp(
-                    self.transform(f, scope), self.transform(arg, scope)
-                )
+                return ast.FunctionApp(self.transform(f, env), self.transform(arg, env))
 
             case ast.OpChain(chain):
                 return self._create_binop(
                     [
-                        self.transform(el, scope) if isinstance(el, ast.Expr) else el
+                        self.transform(el, env) if isinstance(el, ast.Expr) else el
                         for el in chain
                     ],
-                    scope,
+                    env,
                 )
 
             case ast.BinaryOperation(left, operator, right):
                 return ast.BinaryOperation(
-                    self.transform(left, scope), operator, self.transform(right, scope)
+                    self.transform(left, env), operator, self.transform(right, env)
                 )
 
             case ast.LetExpr(definitions, body):
-                scope = scope.new_scope()
+                env = env.child_env()
                 return ast.LetExpr(
-                    [self.transform(defn, scope) for defn in definitions],
-                    self.transform(body, scope),
+                    [self.transform(defn, env) for defn in definitions],
+                    self.transform(body, env),
                 )
 
             case ast.PatternMatching(matchable, matches):
                 return ast.PatternMatching(
-                    self.transform(matchable, scope),
-                    [(p, self.transform(e, scope)) for p, e in matches],
+                    self.transform(matchable, env),
+                    [(p, self.transform(e, env)) for p, e in matches],
                 )
 
             case ast.MultiFunction(params, body):
-                f = self.transform(body, scope)
+                f = self.transform(body, env)
                 for p in reversed(params):
                     f = ast.Function(p, f)
                 return f
 
             case ast.Function(param, body):
-                return ast.Function(param, self.transform(body, scope))
+                return ast.Function(param, self.transform(body, env))
 
             case ast.ValueDefn(name, value):
-                return ast.ValueDefn(name, self.transform(value, scope))
+                return ast.ValueDefn(name, self.transform(value, env))
 
             case ast.DatatypeDefn(type, constructors):
                 return ast.DatatypeDefn(
-                    type, [(self.transform(defn, scope), t) for defn, t in constructors]
+                    type, [(self.transform(defn, env), t) for defn, t in constructors]
                 )
 
             case ast.FixitySignature(ops, left_assoc, prec):
                 for op in ops:
-                    scope.set(op, (op, left_assoc, prec))
+                    env.set(op, (op, left_assoc, prec))
 
                 return node
 
             case ast.Module(definitions):
-                return ast.Module([self.transform(defn, scope) for defn in definitions])
+                return ast.Module([self.transform(defn, env) for defn in definitions])
 
             case _:
                 # internal, data, id, literal and typedefn nodes

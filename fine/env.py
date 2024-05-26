@@ -1,7 +1,7 @@
 from typing import Self
 
 
-class Scope[K, V]:
+class Env[K, V]:
     def __init__(self, parent: Self | None = None):
         self._values: dict[K, V] = {}
         self._parent = parent
@@ -32,5 +32,5 @@ class Scope[K, V]:
         elif not found:
             self._values[key] = value
 
-    def new_scope(self):
-        return Scope(self)
+    def child_env(self):
+        return Env(self)
