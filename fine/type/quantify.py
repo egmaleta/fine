@@ -14,25 +14,24 @@ class Quantifier:
                 return {name}
 
             case t.TypeApp(fname, args):
-                names = {fname}
+                vars = {fname}
                 for arg in args:
-                    names |= self._quantify(arg)
+                    vars |= self._quantify(arg)
 
-                return names
+                return vars
 
             case t.FunctionType(inner_types):
-                names = {}
+                vars = {}
                 for type in inner_types:
-                    names |= self._quantify(type)
+                    vars |= self._quantify(type)
 
-                return names
+                return vars
 
             case t.QuantifiedType(quantified, inner_type):
-                names = self._quantify(inner_type)
+                vars = self._quantify(inner_type)
 
-                captured = quantified & names
-                free = quantified - names
-                unused = quantified - captured
+                free = vars - quantified
+                unused = quantified - vars
 
                 for name in unused:
                     self.errors.append(f"quantified type var '{name}' is unused")
@@ -41,9 +40,9 @@ class Quantifier:
 
     def quantify(self, type: t.Type):
         if not isinstance(type, t.QuantifiedType):
-            names = self._quantify(type)
+            vars = self._quantify(type)
             return (
-                t.QuantifiedType(names, type) if len(names) > 0 else type
+                t.QuantifiedType(vars, type) if len(vars) > 0 else type
             ), self.errors
 
         free = self._quantify(type)
