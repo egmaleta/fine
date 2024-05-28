@@ -16,13 +16,13 @@ class ASTBuilder(Transformer):
     def int_fun_defn(self, p):
         name, params, id = p
         value = ast.InternalFunction(id, params)
-        return ast.ValueDefn(name, ast.MultiFunction(params, value))
+        return ast.ValueDefn(name, ast.Function(params, value))
 
     def int_op_defn(self, p):
         left, name, right, id = p
         params = [left, right]
         value = ast.InternalFunction(id, params)
-        return ast.ValueDefn(name, ast.MultiFunction(params, value))
+        return ast.ValueDefn(name, ast.Function(params, value))
 
     def int_adt_defn(self, p):
         match p:
@@ -45,7 +45,7 @@ class ASTBuilder(Transformer):
 
                 case t.FunctionType(inner_types):
                     params = [f"param_{i+1}" for i in range(len(inner_types))]
-                    value = ast.MultiFunction(params, ast.PolyData(ct, params))
+                    value = ast.Function(params, ast.PolyData(ct, params))
                     value_defn = ast.ValueDefn(ct, value)
 
                     constructors.append(
@@ -54,7 +54,7 @@ class ASTBuilder(Transformer):
 
                 case _:
                     params = ["param_1"]
-                    value = ast.MultiFunction(params, ast.PolyData(ct, params))
+                    value = ast.Function(params, ast.PolyData(ct, params))
                     value_defn = ast.ValueDefn(ct, value)
 
                     constructors.append((value_defn, t.FunctionType([type, ct_type])))
@@ -114,11 +114,11 @@ class ASTBuilder(Transformer):
 
     def fun_defn(self, p):
         name, params, value = p
-        return ast.ValueDefn(name, ast.MultiFunction(params, value))
+        return ast.ValueDefn(name, ast.Function(params, value))
 
     def op_defn(self, p):
         left, name, right, value = p
-        return ast.ValueDefn(name, ast.MultiFunction([left, right], value))
+        return ast.ValueDefn(name, ast.Function([left, right], value))
 
     def typeof_defn(self, p):
         return ast.ValueTypeDefn(p[0], p[1])

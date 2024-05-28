@@ -82,14 +82,8 @@ class Transformer:
                     [(p, self.transform(e, env)) for p, e in matches],
                 )
 
-            case ast.MultiFunction(params, body):
-                f = self.transform(body, env)
-                for p in reversed(params):
-                    f = ast.Function(p, f)
-                return f
-
-            case ast.Function(param, body):
-                return ast.Function(param, self.transform(body, env))
+            case ast.Function(params, body):
+                return ast.Function(params, self.transform(body, env))
 
             case ast.ValueDefn(name, value):
                 return ast.ValueDefn(name, self.transform(value, env))

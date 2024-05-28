@@ -114,16 +114,8 @@ class PatternMatching(Expr):
 
 
 @dataclass
-class MultiFunction(Expr):
-    """Expected to be transformed in a nested `Function`."""
-
-    params: list[Token]
-    body: Expr
-
-
-@dataclass
 class Function(Expr):
-    param: Token
+    params: list[Token]
     body: Expr
 
 
