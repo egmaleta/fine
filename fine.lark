@@ -2,16 +2,16 @@
 
 module: glob_defn+
 
-?glob_defn: _LET _name _ASSIGN _internal                                  -> int_val_defn
-          | _LET _name param_list _ASSIGN _internal                       -> int_fun_defn
-          | _LET ID _operator ID _ASSIGN _internal                        -> int_op_defn
-          | _DATA TYPE_ID param_list? _OCURLY _INTERNAL _CCURLY           -> int_adt_defn
-          | _DATA TYPE_ID param_list? _OCURLY adt_ct_list _COMMA? _CCURLY -> adt_defn
+?glob_defn: _LET _name _ASSIGN _internal                                 -> int_val_defn
+          | _LET _name param_list _ASSIGN _internal                      -> int_fun_defn
+          | _LET ID _operator ID _ASSIGN _internal                       -> int_op_defn
+          | _DATA CAP_ID param_list? _OCURLY _INTERNAL _CCURLY           -> int_adt_defn
+          | _DATA CAP_ID param_list? _OCURLY adt_ct_list _COMMA? _CCURLY -> adt_defn
           | defn
 
 adt_ct_list: adt_ct ( _COMMA adt_ct )*
 
-adt_ct: TYPE_ID ( _COLON quantified_type )?
+adt_ct: CAP_ID ( _COLON quantified_type )?
 
 quantified_type: ( _FORALL param_list DOT )? fun_type
 
@@ -24,9 +24,9 @@ _type: type_var
 
 type_var: ID
 
-mono_type: TYPE_ID
+mono_type: CAP_ID
 
-poly_type: ( ID | TYPE_ID ) _type_arg+
+poly_type: ( ID | CAP_ID ) _type_arg+
 
 _type_arg: type_var
          | mono_type
@@ -59,16 +59,16 @@ param_list: ID+
 match: pattern _ARROW expr
 
 ?pattern: capture_pattern
-        | TYPE_ID capture_pattern* -> data_pattern
-        | ( DEC | NAT | UNIT )     -> literal_pattern
+        | CAP_ID capture_pattern* -> data_pattern
+        | ( DEC | NAT | UNIT )    -> literal_pattern
 
 capture_pattern: ID
 
 operand: operand atom
        | atom
 
-?atom: _OPAR expr _CPAR    -> expr_atom
-     | ( TYPE_ID | _name ) -> id_atom
+?atom: _OPAR expr _CPAR   -> expr_atom
+     | ( CAP_ID | _name ) -> id_atom
      | literal
 
 ?literal: DEC  -> dec_literal
@@ -80,7 +80,7 @@ operand: operand atom
 _INTERNAL.1: "#internal" // over COMMENT
 COMMENT: /#[^\n]*/
 
-TYPE_ID: /[A-Z][a-zA-Z0-9_]*/
+CAP_ID: /[A-Z][a-zA-Z0-9_]*/
 
 // keywords (all over ID)
 INFIXL.2: "infixl" // over IN
