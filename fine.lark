@@ -15,16 +15,23 @@ adt_ct: TYPE_ID ( _COLON quantified_type )?
 
 quantified_type: ( _FORALL param_list DOT )? fun_type
 
-fun_type: type ( _ARROW type )*
+fun_type: _type ( _ARROW _type )*
 
-?type: type_var
+_type: type_var
      | mono_type
-     | ( ID | TYPE_ID ) type+ -> poly_type
+     | poly_type
      | _OPAR quantified_type _CPAR
 
 type_var: ID
 
 mono_type: TYPE_ID
+
+poly_type: ( ID | TYPE_ID ) _type_arg+
+
+_type_arg: type_var
+         | mono_type
+         | _OPAR poly_type _CPAR
+         | _OPAR quantified_type _CPAR
 
 _internal: _INTERNAL ID
 
