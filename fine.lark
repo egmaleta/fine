@@ -11,14 +11,16 @@ module: glob_defn+
 
 adt_ct_list: adt_ct ( _COMMA adt_ct )*
 
-adt_ct: TYPE_ID ( _COLON fun_type )?
+adt_ct: TYPE_ID ( _COLON quantified_type )?
+
+quantified_type: ( _FORALL param_list DOT )? fun_type
 
 fun_type: type ( _ARROW type )*
 
 ?type: type_var
      | mono_type
      | ( ID | TYPE_ID ) type+ -> poly_type
-     | _OPAR fun_type _CPAR
+     | _OPAR quantified_type _CPAR
 
 type_var: ID
 
@@ -29,15 +31,16 @@ _internal: _INTERNAL ID
 ?defn: _LET _name _ASSIGN expr            -> val_defn
      | _LET _name param_list _ASSIGN expr -> fun_defn
      | _LET ID _operator ID _ASSIGN expr  -> op_defn
-     | _LET _name _COLON fun_type         -> typeof_defn
+     | _LET _name _COLON quantified_type  -> typeof_defn
      | ( INFIXL | INFIXR ) NAT _operator+ -> fix_defn
 
 _name: ID
-     | _OPAR ( LARGE_OP | OP ) _CPAR
+     | _OPAR ( LARGE_OP | OP | DOT ) _CPAR
 
 _operator: _BTICK ID _BTICK
          | LARGE_OP
          | OP
+         | DOT
 
 param_list: ID+
 
@@ -75,6 +78,7 @@ TYPE_ID: /[A-Z][a-zA-Z0-9_]*/
 // keywords (all over ID)
 INFIXL.2: "infixl" // over IN
 INFIXR.2: "infixr" // over IN
+_FORALL.1: "forall"
 _IN.1: "in"
 _LET.1: "let"
 _MATCH.1: "match"
@@ -96,7 +100,8 @@ LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 _ASSIGN: "="
 _BAR: "|"
 _COLON: ":"
-OP: /[~!@$%^&*\/\-+?.<>]/
+DOT: "."
+OP: /[~!@$%^&*\/\-+?<>]/
 
 UNIT: "()"
 

@@ -82,6 +82,14 @@ class ASTBuilder(Transformer):
             case [ct, type]:
                 return (ct, type)
 
+    def quantified_type(self, p):
+        match p:
+            case [ftype]:
+                return ftype
+
+            case [params, _, ftype]:
+                return t.QuantifiedType(params, ftype)
+
     def fun_type(self, p):
         match p:
             case [type]:

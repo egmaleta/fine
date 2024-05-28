@@ -49,3 +49,7 @@ class FunctionType(Type):
 class QuantifiedType(Type):
     quantified: set[str]
     inner_type: Type
+
+    def __post_init__(self):
+        if isinstance(self.quantified, list):
+            self.quantified = set(self.quantified)
