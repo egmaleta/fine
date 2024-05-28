@@ -29,9 +29,7 @@ class ASTBuilder(Transformer):
             case [name]:
                 return ast.DatatypeDefn(t.TypeConstant(name))
             case [name, params]:
-                return ast.DatatypeDefn(
-                    t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
-                )
+                return ast.DatatypeDefn(t.TypeApp(name, [t.TypeVar(p) for p in params]))
 
     @staticmethod
     def _create_datatype_defn(ct_type, cts):
