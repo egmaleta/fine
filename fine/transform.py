@@ -1,19 +1,18 @@
-from lark.lexer import Token
-
 from . import ast
 from .env import Env
+from .utils import String
 
 
-type Sig = tuple[Token, bool, int]
+type Sig = tuple[String, bool, int]
 
 
 class Transformer:
     IS_LEFT_ASSOC = True
     PRECEDENCE = 10
 
-    def _create_binop(self, infixn: list[ast.Expr | Token], env: Env[Sig]):
-        rpn: list[ast.Expr | Token] = []
-        op_stack: list[Token] = []
+    def _create_binop(self, infixn: list[ast.Expr | String], env: Env[Sig]):
+        rpn: list[ast.Expr | String] = []
+        op_stack: list[String] = []
         for item in infixn:
             if isinstance(item, ast.Expr):
                 rpn.append(item)

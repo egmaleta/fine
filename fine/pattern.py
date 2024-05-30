@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from lark.lexer import Token
+
+from .utils import String
 
 
 class Pattern:
@@ -8,15 +9,15 @@ class Pattern:
 
 @dataclass
 class CapturePattern(Pattern):
-    name: Token
+    name: String
 
 
 @dataclass
 class DataPattern(Pattern):
-    tag: Token
+    tag: String
     patterns: list[CapturePattern] = field(default_factory=lambda: [])
 
 
 @dataclass
 class LiteralPattern(Pattern):
-    value: Token
+    value: String

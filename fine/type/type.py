@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from lark.lexer import Token
+
+from ..utils import String
 
 
 class Type:
@@ -9,17 +10,17 @@ class Type:
 
 @dataclass
 class TypeConstant(Type):
-    name: Token
+    name: String
 
 
 @dataclass
 class TypeVar(Type):
-    name: Token
+    name: String
 
 
 @dataclass
 class TypeApp(Type):
-    fname: Token
+    fname: String
     args: list[Type]
 
 

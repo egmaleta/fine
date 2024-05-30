@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from lark.lexer import Token
 
 from .pattern import Pattern
 from .type import Type, TypeConstant, TypeApp
+from .utils import String
 
 
 class AST:
@@ -23,7 +23,7 @@ class InternalValue(Expr):
 
     `name` is the identifier of the value."""
 
-    name: Token
+    name: String
 
 
 @dataclass
@@ -35,8 +35,8 @@ class InternalFunction(Expr):
     `arg_names` are the names of the values in scope expected to be passed to the function.
     """
 
-    name: Token
-    arg_names: list[Token]
+    name: String
+    arg_names: list[String]
 
 
 @dataclass
@@ -45,7 +45,7 @@ class Data(Expr):
 
     `tag` is the name of the constructor and the actual data."""
 
-    tag: Token
+    tag: String
 
 
 @dataclass
@@ -57,28 +57,28 @@ class PolyData(Expr):
     `value_names` are the names of the values in scope used to create the piece of data.
     """
 
-    tag: Token
-    value_names: list[Token]
+    tag: String
+    value_names: list[String]
 
 
 @dataclass
 class NaturalNumber(Expr):
-    value: Token
+    value: String
 
 
 @dataclass
 class DecimalNumber(Expr):
-    value: Token
+    value: String
 
 
 @dataclass
 class Unit(Expr):
-    value: Token
+    value: String
 
 
 @dataclass
 class Id(Expr):
-    name: Token
+    name: String
 
 
 @dataclass
@@ -91,13 +91,13 @@ class FunctionApp(Expr):
 class OpChain(Expr):
     """Expected to be transformed in a tree of `BinaryOperation`."""
 
-    chain: list[Token | Expr]
+    chain: list[String | Expr]
 
 
 @dataclass
 class BinaryOperation(Expr):
     left: Expr
-    operator: Token
+    operator: String
     right: Expr
 
 
@@ -115,19 +115,19 @@ class PatternMatching(Expr):
 
 @dataclass
 class Function(Expr):
-    params: list[Token]
+    params: list[String]
     body: Expr
 
 
 @dataclass
 class ValueDefn(Defn):
-    name: Token
+    name: String
     value: Expr
 
 
 @dataclass
 class ValueTypeDefn(Defn):
-    name: Token
+    name: String
     type: Type
 
 
@@ -148,7 +148,7 @@ class DatatypeDefn(Defn):
 
 @dataclass
 class FixitySignature(Defn):
-    operators: list[Token]
+    operators: list[String]
     is_left_associative: bool
     precedence: int
 
