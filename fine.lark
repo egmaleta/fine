@@ -11,7 +11,7 @@ module: glob_defn+
 
 adt_ct_list: adt_ct ( _SEMI adt_ct )*
 
-adt_ct: CAP_ID ( _COLON quantified_type )?
+adt_ct: CAP_ID _COLON quantified_type
 
 quantified_type: ( _FORALL param_list DOT )? fun_type
 

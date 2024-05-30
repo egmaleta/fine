@@ -3,7 +3,8 @@ from lark.lexer import Token
 
 
 class Type:
-    pass
+    def __len__(self):
+        return 1
 
 
 @dataclass
@@ -53,3 +54,6 @@ class QuantifiedType(Type):
     def __post_init__(self):
         if isinstance(self.quantified, list):
             self.quantified = set(self.quantified)
+
+    def __len__(self):
+        return len(self.inner_type)

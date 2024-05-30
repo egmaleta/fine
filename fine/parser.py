@@ -36,26 +36,17 @@ class ASTBuilder(Transformer):
         constructors = []
 
         for ct, type in cts:
-            match type:
-                case None:
-                    value_defn = ast.ValueDefn(ct, ast.Data(ct))
-                    constructors.append((value_defn, ct_type))
+            params_len = len(type) - 1
 
-                case t.FunctionType(inner_types):
-                    params = [f"param_{i+1}" for i in range(len(inner_types))]
-                    value = ast.Function(params, ast.PolyData(ct, params))
-                    value_defn = ast.ValueDefn(ct, value)
+            if params_len > 0:
+                params = [f"_{i+1}" for i in range(params_len)]
+                value_defn = ast.ValueDefn(
+                    ct, ast.Function(params, ast.PolyData(ct, params))
+                )
+            else:
+                value_defn = ast.ValueDefn(ct, ast.Data(ct))
 
-                    constructors.append(
-                        (value_defn, t.FunctionType([*inner_types, ct_type]))
-                    )
-
-                case _:
-                    params = ["param_1"]
-                    value = ast.Function(params, ast.PolyData(ct, params))
-                    value_defn = ast.ValueDefn(ct, value)
-
-                    constructors.append((value_defn, t.FunctionType([type, ct_type])))
+            constructors.append((value_defn, type))
 
         return ast.DatatypeDefn(ct_type, constructors)
 
@@ -73,12 +64,7 @@ class ASTBuilder(Transformer):
         return p
 
     def adt_ct(self, p):
-        match p:
-            case [ct]:
-                return (ct, None)
-
-            case [ct, type]:
-                return (ct, type)
+        return tuple(p)
 
     def quantified_type(self, p):
         match p:
