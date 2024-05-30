@@ -141,7 +141,7 @@ class DatatypeDefn(Defn):
     def __post_init__(self):
         t = self.type
         if isinstance(t, TypeApp):
-            self.typename = t.fname
+            self.typename = t.ftype_name
         else:
             self.typename = t.name
 

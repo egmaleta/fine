@@ -13,25 +13,25 @@ class Quantifier:
             case t.TypeVar(name):
                 return {name}
 
-            case t.TypeApp(fname, args):
-                vars = {fname}
-                for arg in args:
-                    vars |= self._quantify(arg)
-
-                return vars
-
-            case t.FunctionType(inner_types):
-                vars = {}
-                for type in inner_types:
+            case t.TypeApp(ftype_name, type_args):
+                vars = {ftype_name}
+                for type in type_args:
                     vars |= self._quantify(type)
 
                 return vars
 
-            case t.QuantifiedType(quantified, inner_type):
-                vars = self._quantify(inner_type)
+            case t.FunctionType(type_args):
+                vars = {}
+                for type in type_args:
+                    vars |= self._quantify(type)
 
-                free = vars - quantified
-                unused = quantified - vars
+                return vars
+
+            case t.QuantifiedType(vars, inner_type):
+                captured = self._quantify(inner_type)
+
+                free = captured - vars
+                unused = vars - captured
 
                 for name in unused:
                     self.errors.append(f"quantified type var '{name}' is unused")

@@ -20,41 +20,41 @@ class TypeVar(Type):
 
 @dataclass
 class TypeApp(Type):
-    fname: String
-    args: list[Type]
+    ftype_name: String
+    type_args: list[Type]
 
 
 @dataclass
 class FunctionType(Type):
-    inner_types: list[Type]
+    type_args: list[Type]
 
     def __post_init__(self):
-        assert len(self.inner_types) >= 2
+        assert len(self.type_args) >= 2
 
     @property
     def left(self):
-        return self.inner_types[0]
+        return self.type_args[0]
 
     @property
     def right(self):
-        match self.inner_types[1:]:
+        match self.type_args[1:]:
             case [type]:
                 return type
             case types:
                 return FunctionType(types)
 
     def __len__(self):
-        return len(self.inner_types)
+        return len(self.type_args)
 
 
 @dataclass
 class QuantifiedType(Type):
-    quantified: set[str]
+    vars: set[str]
     inner_type: Type
 
     def __post_init__(self):
-        if isinstance(self.quantified, list):
-            self.quantified = set(self.quantified)
+        if isinstance(self.vars, list):
+            self.vars = set(self.vars)
 
     def __len__(self):
         return len(self.inner_type)
