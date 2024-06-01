@@ -9,22 +9,7 @@ class ASTBuilder(Transformer):
     def module(self, p):
         return ast.Module(p)
 
-    def int_val_defn(self, p):
-        name, id = p
-        return ast.ValueDefn(name, ast.InternalValue(id))
-
-    def int_fun_defn(self, p):
-        name, params, id = p
-        value = ast.InternalFunction(id, params)
-        return ast.ValueDefn(name, ast.Function(params, value))
-
-    def int_op_defn(self, p):
-        left, name, right, id = p
-        params = [left, right]
-        value = ast.InternalFunction(id, params)
-        return ast.ValueDefn(name, ast.Function(params, value))
-
-    def int_adt_defn(self, p):
+    def int_data_defn(self, p):
         match p:
             case [name]:
                 return ast.DatatypeDefn(t.TypeConstant(name))
@@ -50,7 +35,7 @@ class ASTBuilder(Transformer):
 
         return ast.DatatypeDefn(ct_type, constructors)
 
-    def adt_defn(self, p):
+    def data_defn(self, p):
         match p:
             case [name, cts]:
                 type = t.TypeConstant(name)
@@ -60,69 +45,77 @@ class ASTBuilder(Transformer):
                 type = t.TypeApp(name, [t.TypeVar(p) for p in params])
                 return self._create_datatype_defn(type, cts)
 
-    def adt_ct_list(self, p):
+    def int_val_defn(self, p):
         match p:
-            case [more_cts, ct]:
-                more_cts.append(ct)
-                return more_cts
+            case [name, intr]:
+                return ast.ValueDefn(name, ast.InternalValue(intr))
+            case [name, params, intr]:
+                return ast.ValueDefn(
+                    name, ast.Function(params, ast.InternalFunction(intr, params))
+                )
 
-            case _:
-                return p
+    def int_op_defn(self, p):
+        left, op, right, intr = p
+        params = [left, right]
+        return ast.ValueDefn(
+            op, ast.Function(params, ast.InternalFunction(intr, params))
+        )
 
-    def adt_ct(self, p):
+    def datact_list(self, p):
+        return p
+
+    def datact(self, p):
         return tuple(p)
 
     def quantified_type(self, p):
         match p:
             case [ftype]:
                 return ftype
-
-            case [params, _, ftype]:
-                return t.QuantifiedType(params, ftype)
+            case [vars, ftype]:
+                return t.QuantifiedType(vars, ftype)
 
     def fun_type(self, p):
         match p:
             case [type]:
                 return type
-
-            case _:
-                return t.FunctionType(p)
+            case types:
+                return t.FunctionType(types)
 
     def type_var(self, p):
         return t.TypeVar(p[0])
 
-    def mono_type(self, p):
+    def type_const(self, p):
         return t.TypeConstant(p[0])
 
-    def poly_type(self, p):
-        fname, *args = p
-        return t.TypeApp(fname, args)
-
-    def val_defn(self, p):
-        name, value = p
-        return ast.ValueDefn(name, value)
-
-    def fun_defn(self, p):
-        name, params, value = p
-        return ast.ValueDefn(name, ast.Function(params, value))
-
-    def op_defn(self, p):
-        left, name, right, value = p
-        return ast.ValueDefn(name, ast.Function([left, right], value))
-
-    def typeof_defn(self, p):
-        return ast.ValueTypeDefn(p[0], p[1])
+    def type_app(self, p):
+        name, *args = p
+        return t.TypeApp(name, args)
 
     def fix_defn(self, p):
         fixity, prec, operator = p
-
         return ast.FixitySignature(operator, fixity.type == "INFIXL", int(prec))
+
+    def typeof_defn(self, p):
+        name, type = p
+        return ast.ValueTypeDefn(name, type)
+
+    def val_defn(self, p):
+        match p:
+            case [name, value]:
+                return ast.ValueDefn(name, value)
+            case [name, params, body]:
+                return ast.ValueDefn(name, ast.Function(params, body))
+
+    def op_defn(self, p):
+        left, op, right, body = p
+        return ast.ValueDefn(op, ast.Function([left, right], body))
 
     def param_list(self, p):
         return p
 
-    def func_expr(self, p):
-        return ast.Function(p[0], p[1])
+    def fun_expr(self, p):
+        params, body = p
+        return ast.Function(params, body)
 
     def let_expr(self, p):
         *defns, body = p
@@ -134,50 +127,40 @@ class ASTBuilder(Transformer):
 
     def op_chain_expr(self, p):
         match p:
-            case [operand]:
-                return operand
-
+            case [single]:
+                return single
             case [left, op, right]:
                 return ast.BinaryOperation(left, op, right)
-
-            case _:
-                return ast.OpChain(p)
-
-    def match_list(self, p):
-        match p:
-            case [more_matches, match]:
-                more_matches.append(match)
-                return more_matches
-
-            case _:
-                return p
+            case chain:
+                return ast.OpChain(chain)
 
     def match(self, p):
-        return (p[0], p[1])
+        return tuple(p)
 
     def capture_pattern(self, p):
         return pat.CapturePattern(p[0])
 
     def data_pattern(self, p):
-        tag, *patterns = p
-        return pat.DataPattern(tag, patterns)
+        match p:
+            case [tag]:
+                return pat.DataPattern(tag)
+            case [tag, names]:
+                return pat.DataPattern(
+                    tag, [pat.CapturePattern(name) for name in names]
+                )
 
     def literal_pattern(self, p):
         return pat.LiteralPattern(p[0])
 
-    def operand(self, p):
-        match p:
-            case [f, arg]:
-                return ast.FunctionApp(f, arg)
-
-            case [atom]:
-                return atom
-
-    def expr_atom(self, p):
-        return p[0]
+    def fun_app(self, p):
+        f, args = p
+        return ast.FunctionApp(f, args)
 
     def id_atom(self, p):
         return ast.Id(p[0])
+
+    def expr_list(self, p):
+        return p
 
     def dec_literal(self, p):
         return ast.DecimalNumber(p[0])

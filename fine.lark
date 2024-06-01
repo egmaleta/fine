@@ -1,83 +1,64 @@
 // PARSER GRAMMAR
 
-module: glob_defn+
+module: defn+
 
-?glob_defn: _LET _name _ASSIGN _internal                                -> int_val_defn
-          | _LET _name param_list _ASSIGN _internal                     -> int_fun_defn
-          | _LET ID _operator ID _ASSIGN _internal                      -> int_op_defn
-          | _DATA CAP_ID param_list? _OCURLY _INTERNAL _CCURLY          -> int_adt_defn
-          | _DATA CAP_ID param_list? _OCURLY adt_ct_list _SEMI? _CCURLY -> adt_defn
-          | defn
+?defn: _DATA CAP_ID param_list? _OCURLY _INTERNAL _CCURLY   -> int_data_defn
+     | _DATA CAP_ID param_list? _OCURLY datact_list _CCURLY -> data_defn
+     | _name param_list? _ASSIGN _internal                  -> int_val_defn
+     | ID _operator ID _ASSIGN _internal                    -> int_op_defn
+     | local_defn
 
-adt_ct_list: adt_ct_list _SEMI adt_ct
-           | adt_ct
+datact_list: datact+
 
-adt_ct: CAP_ID _COLON quantified_type
+datact: CAP_ID _COLON quantified_type
 
-quantified_type: ( _FORALL param_list DOT )? fun_type
+quantified_type: ( _FORALL param_list )? fun_type
 
-fun_type: _type ( _ARROW _type )*
+fun_type: type ( _ARROW type )*
 
-_type: type_var
-     | mono_type
-     | poly_type
+?type: ID                                                -> type_var
+     | CAP_ID                                            -> type_const
+     | ( ID | CAP_ID ) _OPAR type ( _COMMA type )* _CPAR -> type_app
      | _OPAR quantified_type _CPAR
-
-type_var: ID
-
-mono_type: CAP_ID
-
-poly_type: ( ID | CAP_ID ) _type_arg+
-
-_type_arg: type_var
-         | mono_type
-         | _OPAR poly_type _CPAR
-         | _OPAR quantified_type _CPAR
 
 _internal: _INTERNAL ID
 
-?defn: _LET _name _ASSIGN expr            -> val_defn
-     | _LET _name param_list _ASSIGN expr -> fun_defn
-     | _LET ID _operator ID _ASSIGN expr  -> op_defn
-     | _LET _name _COLON quantified_type  -> typeof_defn
-     | ( INFIXL | INFIXR ) NAT _operator  -> fix_defn
+?local_defn: ( INFIXL | INFIXR ) NAT _operator -> fix_defn
+           | _name _COLON quantified_type      -> typeof_defn
+           | _name param_list? _ASSIGN expr    -> val_defn
+           | ID _operator ID _ASSIGN expr      -> op_defn
 
 _name: ID
-     | _OPAR ( LARGE_OP | OP | DOT ) _CPAR
+     | _OPAR ( LARGE_OP | OP ) _CPAR
 
 _operator: _BTICK ID _BTICK
          | LARGE_OP
          | OP
-         | DOT
 
-param_list: ID+
+param_list: _OPAR ID ( _COMMA ID )* _CPAR
 
-?expr: _BSLASH param_list _ASSIGN expr               -> func_expr
-     | defn+ _IN expr                                -> let_expr
-     | _MATCH expr _OCURLY match_list _SEMI? _CCURLY -> match_expr
-     | operand ( _operator operand )*                -> op_chain_expr
-
-match_list: match_list _SEMI match
-          | match
+?expr: _BSLASH param_list _ASSIGN expr    -> fun_expr
+     | _LET local_defn+ _IN expr          -> let_expr
+     | _MATCH expr _OCURLY match+ _CCURLY -> match_expr
+     | operand ( _operator operand )*     -> op_chain_expr
 
 match: pattern _ARROW expr
 
-?pattern: capture_pattern
-        | CAP_ID capture_pattern* -> data_pattern
-        | ( DEC | NAT | UNIT )    -> literal_pattern
+?pattern: ID                   -> capture_pattern
+        | CAP_ID param_list?   -> data_pattern
+        | ( DEC | NAT | UNIT ) -> literal_pattern
 
-capture_pattern: ID
+?operand: operand _OPAR expr_list _CPAR -> fun_app
+        | ( CAP_ID | _name )            -> id_atom
+        | _OPAR expr _CPAR
+        | literal
 
-operand: operand atom
-       | atom
-
-?atom: _OPAR expr _CPAR   -> expr_atom
-     | ( CAP_ID | _name ) -> id_atom
-     | literal
+expr_list: expr ( _COMMA expr )*
 
 ?literal: DEC  -> dec_literal
         | NAT  -> nat_literal
         | UNIT -> unit_literal
+
 
 // LEXER GRAMMAR
 
@@ -87,13 +68,13 @@ COMMENT: /#[^\n]*/
 CAP_ID: /[A-Z][a-zA-Z0-9_]*/
 
 // keywords (all over ID)
+_DATA.1: "data"
+_FORALL.1: "forall"
 INFIXL.2: "infixl" // over IN
 INFIXR.2: "infixr" // over IN
-_FORALL.1: "forall"
 _IN.1: "in"
 _LET.1: "let"
 _MATCH.1: "match"
-_DATA.1: "data"
 
 ID: /[a-z_][a-zA-Z0-9_]*/
 
@@ -102,20 +83,18 @@ NAT: /0|[1-9][0-9]*/
 
 _BTICK: "`"
 _BSLASH: "\\"
-_SEMI: ";"
+_COMMA: ","
 _OCURLY: "{"
 _CCURLY: "}"
 
 _ARROW.1: "->" // over LARGE_OP
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
-_ASSIGN: "="
-_BAR: "|"
+
 _COLON: ":"
-DOT: "."
-OP: /[~!@$%^&*\/\-+?<>]/
+_ASSIGN: "="
+OP: /[~!@$%^&*\/\-+|?.<>]/
 
-UNIT: "()"
-
+UNIT.1: "()" // over _OPAR
 _OPAR: "("
 _CPAR: ")"
 

@@ -84,7 +84,7 @@ class Id(Expr):
 @dataclass
 class FunctionApp(Expr):
     f: Expr
-    arg: Expr
+    args: list[Expr]
 
 
 @dataclass

@@ -51,8 +51,10 @@ class Transformer:
 
     def transform(self, node: ast.AST, env: Env[Sig]) -> ast.AST:
         match node:
-            case ast.FunctionApp(f, arg):
-                return ast.FunctionApp(self.transform(f, env), self.transform(arg, env))
+            case ast.FunctionApp(f, args):
+                return ast.FunctionApp(
+                    self.transform(f, env), [self.transform(arg, env) for arg in args]
+                )
 
             case ast.OpChain(chain):
                 return self._create_binop(
