@@ -2,14 +2,15 @@
 
 module: glob_defn+
 
-?glob_defn: _LET _name _ASSIGN _internal                         -> int_val_defn
-          | _LET _name param_list _ASSIGN _internal              -> int_fun_defn
-          | _LET ID _operator ID _ASSIGN _internal               -> int_op_defn
-          | _DATA CAP_ID param_list? _OCURLY _INTERNAL _CCURLY   -> int_adt_defn
-          | _DATA CAP_ID param_list? _OCURLY adt_ct_list _CCURLY -> adt_defn
+?glob_defn: _LET _name _ASSIGN _internal                                -> int_val_defn
+          | _LET _name param_list _ASSIGN _internal                     -> int_fun_defn
+          | _LET ID _operator ID _ASSIGN _internal                      -> int_op_defn
+          | _DATA CAP_ID param_list? _OCURLY _INTERNAL _CCURLY          -> int_adt_defn
+          | _DATA CAP_ID param_list? _OCURLY adt_ct_list _SEMI? _CCURLY -> adt_defn
           | defn
 
-adt_ct_list: adt_ct ( _SEMI adt_ct )*
+adt_ct_list: adt_ct_list _SEMI adt_ct
+           | adt_ct
 
 adt_ct: CAP_ID _COLON quantified_type
 
@@ -51,10 +52,13 @@ _operator: _BTICK ID _BTICK
 
 param_list: ID+
 
-?expr: _BSLASH param_list _ASSIGN expr                    -> func_expr
-     | defn+ _IN expr                                     -> let_expr
-     | _MATCH expr _OCURLY match ( _SEMI match )* _CCURLY -> match_expr
-     | operand ( _operator operand )*                     -> op_chain_expr
+?expr: _BSLASH param_list _ASSIGN expr               -> func_expr
+     | defn+ _IN expr                                -> let_expr
+     | _MATCH expr _OCURLY match_list _SEMI? _CCURLY -> match_expr
+     | operand ( _operator operand )*                -> op_chain_expr
+
+match_list: match_list _SEMI match
+          | match
 
 match: pattern _ARROW expr
 

@@ -61,7 +61,13 @@ class ASTBuilder(Transformer):
                 return self._create_datatype_defn(type, cts)
 
     def adt_ct_list(self, p):
-        return p
+        match p:
+            case [more_cts, ct]:
+                more_cts.append(ct)
+                return more_cts
+
+            case _:
+                return p
 
     def adt_ct(self, p):
         return tuple(p)
@@ -136,6 +142,15 @@ class ASTBuilder(Transformer):
 
             case _:
                 return ast.OpChain(p)
+
+    def match_list(self, p):
+        match p:
+            case [more_matches, match]:
+                more_matches.append(match)
+                return more_matches
+
+            case _:
+                return p
 
     def match(self, p):
         return (p[0], p[1])
