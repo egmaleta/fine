@@ -39,7 +39,7 @@ _internal: _INTERNAL ID
      | _LET _name param_list _ASSIGN expr -> fun_defn
      | _LET ID _operator ID _ASSIGN expr  -> op_defn
      | _LET _name _COLON quantified_type  -> typeof_defn
-     | ( INFIXL | INFIXR ) NAT _operator+ -> fix_defn
+     | ( INFIXL | INFIXR ) NAT _operator  -> fix_defn
 
 _name: ID
      | _OPAR ( LARGE_OP | OP | DOT ) _CPAR

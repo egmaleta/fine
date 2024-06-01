@@ -92,10 +92,8 @@ class Transformer:
                     type, [(self.transform(defn, env), t) for defn, t in constructors]
                 )
 
-            case ast.FixitySignature(ops, left_assoc, prec):
-                for op in ops:
-                    env.add(op, (op, left_assoc, prec))
-
+            case ast.FixitySignature(op, left_assoc, prec):
+                env.add(op, (op, left_assoc, prec))
                 return node
 
             case ast.Module(definitions):

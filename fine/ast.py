@@ -148,7 +148,7 @@ class DatatypeDefn(Defn):
 
 @dataclass
 class FixitySignature(Defn):
-    operators: list[String]
+    operator: String
     is_left_associative: bool
     precedence: int
 

@@ -108,9 +108,9 @@ class ASTBuilder(Transformer):
         return ast.ValueTypeDefn(p[0], p[1])
 
     def fix_defn(self, p):
-        fixity, prec, *operators = p
+        fixity, prec, operator = p
 
-        return ast.FixitySignature(operators, fixity.type == "INFIXL", int(prec))
+        return ast.FixitySignature(operator, fixity.type == "INFIXL", int(prec))
 
     def param_list(self, p):
         return p
