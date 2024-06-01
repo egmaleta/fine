@@ -115,10 +115,6 @@ class ASTBuilder(Transformer):
     def param_list(self, p):
         return p
 
-    def match_expr(self, p):
-        matchable, *matches = p
-        return ast.PatternMatching(matchable, matches)
-
     def func_expr(self, p):
         return ast.Function(p[0], p[1])
 
@@ -126,8 +122,9 @@ class ASTBuilder(Transformer):
         *defns, body = p
         return ast.LetExpr(defns, body)
 
-    def cond_expr(self, p):
-        return ast.Conditional(p[0], p[1], p[2])
+    def match_expr(self, p):
+        matchable, *matches = p
+        return ast.PatternMatching(matchable, matches)
 
     def op_chain_expr(self, p):
         match p:
