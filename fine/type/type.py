@@ -53,10 +53,10 @@ class FunctionType(Type):
 
 @dataclass
 class ConstrainedType(Type):
-    constraints: dict[str, set[str]]
+    constraints: dict[String, set[String]]
     type: Type
 
-    def __init__(self, constraints: list[tuple[str, list[str]]], type: Type):
+    def __init__(self, constraints: list[tuple[String, list[String]]], type: Type):
         super().__init__()
         self.type = type
 
@@ -75,7 +75,7 @@ class ConstrainedType(Type):
 
 @dataclass
 class TypeScheme(Type):
-    vars: set[str]
+    vars: set[String]
     type: Type
 
     def __post_init__(self):
