@@ -16,9 +16,9 @@ quantified_type: ( _FORALL param_list )? fun_type
 
 fun_type: type ( _ARROW type )*
 
-?type: ID                                                -> type_var
-     | CAP_ID                                            -> type_const
-     | ( ID | CAP_ID ) _OPAR type ( _COMMA type )* _CPAR -> type_app
+?type: ID                                                                      -> type_var
+     | CAP_ID                                                                  -> type_const
+     | ( ID | CAP_ID ) _OPAR quantified_type ( _COMMA quantified_type )* _CPAR -> type_app
      | _OPAR quantified_type _CPAR
 
 _internal: _INTERNAL ID
