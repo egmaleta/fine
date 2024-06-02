@@ -71,8 +71,11 @@ class ASTBuilder(Transformer):
         match p:
             case [ftype]:
                 return ftype
-            case [vars, ftype]:
+            case [vars, _, ftype]:
                 return t.QuantifiedType(vars, ftype)
+
+    def type_var_list(self, p):
+        return p
 
     def fun_type(self, p):
         match p:
