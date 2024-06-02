@@ -38,3 +38,13 @@ class FunctionKind(Kind):
             f"({kind})" if isinstance(kind, FunctionKind) else repr(kind)
             for kind in self.kind_args
         )
+
+
+@dataclass
+class ConstraintKind(Kind):
+    kind: Kind
+
+    def __repr__(self):
+        return (
+            f"({self.kind})" if isinstance(self.kind, FunctionKind) else repr(self.kind)
+        ) + " -> Constraint"

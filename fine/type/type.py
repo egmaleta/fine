@@ -23,6 +23,10 @@ class TypeApp(Type):
     ftype_name: String
     type_args: list[Type]
 
+    @property
+    def name(self):
+        return self.ftype_name
+
 
 @dataclass
 class FunctionType(Type):
@@ -48,13 +52,35 @@ class FunctionType(Type):
 
 
 @dataclass
-class QuantifiedType(Type):
+class ConstrainedType(Type):
+    constraints: dict[str, set[str]]
+    type: Type
+
+    def __init__(self, constraints: list[tuple[str, list[str]]], type: Type):
+        super().__init__()
+        self.type = type
+
+        self.constraints = {}
+        for new_tclass, tvars in constraints:
+            for tvar in tvars:
+                tclasses = self.constraints.get(tvar)
+                if tclasses is not None:
+                    tclasses.add(new_tclass)
+                else:
+                    self.constraints[tvar] = {new_tclass}
+
+    def __len__(self):
+        return len(self.type)
+
+
+@dataclass
+class TypeScheme(Type):
     vars: set[str]
-    inner_type: Type
+    type: Type
 
     def __post_init__(self):
         if isinstance(self.vars, list):
             self.vars = set(self.vars)
 
     def __len__(self):
-        return len(self.inner_type)
+        return len(self.type)

@@ -10,23 +10,27 @@ module: defn+
 
 datact_list: datact+
 
-datact: CAP_ID _COLON quantified_type
+datact: CAP_ID _COLON full_type
 
-quantified_type: ( _FORALL type_var_list DOT )? fun_type
+full_type: ( _FORALL type_var_list DOT )? ( constr_list _IMPLY )? fun_type
 
 type_var_list: ID+
 
+constr_list: constr+
+
+constr: CAP_ID param_list
+
 fun_type: type ( _ARROW type )*
 
-?type: ID                                                                      -> type_var
-     | CAP_ID                                                                  -> type_const
-     | ( ID | CAP_ID ) _OPAR quantified_type ( _COMMA quantified_type )* _CPAR -> type_app
-     | _OPAR quantified_type _CPAR
+?type: ID                                                          -> type_var
+     | CAP_ID                                                      -> type_const
+     | ( ID | CAP_ID ) _OPAR full_type ( _COMMA full_type )* _CPAR -> type_app
+     | _OPAR full_type _CPAR
 
 _internal: _INTERNAL ID
 
 ?local_defn: ( INFIXL | INFIXR ) NAT _operator -> fix_defn
-           | _name _COLON quantified_type      -> typeof_defn
+           | _name _COLON full_type            -> typeof_defn
            | _name param_list? _ASSIGN expr    -> val_defn
            | ID _operator ID _ASSIGN expr      -> op_defn
 
@@ -91,6 +95,7 @@ _OCURLY: "{"
 _CCURLY: "}"
 
 _ARROW.1: "->" // over LARGE_OP
+_IMPLY.1: "=>" // over LARGE_OP
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 
 DOT: "."

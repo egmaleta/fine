@@ -136,15 +136,6 @@ class DatatypeDefn(Defn):
     type: TypeConstant | TypeApp
     constructors: list[tuple[ValueDefn, Type]] = field(default_factory=lambda: [])
 
-    typename: str = field(init=False)
-
-    def __post_init__(self):
-        t = self.type
-        if isinstance(t, TypeApp):
-            self.typename = t.ftype_name
-        else:
-            self.typename = t.name
-
 
 @dataclass
 class FixitySignature(Defn):

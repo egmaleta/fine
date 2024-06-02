@@ -27,7 +27,10 @@ class Quantifier:
 
                 return vars
 
-            case t.QuantifiedType(vars, inner_type):
+            case t.ConstrainedType(_, inner_type):
+                return self._quantify(inner_type)
+
+            case t.TypeScheme(vars, inner_type):
                 captured = self._quantify(inner_type)
 
                 free = captured - vars
@@ -39,11 +42,9 @@ class Quantifier:
                 return free
 
     def quantify(self, type: t.Type):
-        if not isinstance(type, t.QuantifiedType):
+        if not isinstance(type, t.TypeScheme):
             vars = self._quantify(type)
-            return (
-                t.QuantifiedType(vars, type) if len(vars) > 0 else type
-            ), self.errors
+            return (t.TypeScheme(vars, type) if len(vars) > 0 else type), self.errors
 
         free = self._quantify(type)
         for name in free:
