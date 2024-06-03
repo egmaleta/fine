@@ -19,28 +19,31 @@ class ASTBuilder(Transformer):
                 )
 
     @staticmethod
-    def _create_datatype_defn(ct_type, cts):
-        constructors = []
-
-        for ct_name, type in cts:
+    def _create_datatype_defn(main_type, pairs):
+        val_defns = []
+        type_defns = []
+        for name, type in pairs:
             match type:
                 case None:
-                    value_defn = ast.ValueDefn(ct_name, ast.Data(ct_name))
-                    constructors.append((value_defn, ct_type))
+                    val_defns.append(ast.ValueDefn(name, ast.Data(name)))
+                    type_defns.append(ast.ValueTypeDefn(name, main_type))
 
                 case _:
                     ftype = (
-                        t.FunctionType([*type.args, ct_type])
+                        t.FunctionType([*type.args, main_type])
                         if isinstance(type, t.FunctionType)
-                        else t.FunctionType([type, ct_type])
+                        else t.FunctionType([type, main_type])
                     )
                     params = [f"_{i+1}" for i in range(len(ftype) - 1)]
-                    value_defn = ast.ValueDefn(
-                        ct_name, ast.Function(params, ast.PolyData(ct_name, params))
-                    )
-                    constructors.append((value_defn, ftype))
 
-        return ast.DatatypeDefn(ct_type, constructors)
+                    val_defns.append(
+                        ast.ValueDefn(
+                            name, ast.Function(params, ast.PolyData(name, params))
+                        )
+                    )
+                    type_defns.append(ast.ValueTypeDefn(name, ftype))
+
+        return ast.DatatypeDefn(main_type, val_defns, type_defns)
 
     def data_defn(self, p):
         match p:

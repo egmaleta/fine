@@ -103,7 +103,7 @@ class BinaryOperation(Expr):
 
 @dataclass
 class LetExpr(Expr):
-    definitions: list[Defn]
+    defns: list[Defn]
     body: Expr
 
 
@@ -134,7 +134,13 @@ class ValueTypeDefn(Defn):
 @dataclass
 class DatatypeDefn(Defn):
     type: TypeConstant | TypeApp
-    constructors: list[tuple[ValueDefn, Type]] = field(default_factory=lambda: [])
+    val_defns: list[ValueDefn]
+    type_defns: list[ValueTypeDefn]
+
+    def __post_init__(self):
+        assert len(self.val_defns) == len(self.type_defns)
+        for val_defn, type_defn in zip(self.val_defns, self.type_defns):
+            assert val_defn.name == type_defn.name
 
 
 @dataclass
@@ -146,4 +152,4 @@ class FixitySignature(Defn):
 
 @dataclass
 class Module(Defn):
-    definitions: list[Defn]
+    defns: list[Defn]

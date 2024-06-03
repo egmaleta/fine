@@ -70,10 +70,10 @@ class Transformer:
                     self.transform(left, env), operator, self.transform(right, env)
                 )
 
-            case ast.LetExpr(definitions, body):
+            case ast.LetExpr(defns, body):
                 env = env.child_env()
                 return ast.LetExpr(
-                    [self.transform(defn, env) for defn in definitions],
+                    [self.transform(defn, env) for defn in defns],
                     self.transform(body, env),
                 )
 
@@ -89,18 +89,13 @@ class Transformer:
             case ast.ValueDefn(name, value):
                 return ast.ValueDefn(name, self.transform(value, env))
 
-            case ast.DatatypeDefn(type, constructors):
-                return ast.DatatypeDefn(
-                    type, [(self.transform(defn, env), t) for defn, t in constructors]
-                )
-
             case ast.FixitySignature(op, left_assoc, prec):
                 env.add(op, (op, left_assoc, prec))
                 return node
 
-            case ast.Module(definitions):
-                return ast.Module([self.transform(defn, env) for defn in definitions])
+            case ast.Module(defns):
+                return ast.Module([self.transform(defn, env) for defn in defns])
 
             case _:
-                # internal, data, id, literal and typedefn nodes
+                # internal, data, id, literal, datatypedefn and typedefn nodes
                 return node
