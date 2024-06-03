@@ -22,18 +22,23 @@ class ASTBuilder(Transformer):
     def _create_datatype_defn(ct_type, cts):
         constructors = []
 
-        for ct, type in cts:
-            params_len = len(type) - 1
+        for ct_name, type in cts:
+            match type:
+                case None:
+                    value_defn = ast.ValueDefn(ct_name, ast.Data(ct_name))
+                    constructors.append((value_defn, ct_type))
 
-            if params_len > 0:
-                params = [f"_{i+1}" for i in range(params_len)]
-                value_defn = ast.ValueDefn(
-                    ct, ast.Function(params, ast.PolyData(ct, params))
-                )
-            else:
-                value_defn = ast.ValueDefn(ct, ast.Data(ct))
-
-            constructors.append((value_defn, type))
+                case _:
+                    ftype = (
+                        t.FunctionType([*type.args, ct_type])
+                        if isinstance(type, t.FunctionType)
+                        else t.FunctionType([type, ct_type])
+                    )
+                    params = [f"_{i+1}" for i in range(len(ftype) - 1)]
+                    value_defn = ast.ValueDefn(
+                        ct_name, ast.Function(params, ast.PolyData(ct_name, params))
+                    )
+                    constructors.append((value_defn, ftype))
 
         return ast.DatatypeDefn(ct_type, constructors)
 
@@ -67,7 +72,11 @@ class ASTBuilder(Transformer):
         return p
 
     def datact(self, p):
-        return tuple(p)
+        match p:
+            case [ct]:
+                return (ct, None)
+            case [ct, type]:
+                return (ct, type)
 
     def full_type(self, p):
         match p:

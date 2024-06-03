@@ -10,7 +10,7 @@ module: defn+
 
 datact_list: datact+
 
-datact: CAP_ID _COLON full_type
+datact: CAP_ID ( _COLON fun_type )?
 
 full_type: ( _FORALL type_var_list DOT )? ( constr_list _IMPLY )? fun_type
 
