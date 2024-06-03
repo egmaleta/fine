@@ -13,25 +13,23 @@ class Quantifier:
             case t.TypeVar(name):
                 return {name}
 
-            case t.TypeApp(ftype_name, type_args):
-                vars = {ftype_name}
-                for type in type_args:
+            case t.TypeApp(f, args):
+                vars = self._quantify(f)
+                for type in args:
                     vars |= self._quantify(type)
-
                 return vars
 
-            case t.FunctionType(type_args):
+            case t.FunctionType(args):
                 vars = {}
-                for type in type_args:
+                for type in args:
                     vars |= self._quantify(type)
-
                 return vars
 
-            case t.ConstrainedType(_, inner_type):
-                return self._quantify(inner_type)
+            case t.ConstrainedType(_, inner):
+                return self._quantify(inner)
 
-            case t.TypeScheme(vars, inner_type):
-                captured = self._quantify(inner_type)
+            case t.TypeScheme(vars, inner):
+                captured = self._quantify(inner)
 
                 free = captured - vars
                 unused = vars - captured

@@ -20,35 +20,35 @@ class TypeVar(Type):
 
 @dataclass
 class TypeApp(Type):
-    ftype_name: String
-    type_args: list[Type]
+    f: TypeConstant | TypeVar
+    args: list[Type]
 
     @property
     def name(self):
-        return self.ftype_name
+        return self.f.name
 
 
 @dataclass
 class FunctionType(Type):
-    type_args: list[Type]
+    args: list[Type]
 
     def __post_init__(self):
-        assert len(self.type_args) >= 2
+        assert len(self.args) >= 2
 
     @property
     def left(self):
-        return self.type_args[0]
+        return self.args[0]
 
     @property
     def right(self):
-        match self.type_args[1:]:
+        match self.args[1:]:
             case [type]:
                 return type
             case types:
                 return FunctionType(types)
 
     def __len__(self):
-        return len(self.type_args)
+        return len(self.args)
 
 
 @dataclass

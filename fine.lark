@@ -22,10 +22,14 @@ constr: CAP_ID param_list
 
 fun_type: type ( _ARROW type )*
 
-?type: ID                                                          -> type_var
-     | CAP_ID                                                      -> type_const
-     | ( ID | CAP_ID ) _OPAR full_type ( _COMMA full_type )* _CPAR -> type_app
+?type: ( type_var | type_const ) _OPAR full_type ( _COMMA full_type )* _CPAR -> type_app
+     | type_var
+     | type_const
      | _OPAR full_type _CPAR
+
+type_var: ID
+
+type_const: CAP_ID
 
 _internal: _INTERNAL ID
 

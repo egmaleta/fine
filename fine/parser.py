@@ -14,7 +14,9 @@ class ASTBuilder(Transformer):
             case [name]:
                 return ast.DatatypeDefn(t.TypeConstant(name))
             case [name, params]:
-                return ast.DatatypeDefn(t.TypeApp(name, [t.TypeVar(p) for p in params]))
+                return ast.DatatypeDefn(
+                    t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
+                )
 
     @staticmethod
     def _create_datatype_defn(ct_type, cts):
@@ -42,7 +44,7 @@ class ASTBuilder(Transformer):
                 return self._create_datatype_defn(type, cts)
 
             case [name, params, cts]:
-                type = t.TypeApp(name, [t.TypeVar(p) for p in params])
+                type = t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
                 return self._create_datatype_defn(type, cts)
 
     def int_val_defn(self, p):
@@ -101,8 +103,8 @@ class ASTBuilder(Transformer):
         return t.TypeConstant(p[0])
 
     def type_app(self, p):
-        name, *args = p
-        return t.TypeApp(name, args)
+        f, *args = p
+        return t.TypeApp(f, args)
 
     def fix_defn(self, p):
         fixity, prec, operator = p
