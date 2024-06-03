@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .pattern import Pattern
 from .type import Type, TypeConstant, TypeApp

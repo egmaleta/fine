@@ -1,6 +1,5 @@
 from . import ast
-from .env import Env
-from .utils import String
+from .utils import String, Env
 
 
 type Sig = tuple[String, bool, int]
