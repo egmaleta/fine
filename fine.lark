@@ -78,14 +78,13 @@ COMMENT: /#[^\n]*/
 
 CAP_ID: /[A-Z][a-zA-Z0-9_]*/
 
-// keywords (all over ID)
-_DATA.1: "data"
-_FORALL.1: "forall"
-INFIXL.2: "infixl" // over IN
-INFIXR.2: "infixr" // over IN
-_IN.1: "in"
-_LET.1: "let"
-_MATCH.1: "match"
+_DATA: "data"
+_FORALL: "forall"
+INFIXL: "infixl"
+INFIXR: "infixr"
+_IN: "in"
+_LET: "let"
+_MATCH: "match"
 
 ID: /[a-z_][a-zA-Z0-9_]*/
 
@@ -98,8 +97,8 @@ _COMMA: ","
 _OCURLY: "{"
 _CCURLY: "}"
 
-_ARROW.1: "->" // over LARGE_OP
-_IMPLY.1: "=>" // over LARGE_OP
+_ARROW: "->"
+_IMPLY: "=>"
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 
 DOT: "."
@@ -107,7 +106,7 @@ _COLON: ":"
 _ASSIGN: "="
 OP: /[~!@$%^&*\/\-+|?<>]/
 
-UNIT.1: "()" // over _OPAR
+UNIT: "(" SPACE? ")"
 _OPAR: "("
 _CPAR: ")"
 
