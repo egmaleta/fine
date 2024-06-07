@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .pattern import Pattern
 from .type import Type, TypeConstant, TypeApp
@@ -134,8 +134,8 @@ class ValueTypeDefn(Defn):
 @dataclass
 class DatatypeDefn(Defn):
     type: TypeConstant | TypeApp
-    val_defns: list[ValueDefn]
-    type_defns: list[ValueTypeDefn]
+    val_defns: list[ValueDefn] = field(default_factory=lambda: [])
+    type_defns: list[ValueTypeDefn] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         assert len(self.val_defns) == len(self.type_defns)
