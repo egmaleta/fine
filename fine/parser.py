@@ -91,14 +91,13 @@ class ASTBuilder(Transformer):
                 return t.TypeScheme(vars, ftype)
             case [vars, _, constrs, ftype]:
                 return t.TypeScheme(vars, t.ConstrainedType(constrs, ftype))
-    
+
     def quant_type(self, p):
         match p:
             case [ftype]:
                 return ftype
             case [vars, _, ftype]:
                 return t.TypeScheme(vars, ftype)
-            
 
     def type_var_list(self, p):
         return p
