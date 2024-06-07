@@ -1,51 +1,45 @@
 from . import type as t
 
 
-class Quantifier:
-    def __init__(self):
-        self.errors: list[str] = []
+def _quantify(type: t.Type):
+    match type:
+        case t.TypeConstant():
+            return set()
 
-    def _quantify(self, type: t.Type) -> set[str]:
-        match type:
-            case t.TypeConstant():
-                return set()
+        case t.TypeVar(name):
+            return {name}
 
-            case t.TypeVar(name):
-                return {name}
+        case t.TypeApp(f, args):
+            vars = _quantify(f)
+            for type in args:
+                vars |= _quantify(type)
+            return vars
 
-            case t.TypeApp(f, args):
-                vars = self._quantify(f)
-                for type in args:
-                    vars |= self._quantify(type)
-                return vars
+        case t.FunctionType(args):
+            vars = {}
+            for type in args:
+                vars |= _quantify(type)
+            return vars
 
-            case t.FunctionType(args):
-                vars = {}
-                for type in args:
-                    vars |= self._quantify(type)
-                return vars
+        case t.ConstrainedType(_, inner):
+            return _quantify(inner)
 
-            case t.ConstrainedType(_, inner):
-                return self._quantify(inner)
+        case t.TypeScheme(vars, inner):
+            captured = _quantify(inner)
 
-            case t.TypeScheme(vars, inner):
-                captured = self._quantify(inner)
+            unused = vars - captured
+            assert len(unused) == 0
 
-                free = captured - vars
-                unused = vars - captured
+            free = captured - vars
+            return free
 
-                for name in unused:
-                    self.errors.append(f"quantified type var '{name}' is unused")
 
-                return free
+def quantify(type: t.Type):
+    free = _quantify(type)
 
-    def quantify(self, type: t.Type):
-        if not isinstance(type, t.TypeScheme):
-            vars = self._quantify(type)
-            return (t.TypeScheme(vars, type) if len(vars) > 0 else type), self.errors
+    if not isinstance(type, t.TypeScheme):
+        return t.TypeScheme(free, type) if len(free) > 0 else type
 
-        free = self._quantify(type)
-        for name in free:
-            self.errors.append(f"type var '{name}' is not quantified")
+    assert len(free) == 0
 
-        return type, self.errors
+    return type
