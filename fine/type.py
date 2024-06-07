@@ -125,45 +125,45 @@ class TypeScheme(Type):
         return len(self.type)
 
 
-def _quantify(type: Type):
-    match type:
-        case TypeConstant():
-            return set()
+class Quantifier:
+    def _quantify(self, type: Type):
+        match type:
+            case TypeConstant():
+                return set()
 
-        case TypeVar(name):
-            return {name}
+            case TypeVar(name):
+                return {name}
 
-        case TypeApp(f, args):
-            vars = _quantify(f)
-            for type in args:
-                vars |= _quantify(type)
-            return vars
+            case TypeApp(f, args):
+                vars = self._quantify(f)
+                for type in args:
+                    vars |= self._quantify(type)
+                return vars
 
-        case FunctionType(args):
-            vars = {}
-            for type in args:
-                vars |= _quantify(type)
-            return vars
+            case FunctionType(args):
+                vars = {}
+                for type in args:
+                    vars |= self._quantify(type)
+                return vars
 
-        case ConstrainedType(_, inner):
-            return _quantify(inner)
+            case ConstrainedType(_, inner):
+                return self._quantify(inner)
 
-        case TypeScheme(vars, inner):
-            captured = _quantify(inner)
+            case TypeScheme(vars, inner):
+                captured = self._quantify(inner)
 
-            unused = vars - captured
-            assert len(unused) == 0
+                unused = vars - captured
+                assert len(unused) == 0
 
-            free = captured - vars
-            return free
+                free = captured - vars
+                return free
 
+    def quantify(self, type: Type):
+        free = self._quantify(type)
 
-def quantify(type: Type):
-    free = _quantify(type)
+        if not isinstance(type, TypeScheme):
+            return TypeScheme(free, type) if len(free) > 0 else type
 
-    if not isinstance(type, TypeScheme):
-        return TypeScheme(free, type) if len(free) > 0 else type
+        assert len(free) == 0
 
-    assert len(free) == 0
-
-    return type
+        return type
