@@ -50,9 +50,9 @@ _operator: _BTICK ID _BTICK
 
 param_list: _OPAR ID ( _COMMA ID )* _CPAR
 
-?expr: _BSLASH param_list _ASSIGN expr    -> fun_expr
-     | local_defn+ _IN expr               -> let_expr
-     | operand ( _operator operand )*     -> op_chain_expr
+?expr: _BSLASH param_list _ASSIGN expr -> fun_expr
+     | local_defn+ _IN expr            -> let_expr
+     | operand ( _operator operand )*  -> op_chain_expr
 
 match: pattern _ARROW expr
 
