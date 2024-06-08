@@ -50,9 +50,8 @@ _operator: _BTICK ID _BTICK
 
 param_list: _OPAR ID ( _COMMA ID )* _CPAR
 
-?expr: _BSLASH param_list _ARROW expr     -> fun_expr
+?expr: _BSLASH param_list _ASSIGN expr    -> fun_expr
      | local_defn+ _IN expr               -> let_expr
-     | _MATCH expr _OCURLY match+ _CCURLY -> match_expr
      | operand ( _operator operand )*     -> op_chain_expr
 
 match: pattern _ARROW expr
@@ -61,8 +60,9 @@ match: pattern _ARROW expr
         | CAP_ID param_list?   -> data_pattern
         | ( DEC | NAT | UNIT ) -> literal_pattern
 
-?operand: operand _OPAR expr_list _CPAR -> fun_app
-        | ( CAP_ID | _name )            -> id_atom
+?operand: operand _OPAR expr_list _CPAR      -> fun_app
+        | ( CAP_ID | _name )                 -> id_atom
+        | _MATCH expr _OCURLY match+ _CCURLY -> match_expr
         | _OPAR expr _CPAR
         | literal
 

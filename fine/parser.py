@@ -155,10 +155,6 @@ class ASTBuilder(Transformer):
         *defns, body = p
         return ast.LetExpr(defns, body)
 
-    def match_expr(self, p):
-        matchable, *matches = p
-        return ast.PatternMatching(matchable, matches)
-
     def op_chain_expr(self, p):
         match p:
             case [single]:
@@ -192,6 +188,10 @@ class ASTBuilder(Transformer):
 
     def id_atom(self, p):
         return ast.Id(p[0])
+
+    def match_expr(self, p):
+        matchable, *matches = p
+        return ast.PatternMatching(matchable, matches)
 
     def expr_list(self, p):
         return p
