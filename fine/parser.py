@@ -127,7 +127,7 @@ class ASTBuilder(Transformer):
 
     def fix_defn(self, p):
         fixity, prec, operator = p
-        return ast.FixitySignature(operator, fixity.type == "INFIXL", int(prec))
+        return ast.FixitySignature(operator, fixity.type != "INFIXR", int(prec))
 
     def typeof_defn(self, p):
         name, type = p

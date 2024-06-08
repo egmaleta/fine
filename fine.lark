@@ -35,10 +35,10 @@ type_const: CAP_ID
 
 _internal: _INTERNAL ID
 
-?local_defn: ( INFIXL | INFIXR ) NAT _operator   -> fix_defn
-           | _LET _name _COLON full_type         -> typeof_defn
-           | _LET _name param_list? _ASSIGN expr -> val_defn
-           | _LET ID _operator ID _ASSIGN expr   -> op_defn
+?local_defn: ( INFIXL | INFIXR | INFIX ) NAT _operator -> fix_defn
+           | _LET _name _COLON full_type               -> typeof_defn
+           | _LET _name param_list? _ASSIGN expr       -> val_defn
+           | _LET ID _operator ID _ASSIGN expr         -> op_defn
 
 _name: ID
      | _OPAR ( LARGE_OP | OP | DOT ) _CPAR
@@ -84,6 +84,7 @@ _DATA: "data"
 _FORALL: "forall"
 INFIXL: "infixl"
 INFIXR: "infixr"
+INFIX: "infix"
 _IN: "in"
 _LET: "let"
 _MATCH: "match"
