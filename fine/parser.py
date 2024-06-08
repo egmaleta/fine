@@ -26,7 +26,7 @@ class ASTBuilder(Transformer):
             match type:
                 case None:
                     val_defns.append(ast.ValueDefn(name, ast.Data(name)))
-                    type_defns.append(ast.ValueTypeDefn(name, main_type))
+                    type_defns.append(ast.TypeDefn(name, main_type))
 
                 case _:
                     ftype = (
@@ -41,7 +41,7 @@ class ASTBuilder(Transformer):
                             name, ast.Function(params, ast.PolyData(name, params))
                         )
                     )
-                    type_defns.append(ast.ValueTypeDefn(name, ftype))
+                    type_defns.append(ast.TypeDefn(name, ftype))
 
         return ast.DatatypeDefn(main_type, val_defns, type_defns)
 
@@ -131,7 +131,7 @@ class ASTBuilder(Transformer):
 
     def typeof_defn(self, p):
         name, type = p
-        return ast.ValueTypeDefn(name, type)
+        return ast.TypeDefn(name, type)
 
     def val_defn(self, p):
         match p:

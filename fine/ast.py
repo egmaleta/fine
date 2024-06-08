@@ -126,7 +126,7 @@ class ValueDefn(Defn):
 
 
 @dataclass
-class ValueTypeDefn(Defn):
+class TypeDefn(Defn):
     name: String
     type: Type
 
@@ -135,7 +135,7 @@ class ValueTypeDefn(Defn):
 class DatatypeDefn(Defn):
     type: TypeConstant | TypeApp
     val_defns: list[ValueDefn] = field(default_factory=lambda: [])
-    type_defns: list[ValueTypeDefn] = field(default_factory=lambda: [])
+    type_defns: list[TypeDefn] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         assert len(self.val_defns) == len(self.type_defns)
