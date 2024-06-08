@@ -232,7 +232,6 @@ class KindInferer:
 
                     return f_kind
 
-                # 'kind(f)' = kind(arg1) -> kind(arg2) -> kind(arg3) -> ... -> *'
                 arg_kinds = []
                 for type in args:
                     kind = self._infer(type, env)
@@ -247,8 +246,6 @@ class KindInferer:
                 return ATOM_KIND
 
             case FunctionType() as ftype:
-                # kind(->) = * -> * -> *
-
                 left_type = ftype.left
                 left_kind = self._infer(left_type, env)
                 if left_kind is not None:
@@ -266,8 +263,6 @@ class KindInferer:
                 return ATOM_KIND
 
             case ConstrainedType(constrs, inner):
-                # if typevar 'a' is instance of typeclass 'B' and 'kind(B)' is 'k -> Constraint'
-                # then 'kind(a)' is 'k'
                 for tvar_name, tclass_names in constrs.items():
                     candidate = None
                     for name in tclass_names:
