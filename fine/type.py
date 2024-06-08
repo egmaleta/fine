@@ -130,7 +130,7 @@ class TypeScheme(Type):
     vars: set[String]
     type: Type
 
-    _env: KindEnv | None = field(init=False, compare=False, default=None)
+    _env: KindEnv | None = field(init=False, compare=False, repr=False, default=None)
 
     def __post_init__(self):
         if isinstance(self.vars, list):
