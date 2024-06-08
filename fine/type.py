@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .utils import String, Env
 
@@ -50,6 +50,9 @@ class ConstraintKind(Kind):
         return (
             f"({self.kind})" if isinstance(self.kind, FunctionKind) else repr(self.kind)
         ) + " -> Constraint"
+
+
+type KindEnv = Env[Kind | None]
 
 
 class Type:
@@ -127,12 +130,24 @@ class TypeScheme(Type):
     vars: set[String]
     type: Type
 
+    _env: KindEnv | None = field(init=False, compare=False, default=None)
+
     def __post_init__(self):
         if isinstance(self.vars, list):
             self.vars = set(self.vars)
 
     def __len__(self):
         return len(self.type)
+
+    @property
+    def env(self):
+        assert self._env is not None
+        return self._env
+
+    @env.setter
+    def env(self, new_env: KindEnv):
+        assert self._env is None
+        self._env = new_env
 
 
 class Quantifier:
@@ -177,9 +192,6 @@ class Quantifier:
         assert len(free) == 0
 
         return type
-
-
-type KindEnv = Env[Kind | None]
 
 
 class KindInferer:
@@ -272,12 +284,13 @@ class KindInferer:
 
                 return self._infer(inner, env)
 
-            case TypeScheme(vars, inner):
-                env = env.child_env()
+            case TypeScheme(vars, inner) as ts:
+                child_env = env.child_env()
+                ts.env = child_env
                 for name in vars:
-                    env.add(name, None)
+                    child_env.add(name, None)
 
-                return self._infer(inner, env)
+                return self._infer(inner, child_env)
 
     def infer(self, type: Type, env: KindEnv):
         kind = self._infer(type, env)
@@ -287,3 +300,32 @@ class KindInferer:
             self._assign(type, env, ATOM_KIND)
 
         return ATOM_KIND
+
+
+def kindof(type: Type, env: KindEnv) -> Kind:
+    match type:
+        case TypeConstant(name) | TypeVar(name):
+            kind, found = env.get(name)
+            assert found
+            assert kind is not None
+
+            return kind
+
+        case TypeApp(f, args):
+            f_kind = kindof(f, env)
+            assert isinstance(f_kind, FunctionKind)
+
+            match f_kind.args[len(args) :]:
+                case [kind]:
+                    return kind
+                case kinds:
+                    return FunctionKind(kinds)
+
+        case FunctionType():
+            return ATOM_KIND
+
+        case ConstrainedType(_, inner):
+            return kindof(inner, env)
+
+        case TypeScheme(_, inner) as ts:
+            return kindof(inner, ts.env)
