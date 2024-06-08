@@ -10,7 +10,7 @@ class Kind:
 @dataclass
 class AtomKind(Kind):
     def __repr__(self):
-        return "*"
+        return "Type"
 
 
 ATOM_KIND = AtomKind()
