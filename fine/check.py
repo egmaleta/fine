@@ -57,8 +57,8 @@ class NameChecker:
                 | ast.InternalFunction()
                 | ast.Data()
                 | ast.PolyData()
-                | ast.NaturalNumber()
-                | ast.DecimalNumber()
+                | ast.Int()
+                | ast.Float()
                 | ast.Unit()
             ):
                 pass

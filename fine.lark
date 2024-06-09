@@ -29,7 +29,7 @@ type_const: CAP_ID
 
 _internal: _INTERNAL ID
 
-?local_defn: ( INFIXL | INFIXR | INFIX ) NAT _operator -> fix_defn
+?local_defn: ( INFIXL | INFIXR | INFIX ) INT _operator -> fix_defn
            | _LET _name _COLON quant_type              -> typeof_defn
            | _LET _name param_list? _ASSIGN expr       -> val_defn
            | _LET ID _operator ID _ASSIGN expr         -> op_defn
@@ -50,9 +50,9 @@ param_list: _OPAR ID ( _COMMA ID )* _CPAR
 
 match: pattern _ARROW expr
 
-?pattern: ID                   -> capture_pattern
-        | CAP_ID param_list?   -> data_pattern
-        | ( DEC | NAT | UNIT ) -> literal_pattern
+?pattern: ID                     -> capture_pattern
+        | CAP_ID param_list?     -> data_pattern
+        | ( FLOAT | INT | UNIT ) -> literal_pattern
 
 ?operand: operand _OPAR expr_list _CPAR      -> fun_app
         | ( CAP_ID | _name )                 -> id_atom
@@ -62,9 +62,9 @@ match: pattern _ARROW expr
 
 expr_list: expr ( _COMMA expr )*
 
-?literal: DEC  -> dec_literal
-        | NAT  -> nat_literal
-        | UNIT -> unit_literal
+?literal: FLOAT -> dec_literal
+        | INT   -> nat_literal
+        | UNIT  -> unit_literal
 
 
 // LEXER GRAMMAR
@@ -85,8 +85,8 @@ _MATCH: "match"
 
 ID: /[a-z_][a-zA-Z0-9_]*/
 
-DEC: /(0|[1-9][0-9]*)\.[0-9]*/
-NAT: /0|[1-9][0-9]*/
+FLOAT: /-?(0|[1-9][0-9]*)\.[0-9]*/
+INT: /-?(0|[1-9][0-9]*)/
 
 _BTICK: "`"
 _BSLASH: "\\"

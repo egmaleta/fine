@@ -62,12 +62,12 @@ class PolyData(Expr):
 
 
 @dataclass
-class NaturalNumber(Expr):
+class Int(Expr):
     value: String
 
 
 @dataclass
-class DecimalNumber(Expr):
+class Float(Expr):
     value: String
 
 

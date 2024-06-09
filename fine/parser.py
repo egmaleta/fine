@@ -180,10 +180,10 @@ class ASTBuilder(Transformer):
         return p
 
     def dec_literal(self, p):
-        return ast.DecimalNumber(p[0])
+        return ast.Float(p[0])
 
     def nat_literal(self, p):
-        return ast.NaturalNumber(p[0])
+        return ast.Int(p[0])
 
     def unit_literal(self, p):
         return ast.Unit(p[0])
