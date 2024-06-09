@@ -1,3 +1,5 @@
+# TODO: report errors including token's meta
+
 from collections import defaultdict
 
 from . import ast, pattern as pat
@@ -19,7 +21,7 @@ class NameChecker:
             return
 
         used, found = env.get(name)
-        assert found
+        assert found, f"Value bound to '{name}' not found in scope."
 
         if not used:
             env.set(name, True)
@@ -40,8 +42,13 @@ class NameChecker:
             freq[name].append(name)
 
         for repeated_names in freq.values():
-            # TODO: better assertion message
-            assert len(repeated_names) == 1
+            assert (
+                len(repeated_names) == 1
+            ), f"Multiple definitions bound to the same name '{repeated_names[0]}'."
+
+    def _assert_val_defn(self, names: list[String], val_names: set[String]):
+        for name in set(names) - val_names:
+            assert False, f"Missing value definition for '{name}'."
 
     def check(self, node: ast.AST, env: NameEnv):
         match node:
@@ -88,22 +95,14 @@ class NameChecker:
                             valtype_names.append(name)
                         case ast.FixitySignature(op):
                             ops.append(op)
-                        case _:
-                            assert False
 
                 self._assert_unique(val_names)
                 self._assert_unique(valtype_names)
                 self._assert_unique(ops)
 
                 val_names = set(val_names)
-
-                ops = set(ops)
-                # TODO: better assertion message
-                assert len(ops - val_names) == 0
-
-                valtype_names = set(valtype_names)
-                # TODO: better assertion message
-                assert len(valtype_names - val_names) == 0
+                self._assert_val_defn(ops, val_names)
+                self._assert_val_defn(valtype_names, val_names)
 
                 for defn in defns:
                     self.check(defn, env)
@@ -155,18 +154,17 @@ class NameChecker:
             case ast.TypeDefn(_, type) as defn:
                 defn.type = self._quantifier.quantify(type)
 
-            case ast.DatatypeDefn(type, val_defns, type_defns):
-                for defn in val_defns:
-                    self.check(defn, env)
+            case ast.DatatypeDefn(_, _, type_defns):
                 for defn in type_defns:
                     self.check(defn, env)
 
-            case ast.FixitySignature(_, _, prec):
+            case ast.FixitySignature(op, _, prec):
+                min_prec = self._config.min_op_precedence
+                max_prec = self._config.max_op_precedence
+
                 assert (
-                    self._config.min_op_precedence
-                    <= prec
-                    < self._config.max_op_precedence
-                )
+                    min_prec <= prec < max_prec
+                ), f"Operator '{op}'s precedence ({prec}) is out of the range [{min_prec}, {max_prec})."
 
             case ast.Module(defns):
                 val_names = []
@@ -186,8 +184,6 @@ class NameChecker:
                             type_names.append(type.name)
                             for tdefn in type_defns:
                                 ct_names.append(tdefn.name)
-                        case _:
-                            assert False
 
                 self._assert_unique(val_names)
                 self._assert_unique(valtype_names)
@@ -196,14 +192,8 @@ class NameChecker:
                 self._assert_unique(ct_names)
 
                 val_names = set(val_names)
-
-                ops = set(ops)
-                # TODO: better assertion message
-                assert len(ops - val_names) == 0
-
-                valtype_names = set(valtype_names)
-                # TODO: better assertion message
-                assert len(valtype_names - val_names) == 0
+                self._assert_val_defn(ops, val_names)
+                self._assert_val_defn(valtype_names, val_names)
 
                 for defn in defns:
                     self.check(defn, env)
