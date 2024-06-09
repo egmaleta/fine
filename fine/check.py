@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from . import ast, pattern as pat
+from .config import Config
 from .type import Quantifier
 from .utils import Env, String
 
@@ -9,8 +10,9 @@ type NameEnv = Env[bool]
 
 
 class NameChecker:
-    def __init__(self):
-        self.quantifier = Quantifier()
+    def __init__(self, config: Config):
+        self._config = config
+        self._quantifier = Quantifier()
 
     @staticmethod
     def _assert_name(name: String, env: NameEnv):
@@ -145,7 +147,7 @@ class NameChecker:
                 self.check(value, env)
 
             case ast.TypeDefn(_, type) as defn:
-                defn.type = self.quantifier.quantify(type)
+                defn.type = self._quantifier.quantify(type)
 
             case ast.DatatypeDefn(type, val_defns, type_defns):
                 for defn in val_defns:
@@ -154,7 +156,11 @@ class NameChecker:
                     self.check(defn, env)
 
             case ast.FixitySignature(_, _, prec):
-                assert 0 <= prec < 10
+                assert (
+                    self._config.min_op_precedence
+                    <= prec
+                    < self._config.max_op_precedence
+                )
 
             case ast.Module(defns):
                 val_names = []
