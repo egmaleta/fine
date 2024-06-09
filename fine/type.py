@@ -119,6 +119,23 @@ class TypeScheme(Type):
 
 
 class Quantifier:
+    @staticmethod
+    def _format_vars(vars):
+        match [*vars]:
+            case [var]:
+                return f"Type variable '{var}' is"
+            case [*leading, last]:
+                leading = ", ".join(f"'{v}'" for v in leading)
+                return f"Type variables {leading} and '{last}' are"
+
+    @staticmethod
+    def _assert_unused(vars: set[String]):
+        assert len(vars) == 0, f"{Quantifier._format_vars(vars)} unused."
+
+    @staticmethod
+    def _assert_free(vars: set[String]):
+        assert len(vars) == 0, f"{Quantifier._format_vars(vars)} free."
+
     def _quantify(self, type: Type):
         match type:
             case TypeConstant():
@@ -142,8 +159,7 @@ class Quantifier:
             case TypeScheme(vars, inner):
                 captured = self._quantify(inner)
 
-                unused = vars - captured
-                assert len(unused) == 0
+                self._assert_unused(vars - captured)
 
                 free = captured - vars
                 return free
@@ -154,7 +170,7 @@ class Quantifier:
         if not isinstance(type, TypeScheme):
             return TypeScheme(free, type) if len(free) > 0 else type
 
-        assert len(free) == 0
+        self._assert_free(free)
 
         return type
 
