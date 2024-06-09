@@ -45,3 +45,7 @@ class Env[V]:
 
     def child_env(self):
         return Env(self)
+
+    def __iter__(self):
+        for key, value in self._values.items():
+            yield key, value

@@ -5,7 +5,7 @@ from .type import Quantifier
 from .utils import Env, String
 
 
-type NameEnv = Env[None]
+type NameEnv = Env[bool]
 
 
 class NameChecker:
@@ -14,8 +14,16 @@ class NameChecker:
 
     @staticmethod
     def _check_name(name: String, env: NameEnv):
-        _, found = env.get(name)
+        used, found = env.get(name)
         assert found
+
+        if not used:
+            env.set(name, True)
+
+    @staticmethod
+    def _check_unused(env: NameEnv):
+        for name, used in env:
+            assert used, f"Value bound to '{name}' is never used."
 
     @staticmethod
     def _assert_unique_names(names: list[String]):
@@ -94,6 +102,8 @@ class NameChecker:
 
                 self.check(body, env)
 
+                self._check_unused(env)
+
             case ast.PatternMatching(matchable, matches):
                 self.check(matchable, env)
                 for pattern, expr in matches:
@@ -103,8 +113,10 @@ class NameChecker:
 
                         case pat.CapturePattern(name):
                             child_env = env.child_env()
-                            child_env.add(name, None)
+                            child_env.add(name, False)
                             self.check(expr, child_env)
+
+                            self._check_unused(child_env)
 
                         case pat.DataPattern(_, capture_patterns):
                             names = [p.name for p in capture_patterns]
@@ -112,20 +124,24 @@ class NameChecker:
 
                             child_env = env.child_env()
                             for name in names:
-                                child_env.add(name, None)
+                                child_env.add(name, False)
                             self.check(expr, child_env)
+
+                            self._check_unused(child_env)
 
             case ast.Function(params, body):
                 self._assert_unique_names(params)
 
                 child_env = env.child_env()
                 for name in params:
-                    child_env.add(name, None)
+                    child_env.add(name, False)
 
                 self.check(body, child_env)
 
+                self._check_unused(child_env)
+
             case ast.ValueDefn(name, value):
-                env.add(name, None)
+                env.add(name, False)
                 self.check(value, env)
 
             case ast.TypeDefn(_, type) as defn:
@@ -179,3 +195,5 @@ class NameChecker:
 
                 for defn in defns:
                     self.check(defn, env)
+
+                self._check_unused(env)
