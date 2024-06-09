@@ -81,17 +81,6 @@ class ASTBuilder(Transformer):
             case [ct, type]:
                 return (ct, type)
 
-    def full_type(self, p):
-        match p:
-            case [ftype]:
-                return ftype
-            case [constrs, ftype]:
-                return t.ConstrainedType(constrs, ftype)
-            case [vars, _, ftype]:
-                return t.TypeScheme(vars, ftype)
-            case [vars, _, constrs, ftype]:
-                return t.TypeScheme(vars, t.ConstrainedType(constrs, ftype))
-
     def quant_type(self, p):
         match p:
             case [ftype]:
@@ -101,12 +90,6 @@ class ASTBuilder(Transformer):
 
     def type_var_list(self, p):
         return p
-
-    def constr_list(self, p):
-        return p
-
-    def constr(self, p):
-        return tuple(p)
 
     def fun_type(self, p):
         match p:

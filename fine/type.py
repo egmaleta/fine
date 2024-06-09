@@ -42,16 +42,6 @@ class FunctionKind(Kind):
         )
 
 
-@dataclass
-class ConstraintKind(Kind):
-    kind: Kind
-
-    def __repr__(self):
-        return (
-            f"({self.kind})" if isinstance(self.kind, FunctionKind) else repr(self.kind)
-        ) + " -> Constraint"
-
-
 type KindEnv = Env[Kind | None]
 
 
@@ -104,28 +94,6 @@ class FunctionType(Type):
 
 
 @dataclass
-class ConstrainedType(Type):
-    constraints: dict[String, set[String]]
-    type: Type
-
-    def __init__(self, constraints: list[tuple[String, list[String]]], type: Type):
-        super().__init__()
-        self.type = type
-
-        self.constraints = {}
-        for new_tclass_name, tvar_names in constraints:
-            for name in tvar_names:
-                tclass_names = self.constraints.get(name)
-                if tclass_names is not None:
-                    tclass_names.add(new_tclass_name)
-                else:
-                    self.constraints[name] = {new_tclass_name}
-
-    def __len__(self):
-        return len(self.type)
-
-
-@dataclass
 class TypeScheme(Type):
     vars: set[String]
     type: Type
@@ -171,9 +139,6 @@ class Quantifier:
                     vars |= self._quantify(type)
                 return vars
 
-            case ConstrainedType(_, inner):
-                return self._quantify(inner)
-
             case TypeScheme(vars, inner):
                 captured = self._quantify(inner)
 
@@ -200,7 +165,7 @@ class KindInferer:
             case TypeVar(name) | TypeConstant(name):
                 assert env.set(name, kind)
 
-            case ConstrainedType(_, inner) | TypeScheme(_, inner):
+            case TypeScheme(_, inner):
                 self._assign(inner, env, kind)
 
             case _:
@@ -262,23 +227,6 @@ class KindInferer:
 
                 return ATOM_KIND
 
-            case ConstrainedType(constrs, inner):
-                for tvar_name, tclass_names in constrs.items():
-                    candidate = None
-                    for name in tclass_names:
-                        constr_kind, found = env.get(name)
-                        assert found
-                        assert isinstance(constr_kind, ConstraintKind)
-
-                        if candidate is not None:
-                            assert candidate == constr_kind.kind
-                        else:
-                            candidate = constr_kind.kind
-
-                    assert env.set(tvar_name, candidate)
-
-                return self._infer(inner, env)
-
             case TypeScheme(vars, inner) as ts:
                 child_env = env.child_env()
                 ts.env = child_env
@@ -318,9 +266,6 @@ def kindof(type: Type, env: KindEnv) -> Kind:
 
         case FunctionType():
             return ATOM_KIND
-
-        case ConstrainedType(_, inner):
-            return kindof(inner, env)
 
         case TypeScheme(_, inner) as ts:
             return kindof(inner, ts.env)

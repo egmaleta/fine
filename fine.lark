@@ -12,15 +12,9 @@ datact_list: datact+
 
 datact: CAP_ID ( _COLON fun_type )?
 
-full_type: ( _FORALL type_var_list DOT )? ( constr_list _IMPLY )? fun_type
-
 quant_type: ( _FORALL type_var_list DOT )? fun_type
 
 type_var_list: ID+
-
-constr_list: constr+
-
-constr: CAP_ID param_list
 
 fun_type: type ( _ARROW type )*
 
@@ -36,7 +30,7 @@ type_const: CAP_ID
 _internal: _INTERNAL ID
 
 ?local_defn: ( INFIXL | INFIXR | INFIX ) NAT _operator -> fix_defn
-           | _LET _name _COLON full_type               -> typeof_defn
+           | _LET _name _COLON quant_type              -> typeof_defn
            | _LET _name param_list? _ASSIGN expr       -> val_defn
            | _LET ID _operator ID _ASSIGN expr         -> op_defn
 
@@ -101,7 +95,6 @@ _OCURLY: "{"
 _CCURLY: "}"
 
 _ARROW: "->"
-_IMPLY: "=>"
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 
 DOT: "."
