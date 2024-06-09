@@ -134,7 +134,7 @@ class Quantifier:
                 return vars
 
             case FunctionType(args):
-                vars = {}
+                vars = set()
                 for type in args:
                     vars |= self._quantify(type)
                 return vars
