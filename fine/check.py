@@ -13,7 +13,7 @@ class NameChecker:
         self.quantifier = Quantifier()
 
     @staticmethod
-    def _check_name(name: String, env: NameEnv):
+    def _assert_name(name: String, env: NameEnv):
         used, found = env.get(name)
         assert found
 
@@ -21,12 +21,12 @@ class NameChecker:
             env.set(name, True)
 
     @staticmethod
-    def _check_unused(env: NameEnv):
+    def _assert_used(env: NameEnv):
         for name, used in env:
             assert used, f"Value bound to '{name}' is never used."
 
     @staticmethod
-    def _assert_unique_names(names: list[String]):
+    def _assert_unique(names: list[String]):
         freq: defaultdict[String, list[String]] = defaultdict(lambda: [])
         for name in names:
             freq[name].append(name)
@@ -49,7 +49,7 @@ class NameChecker:
                 pass
 
             case ast.Id(name):
-                self._check_name(name, env)
+                self._assert_name(name, env)
 
             case ast.FunctionApp(f, args):
                 self.check(f, env)
@@ -61,11 +61,11 @@ class NameChecker:
                     if isinstance(x, ast.Expr):
                         self.check(x, env)
                     else:
-                        self._check_name(x, env)
+                        self._assert_name(x, env)
 
             case ast.BinaryOperation(left, op, right):
                 self.check(left, env)
-                self._check_name(op, env)
+                self._assert_name(op, env)
                 self.check(right, env)
 
             case ast.LetExpr(defns, body):
@@ -83,9 +83,9 @@ class NameChecker:
                         case _:
                             assert False
 
-                self._assert_unique_names(val_names)
-                self._assert_unique_names(valtype_names)
-                self._assert_unique_names(ops)
+                self._assert_unique(val_names)
+                self._assert_unique(valtype_names)
+                self._assert_unique(ops)
 
                 val_names = set(val_names)
 
@@ -102,7 +102,7 @@ class NameChecker:
 
                 self.check(body, env)
 
-                self._check_unused(env)
+                self._assert_used(env)
 
             case ast.PatternMatching(matchable, matches):
                 self.check(matchable, env)
@@ -116,21 +116,21 @@ class NameChecker:
                             child_env.add(name, False)
                             self.check(expr, child_env)
 
-                            self._check_unused(child_env)
+                            self._assert_used(child_env)
 
                         case pat.DataPattern(_, capture_patterns):
                             names = [p.name for p in capture_patterns]
-                            self._assert_unique_names(names)
+                            self._assert_unique(names)
 
                             child_env = env.child_env()
                             for name in names:
                                 child_env.add(name, False)
                             self.check(expr, child_env)
 
-                            self._check_unused(child_env)
+                            self._assert_used(child_env)
 
             case ast.Function(params, body):
-                self._assert_unique_names(params)
+                self._assert_unique(params)
 
                 child_env = env.child_env()
                 for name in params:
@@ -138,7 +138,7 @@ class NameChecker:
 
                 self.check(body, child_env)
 
-                self._check_unused(child_env)
+                self._assert_used(child_env)
 
             case ast.ValueDefn(name, value):
                 env.add(name, False)
@@ -177,11 +177,11 @@ class NameChecker:
                         case _:
                             assert False
 
-                self._assert_unique_names(val_names)
-                self._assert_unique_names(valtype_names)
-                self._assert_unique_names(ops)
-                self._assert_unique_names(type_names)
-                self._assert_unique_names(ct_names)
+                self._assert_unique(val_names)
+                self._assert_unique(valtype_names)
+                self._assert_unique(ops)
+                self._assert_unique(type_names)
+                self._assert_unique(ct_names)
 
                 val_names = set(val_names)
 
@@ -196,4 +196,4 @@ class NameChecker:
                 for defn in defns:
                     self.check(defn, env)
 
-                self._check_unused(env)
+                self._assert_used(env)
