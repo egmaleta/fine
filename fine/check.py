@@ -14,23 +14,29 @@ class NameChecker:
         self._config = config
         self._quantifier = Quantifier()
 
-    @staticmethod
-    def _assert_name(name: String, env: NameEnv):
+    def _assert_name(self, name: String, env: NameEnv):
+        if name == self._config.ignore_name:
+            return
+
         used, found = env.get(name)
         assert found
 
         if not used:
             env.set(name, True)
 
-    @staticmethod
-    def _assert_used(env: NameEnv):
+    def _assert_used(self, env: NameEnv):
         for name, used in env:
+            if name == self._config.ignore_name:
+                continue
+
             assert used, f"Value bound to '{name}' is never used."
 
-    @staticmethod
-    def _assert_unique(names: list[String]):
+    def _assert_unique(self, names: list[String]):
         freq: defaultdict[String, list[String]] = defaultdict(lambda: [])
         for name in names:
+            if name == self._config.ignore_name:
+                continue
+
             freq[name].append(name)
 
         for repeated_names in freq.values():
