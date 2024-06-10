@@ -1,29 +1,37 @@
 from . import ast
-from .utils import String, Env
+from .config import Config
+from .utils import Env, String
 
 
-type Sig = tuple[String, bool, int]
+type SigEnv = Env[ast.FixitySignature]
 
 
 class Transformer:
-    IS_LEFT_ASSOC = True
-    PRECEDENCE = 10
+    def __init__(self, config: Config):
+        self._config = config
 
-    def _create_binop(self, infixn: list[ast.Expr | String], env: Env[Sig]):
+    def _binop(self, infixn: list[ast.Expr | String], env: SigEnv):
         rpn: list[ast.Expr | String] = []
         op_stack: list[String] = []
+
         for item in infixn:
             if isinstance(item, ast.Expr):
                 rpn.append(item)
                 continue
 
             curr, has_curr = env.get(item)
-            curr_prec = curr[2] if has_curr else self.PRECEDENCE
-            is_curr_lassoc = curr[1] if has_curr else self.IS_LEFT_ASSOC
+            curr_prec = (
+                curr.precedence if has_curr else self._config.default_op_precedence
+            )
+            is_curr_lassoc = (
+                curr.is_left_associative if has_curr else self._config.assoc_is_left
+            )
 
             while len(op_stack) > 0:
                 top, has_top = env.get(op_stack[-1])
-                top_prec = top[2] if has_top else self.PRECEDENCE
+                top_prec = (
+                    top.precedence if has_top else self._config.default_op_precedence
+                )
 
                 if top_prec > curr_prec or top_prec == curr_prec and is_curr_lassoc:
                     rpn.append(op_stack.pop())
@@ -48,7 +56,7 @@ class Transformer:
         assert len(operands) == 1
         return operands[0]
 
-    def transform(self, node: ast.AST, env: Env[Sig]) -> ast.AST:
+    def transform(self, node: ast.AST, env: SigEnv):
         match node:
             case ast.FunctionApp(f, args):
                 return ast.FunctionApp(
@@ -56,7 +64,7 @@ class Transformer:
                 )
 
             case ast.OpChain(chain):
-                return self._create_binop(
+                return self._binop(
                     [
                         self.transform(el, env) if isinstance(el, ast.Expr) else el
                         for el in chain
@@ -70,10 +78,10 @@ class Transformer:
                 )
 
             case ast.LetExpr(defns, body):
-                env = env.child_env()
+                child_env = env.child_env()
                 return ast.LetExpr(
-                    [self.transform(defn, env) for defn in defns],
-                    self.transform(body, env),
+                    [self.transform(defn, child_env) for defn in defns],
+                    self.transform(body, child_env),
                 )
 
             case ast.PatternMatching(matchable, matches):
@@ -88,13 +96,12 @@ class Transformer:
             case ast.ValueDefn(name, value):
                 return ast.ValueDefn(name, self.transform(value, env))
 
-            case ast.FixitySignature(op, left_assoc, prec):
-                env.add(op, (op, left_assoc, prec))
+            case ast.FixitySignature(op) as fs:
+                env.add(op, fs)
                 return node
 
             case ast.Module(defns):
                 return ast.Module([self.transform(defn, env) for defn in defns])
 
             case _:
-                # internal, data, id, literal, datatypedefn and typedefn nodes
                 return node
