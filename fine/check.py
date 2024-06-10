@@ -146,7 +146,8 @@ class NameChecker:
                 env.add(name, False)
                 self.check(value, env)
 
-            case ast.TypeDefn(_, type) as defn:
+            case ast.TypeDefn(name, type) as defn:
+                env.add(name, False)
                 defn.type = self._quantifier.quantify(type)
 
             case ast.DatatypeDefn(_, _, type_defns):
