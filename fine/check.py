@@ -28,7 +28,7 @@ class NameChecker:
 
     def _assert_used(self, env: NameEnv):
         for name, used in env:
-            if name == self._config.ignore_name:
+            if name.startswith(self._config.ignore_name):
                 continue
 
             assert used, f"Value bound to '{name}' is never used."
