@@ -89,16 +89,9 @@ class FunctionApp(Expr):
 
 @dataclass
 class OpChain(Expr):
-    """Expected to be transformed in a tree of `BinaryOperation`."""
+    """Expected to be transformed in a tree of `FunctionApp`."""
 
     chain: list[String | Expr]
-
-
-@dataclass
-class BinaryOperation(Expr):
-    left: Expr
-    operator: String
-    right: Expr
 
 
 @dataclass

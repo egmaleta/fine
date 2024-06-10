@@ -51,7 +51,7 @@ class Transformer:
 
             right = operands.pop()
             left = operands.pop()
-            operands.append(ast.BinaryOperation(left, item, right))
+            operands.append(ast.FunctionApp(ast.Id(item), [left, right]))
 
         assert len(operands) == 1
         return operands[0]
@@ -70,11 +70,6 @@ class Transformer:
                         for el in chain
                     ],
                     env,
-                )
-
-            case ast.BinaryOperation(left, operator, right):
-                return ast.BinaryOperation(
-                    self.transform(left, env), operator, self.transform(right, env)
                 )
 
             case ast.LetExpr(defns, body):

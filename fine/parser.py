@@ -143,7 +143,7 @@ class ASTBuilder(Transformer):
             case [single]:
                 return single
             case [left, op, right]:
-                return ast.BinaryOperation(left, op, right)
+                return ast.FunctionApp(ast.Id(op), [left, right])
             case chain:
                 return ast.OpChain(chain)
 

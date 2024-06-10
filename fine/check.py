@@ -78,11 +78,6 @@ class NameChecker:
                     else:
                         self._assert_name(x, env)
 
-            case ast.BinaryOperation(left, op, right):
-                self.check(left, env)
-                self._assert_name(op, env)
-                self.check(right, env)
-
             case ast.LetExpr(defns, body):
                 val_names = []
                 valtype_names = []
