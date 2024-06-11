@@ -78,8 +78,8 @@ class NameChecker:
                             val_names.append(name)
                         case ast.TypeDefn(name):
                             valtype_names.append(name)
-                        case ast.FixitySignature(op):
-                            ops.append(op)
+                        case ast.FixitySignature(operators):
+                            ops.extend(operators)
 
                 self._assert_unique(val_names)
                 self._assert_unique(valtype_names)
@@ -145,13 +145,13 @@ class NameChecker:
                 for defn in type_defns:
                     self.check(defn, env)
 
-            case ast.FixitySignature(op, _, prec):
+            case ast.FixitySignature(_, _, prec):
                 min_prec = self._config.min_op_precedence
                 max_prec = self._config.max_op_precedence
 
                 assert (
                     min_prec <= prec < max_prec
-                ), f"Operator '{op}'s precedence ({prec}) is out of the range [{min_prec}, {max_prec})."
+                ), f"Operator precedence ({prec}) is out of the range [{min_prec}, {max_prec})."
 
             case ast.Module(defns):
                 val_names = []
@@ -165,8 +165,8 @@ class NameChecker:
                             val_names.append(name)
                         case ast.TypeDefn(name):
                             valtype_names.append(name)
-                        case ast.FixitySignature(op):
-                            ops.append(op)
+                        case ast.FixitySignature(operators):
+                            ops.extend(operators)
                         case ast.DatatypeDefn(type, _, type_defns):
                             type_names.append(type.name)
                             for tdefn in type_defns:

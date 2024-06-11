@@ -3,7 +3,7 @@ from .config import Config
 from .utils import Env, String
 
 
-type SigEnv = Env[ast.FixitySignature]
+type SigEnv = Env[tuple[bool, int]]
 
 
 class Transformer:
@@ -20,18 +20,12 @@ class Transformer:
                 continue
 
             curr, has_curr = env.get(item)
-            curr_prec = (
-                curr.precedence if has_curr else self._config.default_op_precedence
-            )
-            is_curr_lassoc = (
-                curr.is_left_associative if has_curr else self._config.assoc_is_left
-            )
+            curr_prec = curr[1] if has_curr else self._config.default_op_precedence
+            is_curr_lassoc = curr[0] if has_curr else self._config.assoc_is_left
 
             while len(op_stack) > 0:
                 top, has_top = env.get(op_stack[-1])
-                top_prec = (
-                    top.precedence if has_top else self._config.default_op_precedence
-                )
+                top_prec = top[1] if has_top else self._config.default_op_precedence
 
                 if top_prec > curr_prec or top_prec == curr_prec and is_curr_lassoc:
                     rpn.append(op_stack.pop())
@@ -115,8 +109,9 @@ class Transformer:
             case ast.TypeDefn() | ast.DatatypeDefn():
                 return node
 
-            case ast.FixitySignature(op) as fs:
-                env.add(op, fs)
+            case ast.FixitySignature(operators, is_left_assoc, prec):
+                for op in operators:
+                    env.add(op, (is_left_assoc, prec))
                 return node
 
             case ast.Module(defns):
