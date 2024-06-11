@@ -138,6 +138,11 @@ class ASTBuilder(Transformer):
         *defns, body = p
         return ast.LetExpr(defns, body)
 
+    def guard_expr(self, p):
+        *exprs, fallback = p
+        conditionals = [(exprs[i], exprs[i + 1]) for i in range(0, len(exprs) - 1, 2)]
+        return ast.Guards(conditionals, fallback)
+
     def op_chain_expr(self, p):
         match p:
             case [single]:

@@ -107,6 +107,12 @@ class PatternMatching(Expr):
 
 
 @dataclass
+class Guards(Expr):
+    conditionals: list[tuple[Expr, Expr]]
+    fallback: Expr
+
+
+@dataclass
 class Function(Expr):
     params: list[String]
     body: Expr

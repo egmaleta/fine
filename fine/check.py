@@ -115,6 +115,13 @@ class NameChecker:
                                 child_env.add(name, None)
                             self.check(expr, child_env)
 
+            case ast.Guards(conditionals, fallback):
+                for cond, expr in conditionals:
+                    self.check(cond, env)
+                    self.check(expr, env)
+
+                self.check(fallback, env)
+
             case ast.Function(params, body):
                 self._assert_unique(params)
 

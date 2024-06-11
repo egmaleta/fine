@@ -69,6 +69,7 @@ class Transformer:
                 | ast.Id()
             ):
                 return node
+
             case ast.FunctionApp(f, args):
                 return ast.FunctionApp(
                     self.transform(f, env), [self.transform(arg, env) for arg in args]
@@ -94,6 +95,15 @@ class Transformer:
                 return ast.PatternMatching(
                     self.transform(matchable, env),
                     [(p, self.transform(e, env)) for p, e in matches],
+                )
+
+            case ast.Guards(conditionals, fallback):
+                return ast.Guards(
+                    [
+                        (self.transform(cond, env), self.transform(expr, env))
+                        for cond, expr in conditionals
+                    ],
+                    self.transform(fallback, env),
                 )
 
             case ast.Function(params, body):

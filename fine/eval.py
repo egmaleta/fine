@@ -153,6 +153,15 @@ class Evaluator:
 
                 assert False, "No pattern was matched"
 
+            case ast.Guards(conditionals, fallback):
+                for cond, expr in conditionals:
+                    data = self._eval(cond, env)
+                    assert isinstance(data, ast.Data)
+                    if data.tag == "True":
+                        return self._eval(expr, env)
+
+                return self._eval(fallback, env)
+
             case ast.Function() as f:
                 return Closure(f, env)
 
