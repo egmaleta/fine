@@ -21,26 +21,17 @@ evaluator = Evaluator(
 )
 
 SOURCE_CODE = """
-# int
-infixl 6 +
+infixl 6 + -
+infixl 7 * / %
+infixr 8 ^ **
+
 let a + b = #internal add
-
-infixl 6 -
 let a - b = #internal sub
-
-infixl 7 *
 let a * b = #internal times
-
-infixl 7 /
 let a / b = #internal div
-
-infixl 7 %
 let a % b = #internal mod
-
-infixr 8 ^
 let a ^ b = #internal pow
-
-# list
+let (**) = (^)
 
 data List(a) {
     Nil
@@ -57,7 +48,7 @@ let map(f, list) = match list {
 
 let main =
     let numbers = 1 :: 2 :: 3 :: 4 :: 5 :: Nil
-    let squared(x) = x ^ 2
+    let squared(x) = x ** 2
     in map(squared, numbers)
 """
 
