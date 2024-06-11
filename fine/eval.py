@@ -23,9 +23,8 @@ type Value = ast.Int | ast.Float | ast.Unit | ast.Data | PolyData[Value] | Closu
 
 
 class Evaluator:
-    def __init__(self, internals: dict[String], config: Config):
+    def __init__(self, internals: dict[String]):
         self._internals = internals
-        self._config = config
 
     @staticmethod
     def try_pythonize(value: Value):
@@ -182,8 +181,8 @@ class Evaluator:
                 for defn in defns:
                     self._eval(defn, env)
 
-    def eval(self, node: ast.Defn, env: Env[Value], entrypoint: String):
+    def eval(self, node: ast.Defn, env: Env[Value], entrypoints: list[String]):
         self._eval(node, env)
 
-        value = env.get(entrypoint)[0]
-        return self.try_pythonize(value)
+        values = [env.get(entry)[0] for entry in entrypoints]
+        return [self.try_pythonize(v) for v in values]
