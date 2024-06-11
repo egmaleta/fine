@@ -58,6 +58,17 @@ class Transformer:
 
     def transform(self, node: ast.AST, env: SigEnv):
         match node:
+            case (
+                ast.InternalValue()
+                | ast.InternalFunction()
+                | ast.Data()
+                | ast.PolyData()
+                | ast.Int()
+                | ast.Float()
+                | ast.Unit()
+                | ast.Id()
+            ):
+                return node
             case ast.FunctionApp(f, args):
                 return ast.FunctionApp(
                     self.transform(f, env), [self.transform(arg, env) for arg in args]
@@ -91,12 +102,12 @@ class Transformer:
             case ast.ValueDefn(name, value):
                 return ast.ValueDefn(name, self.transform(value, env))
 
+            case ast.TypeDefn() | ast.DatatypeDefn():
+                return node
+
             case ast.FixitySignature(op) as fs:
                 env.add(op, fs)
                 return node
 
             case ast.Module(defns):
                 return ast.Module([self.transform(defn, env) for defn in defns])
-
-            case _:
-                return node
