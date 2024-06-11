@@ -60,6 +60,30 @@ class Evaluator:
 
         return value
 
+    def _eval_closure(self, cl: Closure[Value], args: list[ast.Expr], env: Env[Value]):
+        params = cl.f.params
+        child_env = cl.env.child_env()
+        for arg, param in zip(args, params):
+            arg = self._eval(arg, env)
+            child_env.add(param, arg)
+
+        args_len = len(args)
+        params_len = len(params)
+
+        # partial app
+        if args_len < params_len:
+            return Closure(ast.Function(params[args_len:], cl.f.body), child_env)
+
+        value = self._eval(cl.f.body, child_env)
+
+        # full app
+        if args_len == params_len:
+            return value
+
+        # 'value' must be a closure
+        assert isinstance(value, Closure)
+        return self._eval_closure(value, args[params_len:], env)
+
     def _eval(self, node: ast.AST, env: Env[Value]) -> Value:
         match node:
             case ast.InternalValue(name):
@@ -90,17 +114,7 @@ class Evaluator:
                 cl = self._eval(f, env)
                 assert isinstance(cl, Closure)
 
-                args = [self._eval(arg, env) for arg in args]
-
-                child_env = cl.env.child_env()
-                for param, arg in zip(cl.f.params, args):
-                    child_env.add(param, arg)
-
-                rest = cl.f.params[len(args) :]
-                if len(rest) == 0:
-                    return self._eval(cl.f.body, child_env)
-
-                return Closure(ast.Function(rest, cl.f.body), child_env)
+                return self._eval_closure(cl, args, env)
 
             case ast.LetExpr(defns, body):
                 child_env = env.child_env()
