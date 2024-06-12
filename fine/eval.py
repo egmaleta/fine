@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from . import ast, pattern as pat
-from .config import Config
 from .utils import Env, String
 
 
@@ -12,14 +11,26 @@ class Closure[T]:
 
 
 @dataclass
+class Lazy[T]:
+    expr: ast.Expr
+    env: Env[T]
+
+
+@dataclass
 class PolyData[T]:
     tag: String
     values: list[T]
 
 
-type Value = ast.Int | ast.Float | ast.Unit | ast.Data | PolyData[Value] | Closure[
-    Value
-]
+type Value = (
+    PolyData[Value]
+    | Closure[Value]
+    | Lazy[Value]
+    | ast.Int
+    | ast.Float
+    | ast.Unit
+    | ast.Data
+)
 
 
 class Evaluator:
@@ -63,7 +74,7 @@ class Evaluator:
         params = cl.f.params
         child_env = cl.env.child_env()
         for arg, param in zip(args, params):
-            arg = self._eval(arg, env)
+            arg = self._lazy_eval(arg, env)
             child_env.add(param, arg)
 
         args_len = len(args)
@@ -83,6 +94,26 @@ class Evaluator:
         assert isinstance(value, Closure)
         return self._eval_closure(value, args[params_len:], env)
 
+    def _lazy_eval(self, node: ast.Expr, env: Env[Value]):
+        match node:
+            case ast.Data() | ast.Int() | ast.Float() | ast.Unit():
+                return node
+
+            case ast.Id(name):
+                return env.get(name)[0]
+
+            case ast.Function() as f:
+                return Closure(f, env)
+
+            case _:
+                return Lazy(node, env)
+
+    def _unlazy(self, value: Value):
+        if isinstance(value, Lazy):
+            return self._eval(value.expr, value.env)
+
+        return value
+
     def _eval(self, node: ast.AST, env: Env[Value]) -> Value:
         match node:
             case ast.InternalValue(name):
@@ -93,21 +124,21 @@ class Evaluator:
                 assert name in self._internals
 
                 f = self._internals[name]
-                args = [env.get(name)[0] for name in arg_names]
+                args = [self._unlazy(env.get(name)[0]) for name in arg_names]
                 return f(*args)
 
             case ast.Data():
                 return node
 
             case ast.PolyData(tag, value_names):
-                values = [env.get(name)[0] for name in value_names]
+                values = [self._unlazy(env.get(name)[0]) for name in value_names]
                 return PolyData(tag, values)
 
             case ast.Int() | ast.Float() | ast.Unit():
                 return node
 
             case ast.Id(name):
-                return env.get(name)[0]
+                return self._unlazy(env.get(name)[0])
 
             case ast.FunctionApp(f, args):
                 cl = self._eval(f, env)
