@@ -119,7 +119,7 @@ class Guards(Expr):
 
 @dataclass
 class Function(Expr):
-    params: list[String]
+    params: list[tuple[String, bool]]
     body: Expr
 
 

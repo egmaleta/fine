@@ -124,10 +124,11 @@ class NameChecker:
                 self.check(fallback, env)
 
             case ast.Function(params, body):
-                self._assert_unique(params)
+                names = [name for name, _ in params]
+                self._assert_unique(names)
 
                 child_env = env.child_env()
-                for name in params:
+                for name in names:
                     child_env.add(name, None)
 
                 self.check(body, child_env)

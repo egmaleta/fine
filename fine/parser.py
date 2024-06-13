@@ -34,11 +34,11 @@ class ASTBuilder(Transformer):
                         if isinstance(type, t.FunctionType)
                         else t.FunctionType([type, main_type])
                     )
-                    params = [f"_{i+1}" for i in range(len(ftype) - 1)]
+                    params = [(f"_{i+1}", False) for i in range(len(ftype) - 1)]
 
                     val_defns.append(
                         ast.ValueDefn(
-                            name, ast.Function(params, ast.PolyData(name, params))
+                            name, ast.Function(params, ast.PolyData(name, [name for name, _ in params]))
                         )
                     )
                     type_defns.append(ast.TypeDefn(name, ftype))
@@ -61,14 +61,14 @@ class ASTBuilder(Transformer):
                 return ast.ValueDefn(name, ast.InternalValue(intr))
             case [name, params, intr]:
                 return ast.ValueDefn(
-                    name, ast.Function(params, ast.InternalFunction(intr, params))
+                    name, ast.Function(params, ast.InternalFunction(intr, [name for name, _ in params]))
                 )
 
     def int_op_defn(self, p):
         left, op, right, intr = p
         params = [left, right]
         return ast.ValueDefn(
-            op, ast.Function(params, ast.InternalFunction(intr, params))
+            op, ast.Function(params, ast.InternalFunction(intr, [name for name, _ in params]))
         )
 
     def datact_list(self, p):
@@ -129,6 +129,16 @@ class ASTBuilder(Transformer):
 
     def param_list(self, p):
         return p
+
+    def fun_param_list(self, p):
+        return p
+
+    def fun_param(self, p):
+        match p:
+            case [_, name]:
+                return (name, True)
+            case [name]:
+                return (name, False)
 
     def fun_expr(self, p):
         params, body = p

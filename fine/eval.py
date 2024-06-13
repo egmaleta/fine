@@ -77,9 +77,9 @@ class Evaluator:
     def _eval_closure(self, cl: Closure[Value], args: list[ast.Expr], env: Env[Value]):
         params = cl.f.params
         child_env = cl.env.child_env()
-        for arg, param in zip(args, params):
-            arg = self._lazy_eval(arg, env)
-            child_env.add(param, arg)
+        for arg, (name, is_lazy) in zip(args, params):
+            arg = self._lazy_eval(arg, env) if is_lazy else self._eval(arg, env)
+            child_env.add(name, arg)
 
         args_len = len(args)
         params_len = len(params)
