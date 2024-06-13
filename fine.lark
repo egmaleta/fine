@@ -51,9 +51,9 @@ param_list: _OPAR ID ( _COMMA ID )* _CPAR
 
 match: pattern _ARROW expr
 
-?pattern: ID                     -> capture_pattern
-        | CAP_ID param_list?     -> data_pattern
-        | ( FLOAT | INT | UNIT ) -> literal_pattern
+?pattern: ID                              -> capture_pattern
+        | CAP_ID param_list?              -> data_pattern
+        | ( FLOAT | INT | UNIT | STRING ) -> literal_pattern
 
 ?operand: operand _OPAR expr_list _CPAR      -> fun_app
         | ( CAP_ID | _name )                 -> id_atom
@@ -63,9 +63,10 @@ match: pattern _ARROW expr
 
 expr_list: expr ( _COMMA expr )*
 
-?literal: FLOAT -> dec_literal
-        | INT   -> nat_literal
-        | UNIT  -> unit_literal
+?literal: FLOAT  -> dec_literal
+        | INT    -> nat_literal
+        | UNIT   -> unit_literal
+        | STRING -> string_literal
 
 
 // LEXER GRAMMAR
@@ -89,6 +90,8 @@ _MATCH: "match"
 _THEN: "then"
 
 ID: /[a-z_][a-zA-Z0-9_]*/
+
+%import common.ESCAPED_STRING -> STRING
 
 FLOAT: /-?(0|[1-9][0-9]*)\.[0-9]*/
 INT: /-?(0|[1-9][0-9]*)/

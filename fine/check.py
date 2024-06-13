@@ -50,6 +50,7 @@ class NameChecker:
                 | ast.Int()
                 | ast.Float()
                 | ast.Unit()
+                | ast.Str()
             ):
                 pass
 

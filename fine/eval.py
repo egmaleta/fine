@@ -29,6 +29,7 @@ type Value = (
     | ast.Int
     | ast.Float
     | ast.Unit
+    | ast.Str
     | ast.Data
 )
 
@@ -40,14 +41,17 @@ class Evaluator:
     @staticmethod
     def try_pythonize(value: Value):
         match value:
-            case ast.Int(value):
-                return int(value)
+            case ast.Int(v):
+                return int(v)
 
-            case ast.Float(value):
-                return float(value)
+            case ast.Float(v):
+                return float(v)
 
             case ast.Unit():
                 return ()
+
+            case ast.Str(v):
+                return v[1:-1].encode().decode("unicode_escape")
 
             case ast.Data(tag) as data:
                 match tag:
@@ -96,7 +100,7 @@ class Evaluator:
 
     def _lazy_eval(self, node: ast.Expr, env: Env[Value]):
         match node:
-            case ast.Data() | ast.Int() | ast.Float() | ast.Unit():
+            case ast.Data() | ast.Int() | ast.Float() | ast.Unit() | ast.Str():
                 return node
 
             case ast.Id(name):
@@ -134,7 +138,7 @@ class Evaluator:
                 values = [self._unlazy(env.get(name)[0]) for name in value_names]
                 return PolyData(tag, values)
 
-            case ast.Int() | ast.Float() | ast.Unit():
+            case ast.Int() | ast.Float() | ast.Unit() | ast.Str():
                 return node
 
             case ast.Id(name):

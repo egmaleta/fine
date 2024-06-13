@@ -77,6 +77,11 @@ class Unit(Expr):
 
 
 @dataclass
+class Str(Expr):
+    value: String
+
+
+@dataclass
 class Id(Expr):
     name: String
 

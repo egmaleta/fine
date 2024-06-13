@@ -193,6 +193,9 @@ class ASTBuilder(Transformer):
     def unit_literal(self, p):
         return ast.Unit(p[0])
 
+    def string_literal(self, p):
+        return ast.Str(p[0])
+
 
 PARSER = Lark.open(
     "fine.lark",
