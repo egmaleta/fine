@@ -45,18 +45,22 @@ class FunctionKind(Kind):
 type KindEnv = Env[Kind | None]
 
 
+class _Kinded:
+    _kind: Kind | None = None
+
+
 class Type:
     def __len__(self):
         return 1
 
 
 @dataclass
-class TypeConstant(Type):
+class TypeConstant(Type, _Kinded):
     name: String
 
 
 @dataclass
-class TypeVar(Type):
+class TypeVar(Type, _Kinded):
     name: String
 
 
@@ -261,20 +265,40 @@ class KindInferer:
         return ATOM_KIND
 
 
-def kindof(type: Type, env: KindEnv) -> Kind:
+def check_kind(type: Type, expected_kind=ATOM_KIND):
     match type:
-        case TypeConstant(name) | TypeVar(name):
-            kind, found = env.get(name)
-            assert found
-            assert kind is not None
-
-            return kind
+        case TypeConstant() | TypeVar():
+            assert type._kind == expected_kind
 
         case TypeApp(f, args):
-            f_kind = kindof(f, env)
-            assert isinstance(f_kind, FunctionKind)
+            fkind = kindof(f)
 
-            match f_kind.args[len(args) :]:
+            for type_arg in args:
+                assert isinstance(fkind, FunctionKind)
+                check_kind(type_arg, fkind.left)
+                fkind = fkind.right
+
+            assert fkind == expected_kind
+
+        case FunctionType() as ftype:
+            check_kind(ftype.left, ATOM_KIND)
+            check_kind(ftype.right, ATOM_KIND)
+
+        case TypeScheme(_, inner):
+            return check_kind(inner, expected_kind)
+
+
+def kindof(type: Type) -> Kind:
+    match type:
+        case TypeConstant() | TypeVar():
+            assert type._kind is not None
+            return type._kind
+
+        case TypeApp(f, args):
+            fkind = kindof(f)
+            assert isinstance(fkind, FunctionKind)
+
+            match fkind.args[len(args) :]:
                 case [kind]:
                     return kind
                 case kinds:
@@ -283,5 +307,5 @@ def kindof(type: Type, env: KindEnv) -> Kind:
         case FunctionType():
             return ATOM_KIND
 
-        case TypeScheme(_, inner) as ts:
-            return kindof(inner, ts.env)
+        case TypeScheme(_, inner):
+            return kindof(inner)
