@@ -10,7 +10,7 @@ class Kind:
 @dataclass
 class AtomKind(Kind):
     def __repr__(self):
-        return "Type"
+        return "*"
 
 
 ATOM_KIND = AtomKind()
@@ -238,7 +238,7 @@ class KindInferer:
     def infer(self, type: Type, env: KindEnv):
         kind, setter_env = self._infer(type, env)
         if kind is None:
-            self._assign(kind, ATOM_KIND, setter_env)
+            self._assign(type, ATOM_KIND, setter_env)
             return ATOM_KIND
 
         return kind
