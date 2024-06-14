@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from .pattern import Pattern
-from .type import Type, TypeConstant, TypeApp
+from .type import Type, TypeConstant, TypeVar, TypeApp
 from .utils import String
 
 
@@ -142,6 +142,11 @@ class DatatypeDefn(Defn):
     type_defns: list[TypeDefn] = field(default_factory=lambda: [])
 
     def __post_init__(self):
+        match self.type:
+            case TypeApp(f, args):
+                assert isinstance(f, TypeConstant)
+                assert all(isinstance(type_arg, TypeVar) for type_arg in args)
+
         assert len(self.val_defns) == len(self.type_defns)
         for val_defn, type_defn in zip(self.val_defns, self.type_defns):
             assert val_defn.name == type_defn.name
