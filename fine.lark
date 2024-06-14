@@ -75,11 +75,9 @@ expr_list: expr ( _COMMA expr )*
 
 // LEXER GRAMMAR
 
-_INTERNAL.1: "#internal" // over COMMENT
-COMMENT: /#[^\n]*/
-
 CAP_ID: /[A-Z][a-zA-Z0-9_]*/
 
+_INTERNAL: "%internal"
 _DATA: "data"
 _ELIF: "elif"
 _ELSE: "else"
@@ -115,11 +113,12 @@ _COLON: ":"
 _ASSIGN: "="
 OP: /[~!@$%^&*\/\-+|?<>]/
 
-UNIT: "(" SPACE? ")"
+UNIT: "(" _SPACE? ")"
 _OPAR: "("
 _CPAR: ")"
 
-SPACE: /[ \t\f\r\n]+/
+%import common.WS -> _SPACE
+%import common.SH_COMMENT -> _COMMENT
 
-%ignore COMMENT
-%ignore SPACE
+%ignore _COMMENT
+%ignore _SPACE
