@@ -102,24 +102,12 @@ class TypeScheme(Type):
     vars: set[String]
     type: Type
 
-    _env: KindEnv | None = field(init=False, compare=False, repr=False, default=None)
-
     def __post_init__(self):
         if isinstance(self.vars, list):
             self.vars = set(self.vars)
 
     def __len__(self):
         return len(self.type)
-
-    @property
-    def env(self):
-        assert self._env is not None
-        return self._env
-
-    @env.setter
-    def env(self, new_env: KindEnv):
-        assert self._env is None
-        self._env = new_env
 
 
 class Quantifier:
@@ -180,89 +168,80 @@ class Quantifier:
 
 
 class KindInferer:
-    def _assign(self, type: Type, env: KindEnv, kind: Kind):
+    def _assign(self, type: Type, kind: Kind, setter_env: KindEnv):
         match type:
-            case TypeVar(name) | TypeConstant(name):
-                assert env.set(name, kind)
+            case TypeConstant(name) | TypeVar(name):
+                type._kind = kind
+                # make it available
+                assert setter_env.set(name, kind)
 
             case TypeScheme(_, inner):
-                self._assign(inner, env, kind)
+                self._assign(inner, kind, setter_env)
 
             case _:
                 assert False
 
-    def _infer(self, type: Type, env: KindEnv):
+    def _infer(self, type: Type, env: KindEnv) -> tuple[Kind | None, KindEnv]:
         match type:
             case TypeConstant(name) | TypeVar(name):
                 kind, found = env.get(name)
                 assert found
 
-                return kind
+                # a kind might be available for this type
+                if kind is not None and type._kind is None:
+                    type._kind = kind
+
+                return type._kind, env
 
             case TypeApp(f, args):
-                f_kind = self._infer(f, env)
+                fkind, fsetter_env = self._infer(f, env)
 
-                if f_kind is not None:
-                    for type in args:
-                        assert isinstance(f_kind, FunctionKind)
-                        left_kind = f_kind.left
-
-                        kind = self._infer(type, env)
-                        if kind is not None:
-                            assert kind == left_kind
-                        else:
-                            self._assign(type, env, left_kind)
-
-                        f_kind = f_kind.right
-
-                    return f_kind
-
-                arg_kinds = []
-                for type in args:
-                    kind = self._infer(type, env)
-                    if kind is not None:
-                        arg_kinds.append(kind)
+                # kind(f) == kind(arg1) -> kind(arg2) -> ... -> *
+                if fkind is None:
+                    kinds = []
+                    for type_arg in args:
+                        kind, _ = self._infer(type_arg, env)
+                        if kind is None:
+                            break
+                        kinds.append(kind)
                     else:
-                        self._assign(type, env, ATOM_KIND)
-                        arg_kinds.append(ATOM_KIND)
+                        self._assign(f, FunctionKind([*kinds, ATOM_KIND]), fsetter_env)
+                else:
+                    for type_arg in args:
+                        assert isinstance(fkind, FunctionKind)
+                        lkind = fkind.left
 
-                assert env.set(f.name, FunctionKind([*arg_kinds, ATOM_KIND]))
+                        kind, setter_env = self._infer(type_arg, env)
+                        if kind is None:
+                            self._assign(type_arg, lkind, setter_env)
 
-                return ATOM_KIND
+                        fkind = fkind.right
+
+                return ATOM_KIND, env
 
             case FunctionType() as ftype:
-                left_type = ftype.left
-                left_kind = self._infer(left_type, env)
-                if left_kind is not None:
-                    assert left_kind == ATOM_KIND
-                else:
-                    self._assign(left_type, env, ATOM_KIND)
+                # kind(->) == * -> *
+                for type_arg in [ftype.left, ftype.right]:
+                    kind, setter_env = self._infer(type_arg, env)
+                    if kind is None:
+                        self._assign(type_arg, ATOM_KIND, setter_env)
 
-                right_type = ftype.right
-                right_kind = self._infer(right_type, env)
-                if right_kind is not None:
-                    assert right_kind == ATOM_KIND
-                else:
-                    self._assign(right_type, env, ATOM_KIND)
+                return ATOM_KIND, env
 
-                return ATOM_KIND
-
-            case TypeScheme(vars, inner) as ts:
+            case TypeScheme(vars, inner):
                 child_env = env.child_env()
-                ts.env = child_env
                 for name in vars:
                     child_env.add(name, None)
 
                 return self._infer(inner, child_env)
 
     def infer(self, type: Type, env: KindEnv):
-        kind = self._infer(type, env)
-        if kind is not None:
-            assert kind == ATOM_KIND
-        else:
-            self._assign(type, env, ATOM_KIND)
+        kind, setter_env = self._infer(type, env)
+        if kind is None:
+            self._assign(kind, ATOM_KIND, setter_env)
+            return ATOM_KIND
 
-        return ATOM_KIND
+        return kind
 
 
 def check_kind(type: Type, expected_kind=ATOM_KIND):
