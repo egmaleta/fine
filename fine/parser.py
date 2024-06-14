@@ -38,7 +38,10 @@ class ASTBuilder(Transformer):
 
                     val_defns.append(
                         ast.ValueDefn(
-                            name, ast.Function(params, ast.PolyData(name, [name for name, _ in params]))
+                            name,
+                            ast.Function(
+                                params, ast.PolyData(name, [name for name, _ in params])
+                            ),
                         )
                     )
                     type_defns.append(ast.TypeDefn(name, ftype))
@@ -61,14 +64,20 @@ class ASTBuilder(Transformer):
                 return ast.ValueDefn(name, ast.InternalValue(intr))
             case [name, params, intr]:
                 return ast.ValueDefn(
-                    name, ast.Function(params, ast.InternalFunction(intr, [name for name, _ in params]))
+                    name,
+                    ast.Function(
+                        params, ast.InternalFunction(intr, [name for name, _ in params])
+                    ),
                 )
 
     def int_op_defn(self, p):
         left, op, right, intr = p
         params = [left, right]
         return ast.ValueDefn(
-            op, ast.Function(params, ast.InternalFunction(intr, [name for name, _ in params]))
+            op,
+            ast.Function(
+                params, ast.InternalFunction(intr, [name for name, _ in params])
+            ),
         )
 
     def datact_list(self, p):
