@@ -1,8 +1,23 @@
 from dataclasses import dataclass
 
+from ..utils import String
+
 from .type import *
 
-from ..utils import String
+
+def _assign(type: TypeVar | TypeConstant, kind: Kind, env: KindEnv):
+    type._kind = kind
+    assert env.set(type.name, kind)
+
+
+def _kindof(type: TypeVar | TypeConstant, env: KindEnv):
+    kind, found = env.get(type.name)
+    assert found
+
+    if kind is not None and type._kind is None:
+        type._kind = kind
+
+    return type._kind
 
 
 @dataclass
@@ -15,19 +30,14 @@ class _Equation:
         _, found = self.env.get(self.left.name)
         assert found
 
-    def _kindof(self, type: TypeConstant | TypeVar):
-        kind, found = self.env.get(type.name)
-        assert found
-        return kind
-
     def solved(self):
-        lkind = self._kindof(self.left)
+        lkind = _kindof(self.left, self.env)
         if lkind is not None:
             for item in self.right:
                 assert isinstance(lkind, FunctionKind)
 
-                if not isinstance(item, Kind) and self._kindof(item) is None:
-                    assert self.env.set(item.name, lkind.left)
+                if not isinstance(item, Kind) and _kindof(item, self.env) is None:
+                    _assign(item, lkind.left, self.env)
 
                 lkind = lkind.right
 
@@ -40,7 +50,7 @@ class _Equation:
                 new_right.append(item)
                 continue
 
-            kind = self._kindof(item)
+            kind = _kindof(item, self.env)
             if kind is not None:
                 new_right.append(kind)
                 continue
@@ -50,7 +60,7 @@ class _Equation:
 
         if all_solved:
             rkind = FunctionKind([*new_right, ATOM_KIND])
-            assert self.env.set(self.left.name, rkind)
+            _assign(self.left, rkind, self.env)
 
             return True
 
@@ -61,25 +71,16 @@ class _Equation:
 class KindInferer:
     def __init__(self):
         self._equations: list[_Equation] = []
-        self._tvar_names: list[String] = []
-
-    def _assign(self, type: Type, kind: Kind, env: KindEnv):
-        assert isinstance(type, (TypeConstant, TypeVar))
-        assert env.set(type.name, kind)
+        self._tvars: list[TypeVar] = []
 
     def _infer(self, type: Type, env: KindEnv):
         match type:
-            case TypeConstant(name):
-                kind, found = env.get(name)
-                assert found
-                return kind
+            case TypeConstant():
+                return _kindof(type, env)
 
-            case TypeVar(name):
-                self._tvar_names.append(name)
-
-                kind, found = env.get(name)
-                assert found
-                return kind
+            case TypeVar():
+                self._tvars.append(type)
+                return _kindof(type, env)
 
             case TypeApp(f, args):
                 fkind = self._infer(f, env)
@@ -97,7 +98,7 @@ class KindInferer:
                         items.append(type_arg)
 
                     if all_kinds:
-                        self._assign(f, FunctionKind([*items, ATOM_KIND]), env)
+                        _assign(f, FunctionKind([*items, ATOM_KIND]), env)
                     else:
                         eq = _Equation(f, items, env)
                         self._equations.append(eq)
@@ -109,7 +110,7 @@ class KindInferer:
 
                         kind = self._infer(type_arg, env)
                         if kind is None:
-                            self._assign(type_arg, lkind, env)
+                            _assign(type_arg, lkind, env)
 
                         fkind = fkind.right
 
@@ -120,21 +121,18 @@ class KindInferer:
                 for type_arg in [ftype.left, ftype.right]:
                     kind = self._infer(type_arg, env)
                     if kind is None:
-                        self._assign(type_arg, ATOM_KIND, env)
+                        _assign(type_arg, ATOM_KIND, env)
 
                 return ATOM_KIND
 
             case TypeScheme(vars, inner):
-                env = env.child_env()
+                new_env = env.child_env()
                 for name in vars:
-                    env.add(name, None)
+                    new_env.add(name, None)
 
-                if type._env is None:
-                    type._env = env
-
-                kind = self._infer(inner, env)
+                kind = self._infer(inner, new_env)
                 if kind is None:
-                    self._assign(inner, ATOM_KIND, env)
+                    _assign(inner, ATOM_KIND, new_env)
 
                 return ATOM_KIND
 
@@ -142,9 +140,9 @@ class KindInferer:
         for type in types:
             kind = self._infer(type, env)
             if kind is None:
-                self._assign(type, ATOM_KIND, env)
+                _assign(type, ATOM_KIND, env)
 
-        leftside_names = [eq.left.name for eq in self._equations]
+        leftside_types = [eq.left for eq in self._equations]
         while True:
             prev_len = len(self._equations)
 
@@ -157,25 +155,28 @@ class KindInferer:
             if new_len < prev_len:
                 continue
 
-            for name in self._tvar_names:
-                if name not in leftside_names:
+            for tvar in self._tvars:
+                if tvar not in leftside_types:
                     for eq in self._equations:
-                        kind, found = eq.env.get(name)
+                        kind, found = eq.env.get(tvar.name)
                         if found and kind is None:
-                            assert eq.env.set(name, ATOM_KIND)
-                    self._tvar_names.remove(name)
+                            _assign(tvar, ATOM_KIND, eq.env)
+                    self._tvars.remove(tvar)
                     break
             else:
                 assert False
 
     def silly_infer(self, type: Type, env: KindEnv):
         match type:
-            case TypeConstant(name):
-                env.set(name, ATOM_KIND)
+            case TypeConstant():
+                _assign(type, ATOM_KIND, env)
             case TypeApp(f, args):
                 assert isinstance(f, TypeConstant)
                 assert all(isinstance(type_arg, TypeVar) for type_arg in args)
 
-                env.set(f.name, FunctionKind([ATOM_KIND for _ in args] + [ATOM_KIND]))
+                for type_arg in args:
+                    type_arg._kind = ATOM_KIND
+
+                _assign(f, FunctionKind([ATOM_KIND for _ in args] + [ATOM_KIND]), env)
             case _:
                 assert False

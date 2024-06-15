@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from ..utils import String, Env
 
@@ -45,18 +45,22 @@ class FunctionKind(Kind):
 type KindEnv = Env[Kind | None]
 
 
+class _Kinded:
+    _kind: Kind | None = None
+
+
 class Type:
     def __len__(self):
         return 1
 
 
 @dataclass
-class TypeConstant(Type):
+class TypeConstant(Type, _Kinded):
     name: String
 
 
 @dataclass
-class TypeVar(Type):
+class TypeVar(Type, _Kinded):
     name: String
 
 
@@ -98,8 +102,6 @@ class TypeScheme(Type):
     vars: set[String]
     type: Type
 
-    _env: KindEnv | None = field(init=False, compare=False, repr=False, default=None)
-
     def __post_init__(self):
         if isinstance(self.vars, list):
             self.vars = set(self.vars)
@@ -108,7 +110,7 @@ class TypeScheme(Type):
         return len(self.type)
 
 
-def check_kind(type: Type, expected_kind: Kind, env: KindEnv):
+def check_kind(type: Type, expected_kind: Kind):
     """
     Kind checker function.
 
@@ -116,31 +118,28 @@ def check_kind(type: Type, expected_kind: Kind, env: KindEnv):
     """
 
     match type:
-        case TypeConstant(name) | TypeVar(name):
-            kind, found = env.get(name)
-            assert found
-            assert kind == expected_kind
+        case TypeConstant() | TypeVar():
+            assert type._kind == expected_kind
 
         case TypeApp(f, args):
-            fkind = kindof(f, env)
+            fkind = f._kind
 
             for type_arg in args:
                 assert isinstance(fkind, FunctionKind)
-                check_kind(type_arg, fkind.left, env)
+                check_kind(type_arg, fkind.left)
                 fkind = fkind.right
 
             assert fkind == expected_kind
 
         case FunctionType() as ftype:
-            check_kind(ftype.left, ATOM_KIND, env)
-            check_kind(ftype.right, ATOM_KIND, env)
+            check_kind(ftype.left, ATOM_KIND)
+            check_kind(ftype.right, ATOM_KIND)
 
         case TypeScheme(_, inner):
-            assert type._env is not None
-            return check_kind(inner, expected_kind, type._env)
+            return check_kind(inner, expected_kind)
 
 
-def kindof(type: Type, env: KindEnv) -> Kind:
+def kindof(type: Type) -> Kind:
     """
     Kind getter function.
 
@@ -148,15 +147,12 @@ def kindof(type: Type, env: KindEnv) -> Kind:
     """
 
     match type:
-        case TypeConstant(name) | TypeVar(name):
-            kind, found = env.get(name)
-            assert found
-            assert kind is not None
-
-            return kind
+        case TypeConstant() | TypeVar():
+            assert type._kind is not None
+            return type._kind
 
         case TypeApp(f, args):
-            fkind = kindof(f, env)
+            fkind = f._kind
             assert isinstance(fkind, FunctionKind)
 
             match fkind.args[len(args) :]:
@@ -169,5 +165,4 @@ def kindof(type: Type, env: KindEnv) -> Kind:
             return ATOM_KIND
 
         case TypeScheme(_, inner):
-            assert type._env is not None
-            return kindof(inner, type._env)
+            return kindof(inner)
