@@ -4,6 +4,7 @@ from .type import *
 
 from ..utils import String
 
+
 @dataclass
 class _Equation:
     left: TypeConstant | TypeVar
@@ -32,7 +33,9 @@ class _Equation:
 
         # solve left
         try:
-            kind = FunctionKind([kindof(type, self.env) for type in self.right] + [ATOM_KIND])
+            kind = FunctionKind(
+                [kindof(type, self.env) for type in self.right] + [ATOM_KIND]
+            )
         except AssertionError:
             pass
         else:

@@ -107,6 +107,7 @@ class TypeScheme(Type):
     def __len__(self):
         return len(self.type)
 
+
 def check_kind(type: Type, env: KindEnv, expected_kind=ATOM_KIND):
     match type:
         case TypeConstant(name) | TypeVar(name):
