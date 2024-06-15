@@ -25,12 +25,12 @@ infixl 6 + -
 infixl 7 * / %
 infixr 8 ^ **
 
-let a + b = #internal add
-let a - b = #internal sub
-let a * b = #internal times
-let a / b = #internal div
-let a % b = #internal mod
-let a ^ b = #internal pow
+let a + b = %internal add
+let a - b = %internal sub
+let a * b = %internal times
+let a / b = %internal div
+let a % b = %internal mod
+let a ^ b = %internal pow
 let (**) = (^)
 
 data List(a) {
