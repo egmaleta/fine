@@ -108,7 +108,13 @@ class TypeScheme(Type):
         return len(self.type)
 
 
-def check_kind(type: Type, env: KindEnv, expected_kind=ATOM_KIND):
+def check_kind(type: Type, expected_kind: Kind, env: KindEnv):
+    """
+    Kind checker function.
+
+    Must be used after kind inference of 'type'.
+    """
+
     match type:
         case TypeConstant(name) | TypeVar(name):
             kind, found = env.get(name)
@@ -120,21 +126,27 @@ def check_kind(type: Type, env: KindEnv, expected_kind=ATOM_KIND):
 
             for type_arg in args:
                 assert isinstance(fkind, FunctionKind)
-                check_kind(type_arg, env, fkind.left)
+                check_kind(type_arg, fkind.left, env)
                 fkind = fkind.right
 
             assert fkind == expected_kind
 
         case FunctionType() as ftype:
-            check_kind(ftype.left, env, ATOM_KIND)
-            check_kind(ftype.right, env, ATOM_KIND)
+            check_kind(ftype.left, ATOM_KIND, env)
+            check_kind(ftype.right, ATOM_KIND, env)
 
         case TypeScheme(_, inner):
             assert type._env is not None
-            return check_kind(inner, type._env, expected_kind)
+            return check_kind(inner, expected_kind, type._env)
 
 
 def kindof(type: Type, env: KindEnv) -> Kind:
+    """
+    Kind getter function.
+
+    Must be used after kind inference and kind checking of 'type'.
+    """
+
     match type:
         case TypeConstant(name) | TypeVar(name):
             kind, found = env.get(name)
