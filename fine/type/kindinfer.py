@@ -8,40 +8,53 @@ from ..utils import String
 @dataclass
 class _Equation:
     left: TypeConstant | TypeVar
-    right: list[Type]
+    right: list[Kind | TypeConstant | TypeVar]
     env: KindEnv
 
     def __post_init__(self):
         _, found = self.env.get(self.left.name)
         assert found
 
+    def _kindof(self, type: TypeConstant | TypeVar):
+        kind, found = self.env.get(type.name)
+        assert found
+        return kind
+
     def solved(self):
-        try:
-            kind = kindof(self.left, self.env)
-        except AssertionError:
-            pass
-        else:
-            # solve right
-            for type in self.right:
-                if isinstance(type, (TypeConstant, TypeVar)):
-                    tkind, found = self.env.get(type.name)
-                    if found and tkind is None:
-                        self.env.set(type.name, kind.left)
-                kind = kind.right
+        lkind = self._kindof(self.left)
+        if lkind is not None:
+            for item in self.right:
+                assert isinstance(lkind, FunctionKind)
+
+                if not isinstance(item, Kind) and self._kindof(item) is None:
+                    assert self.env.set(item.name, lkind.left)
+
+                lkind = lkind.right
 
             return True
 
-        # solve left
-        try:
-            kind = FunctionKind(
-                [kindof(type, self.env) for type in self.right] + [ATOM_KIND]
-            )
-        except AssertionError:
-            pass
-        else:
-            self.env.set(self.left.name, kind)
+        new_right = []
+        all_solved = True
+        for item in self.right:
+            if isinstance(item, Kind):
+                new_right.append(item)
+                continue
+
+            kind = self._kindof(item)
+            if kind is not None:
+                new_right.append(kind)
+                continue
+
+            all_solved = False
+            new_right.append(item)
+
+        if all_solved:
+            rkind = FunctionKind([*new_right, ATOM_KIND])
+            assert self.env.set(self.left.name, rkind)
+
             return True
 
+        self.right = new_right
         return False
 
 
@@ -72,12 +85,23 @@ class KindInferer:
                 fkind = self._infer(f, env)
 
                 if fkind is None:
-                    kinds = [self._infer(type_arg, env) for type_arg in args]
-                    if None not in kinds:
-                        self._assign(f, FunctionKind([*kinds, ATOM_KIND]), env)
+                    items = []
+                    all_kinds = True
+                    for type_arg in args:
+                        kind = self._infer(type_arg, env)
+                        if kind is not None:
+                            items.append(kind)
+                            continue
+
+                        all_kinds = False
+                        items.append(type_arg)
+
+                    if all_kinds:
+                        self._assign(f, FunctionKind([*items, ATOM_KIND]), env)
                     else:
-                        eq = _Equation(f, args, env)
+                        eq = _Equation(f, items, env)
                         self._equations.append(eq)
+
                 else:
                     for type_arg in args:
                         assert isinstance(fkind, FunctionKind)
@@ -138,11 +162,11 @@ class KindInferer:
                     for eq in self._equations:
                         kind, found = eq.env.get(name)
                         if found and kind is None:
-                            eq.env.set(name, ATOM_KIND)
+                            assert eq.env.set(name, ATOM_KIND)
                     self._tvar_names.remove(name)
                     break
             else:
-                assert False, self._equations
+                assert False
 
     def silly_infer(self, type: Type, env: KindEnv):
         match type:
