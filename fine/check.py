@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from . import ast, pattern as pat
 from .config import Config
-from .type import Quantifier
+from .type import quantify
 from .utils import Env, String
 
 
@@ -14,7 +14,6 @@ type NameEnv = Env[None]
 class NameChecker:
     def __init__(self, config: Config):
         self._config = config
-        self._quantifier = Quantifier()
 
     def _assert_name(self, name: String, env: NameEnv):
         if name == self._config.ignore_name:
@@ -138,7 +137,7 @@ class NameChecker:
                 self.check(value, env)
 
             case ast.TypeDefn(name, type) as defn:
-                defn.type = self._quantifier.quantify(type)
+                defn.type = quantify(type)
 
             case ast.DatatypeDefn(_, val_defns, type_defns):
                 for defn in val_defns:

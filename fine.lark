@@ -12,16 +12,16 @@ datact_list: datact+
 
 datact: CAP_ID ( _COLON fun_type )?
 
-quant_type: ( _FORALL type_var_list DOT )? fun_type
+type_scheme: ( _FORALL type_var_list DOT )? fun_type
 
 type_var_list: ID+
 
 fun_type: type ( _ARROW type )*
 
-?type: ( type_var | type_const ) _OPAR quant_type ( _COMMA quant_type )* _CPAR -> type_app
+?type: ( type_var | type_const ) _OPAR fun_type ( _COMMA fun_type )* _CPAR -> type_app
      | type_var
      | type_const
-     | _OPAR quant_type _CPAR
+     | _OPAR fun_type _CPAR
 
 type_var: ID
 
@@ -30,7 +30,7 @@ type_const: CAP_ID
 _internal: _INTERNAL ID
 
 ?local_defn: ( INFIXL | INFIXR | INFIX ) INT _operator+      -> fix_defn
-           | _LET _name _COLON quant_type                    -> typeof_defn
+           | _LET _name _COLON type_scheme                   -> typeof_defn
            | _LET _name fun_param_list? _ASSIGN expr         -> val_defn
            | _LET fun_param _operator fun_param _ASSIGN expr -> op_defn
 

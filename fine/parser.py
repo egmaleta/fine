@@ -90,7 +90,7 @@ class ASTBuilder(Transformer):
             case [ct, type]:
                 return (ct, type)
 
-    def quant_type(self, p):
+    def type_scheme(self, p):
         match p:
             case [ftype]:
                 return ftype
