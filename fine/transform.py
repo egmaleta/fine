@@ -45,7 +45,7 @@ class Transformer:
 
             right = operands.pop()
             left = operands.pop()
-            operands.append(ast.FunctionApp(ast.Id(item), [left, right]))
+            operands.append(ast.FunctionApp(ast.FunctionApp(ast.Id(item), left), right))
 
         assert len(operands) == 1
         return operands[0]
@@ -65,10 +65,8 @@ class Transformer:
             ):
                 return node
 
-            case ast.FunctionApp(f, args):
-                return ast.FunctionApp(
-                    self.transform(f, env), [self.transform(arg, env) for arg in args]
-                )
+            case ast.FunctionApp(f, arg):
+                return ast.FunctionApp(self.transform(f, env), self.transform(arg, env))
 
             case ast.OpChain(chain):
                 return self._binop(

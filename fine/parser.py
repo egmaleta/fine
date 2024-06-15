@@ -5,6 +5,44 @@ from . import pattern as pat
 from . import type as t
 
 
+def _create_function_app(f, args):
+    match args:
+        case [arg, *rest]:
+            return _create_function_app(ast.FunctionApp(f, arg), rest)
+        case []:
+            return f
+
+
+def _create_datatype_defn(main_type, pairs):
+    val_defns = []
+    type_defns = []
+    for name, type in pairs:
+        match type:
+            case None:
+                val_defns.append(ast.ValueDefn(name, ast.Data(name)))
+                type_defns.append(ast.TypeDefn(name, main_type))
+
+            case _:
+                ftype = (
+                    t.FunctionType([*type.args, main_type])
+                    if isinstance(type, t.FunctionType)
+                    else t.FunctionType([type, main_type])
+                )
+                params = [(f"_{i+1}", False) for i in range(len(ftype) - 1)]
+
+                val_defns.append(
+                    ast.ValueDefn(
+                        name,
+                        ast.Function(
+                            params, ast.PolyData(name, [name for name, _ in params])
+                        ),
+                    )
+                )
+                type_defns.append(ast.TypeDefn(name, ftype))
+
+    return ast.DatatypeDefn(main_type, val_defns, type_defns)
+
+
 class ASTBuilder(Transformer):
     def module(self, p):
         return ast.Module(p)
@@ -18,45 +56,15 @@ class ASTBuilder(Transformer):
                     t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
                 )
 
-    @staticmethod
-    def _create_datatype_defn(main_type, pairs):
-        val_defns = []
-        type_defns = []
-        for name, type in pairs:
-            match type:
-                case None:
-                    val_defns.append(ast.ValueDefn(name, ast.Data(name)))
-                    type_defns.append(ast.TypeDefn(name, main_type))
-
-                case _:
-                    ftype = (
-                        t.FunctionType([*type.args, main_type])
-                        if isinstance(type, t.FunctionType)
-                        else t.FunctionType([type, main_type])
-                    )
-                    params = [(f"_{i+1}", False) for i in range(len(ftype) - 1)]
-
-                    val_defns.append(
-                        ast.ValueDefn(
-                            name,
-                            ast.Function(
-                                params, ast.PolyData(name, [name for name, _ in params])
-                            ),
-                        )
-                    )
-                    type_defns.append(ast.TypeDefn(name, ftype))
-
-        return ast.DatatypeDefn(main_type, val_defns, type_defns)
-
     def data_defn(self, p):
         match p:
             case [name, cts]:
                 type = t.TypeConstant(name)
-                return self._create_datatype_defn(type, cts)
+                return _create_datatype_defn(type, cts)
 
             case [name, params, cts]:
                 type = t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
-                return self._create_datatype_defn(type, cts)
+                return _create_datatype_defn(type, cts)
 
     def int_val_defn(self, p):
         match p:
@@ -167,7 +175,7 @@ class ASTBuilder(Transformer):
             case [single]:
                 return single
             case [left, op, right]:
-                return ast.FunctionApp(ast.Id(op), [left, right])
+                return ast.FunctionApp(ast.FunctionApp(ast.Id(op), left), right)
             case chain:
                 return ast.OpChain(chain)
 
@@ -191,7 +199,7 @@ class ASTBuilder(Transformer):
 
     def fun_app(self, p):
         f, args = p
-        return ast.FunctionApp(f, args)
+        return _create_function_app(f, args)
 
     def id_atom(self, p):
         return ast.Id(p[0])

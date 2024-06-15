@@ -56,10 +56,9 @@ class NameChecker:
             case ast.Id(name):
                 self._assert_name(name, env)
 
-            case ast.FunctionApp(f, args):
+            case ast.FunctionApp(f, arg):
                 self.check(f, env)
-                for node in args:
-                    self.check(node, env)
+                self.check(arg, env)
 
             case ast.OpChain(chain):
                 for x in chain:

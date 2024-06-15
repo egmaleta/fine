@@ -74,30 +74,6 @@ class Evaluator:
 
         return value
 
-    def _eval_closure(self, cl: Closure[Value], args: list[ast.Expr], env: Env[Value]):
-        params = cl.f.params
-        child_env = cl.env.child_env()
-        for arg, (name, is_lazy) in zip(args, params):
-            arg = self._lazy_eval(arg, env) if is_lazy else self._eval(arg, env)
-            child_env.add(name, arg)
-
-        args_len = len(args)
-        params_len = len(params)
-
-        # partial app
-        if args_len < params_len:
-            return Closure(ast.Function(params[args_len:], cl.f.body), child_env)
-
-        value = self._eval(cl.f.body, child_env)
-
-        # full app
-        if args_len == params_len:
-            return value
-
-        # 'value' must be a closure
-        assert isinstance(value, Closure)
-        return self._eval_closure(value, args[params_len:], env)
-
     def _lazy_eval(self, node: ast.Expr, env: Env[Value]):
         match node:
             case ast.Data() | ast.Int() | ast.Float() | ast.Unit() | ast.Str():
@@ -144,11 +120,24 @@ class Evaluator:
             case ast.Id(name):
                 return self._unlazy(env.get(name)[0])
 
-            case ast.FunctionApp(f, args):
+            case ast.FunctionApp(f, arg):
                 cl = self._eval(f, env)
                 assert isinstance(cl, Closure)
 
-                return self._eval_closure(cl, args, env)
+                param, *rest = cl.f.params
+
+                child_env = cl.env.child_env()
+                name, is_lazy = param
+                child_env.add(
+                    name, self._lazy_eval(arg, env) if is_lazy else self._eval(arg, env)
+                )
+
+                # full app
+                if len(rest) == 0:
+                    return self._eval(cl.f.body, child_env)
+
+                # partial app
+                return Closure(ast.Function(rest, cl.f.body), child_env)
 
             case ast.LetExpr(defns, body):
                 child_env = env.child_env()
