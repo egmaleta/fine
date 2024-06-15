@@ -151,6 +151,10 @@ class DatatypeDefn(Defn):
         for val_defn, type_defn in zip(self.val_defns, self.type_defns):
             assert val_defn.name == type_defn.name
 
+    @property
+    def is_internal(self):
+        return len(self.type_defns) == 0
+
 
 @dataclass
 class FixitySignature(Defn):
