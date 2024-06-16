@@ -88,6 +88,25 @@ class ASTBuilder(Transformer):
             ),
         )
 
+    def fix_defn(self, p):
+        fixity, prec, *operators = p
+        return ast.FixitySignature(operators, fixity.type != "INFIXR", int(prec))
+
+    def typeof_defn(self, p):
+        name, type = p
+        return ast.Typing(name, type)
+
+    def val_defn(self, p):
+        match p:
+            case [name, value]:
+                return ast.Binding(name, value)
+            case [name, params, body]:
+                return ast.Binding(name, ast.Function(params, body))
+
+    def op_defn(self, p):
+        left, op, right, body = p
+        return ast.Binding(op, ast.Function([left, right], body))
+
     def datact_list(self, p):
         return p
 
@@ -124,25 +143,6 @@ class ASTBuilder(Transformer):
     def type_app(self, p):
         f, *args = p
         return t.TypeApp(f, args)
-
-    def fix_defn(self, p):
-        fixity, prec, *operators = p
-        return ast.FixitySignature(operators, fixity.type != "INFIXR", int(prec))
-
-    def typeof_defn(self, p):
-        name, type = p
-        return ast.Typing(name, type)
-
-    def val_defn(self, p):
-        match p:
-            case [name, value]:
-                return ast.Binding(name, value)
-            case [name, params, body]:
-                return ast.Binding(name, ast.Function(params, body))
-
-    def op_defn(self, p):
-        left, op, right, body = p
-        return ast.Binding(op, ast.Function([left, right], body))
 
     def param_list(self, p):
         return p

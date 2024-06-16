@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Union
 
 from .pattern import Pattern
 from .type import Type, TypeConstant, TypeVar, TypeApp
@@ -101,7 +102,7 @@ class OpChain(Expr):
 
 @dataclass
 class LetExpr(Expr):
-    defns: list[Defn]
+    defns: list[Union["Binding", "Typing", "FixitySignature"]]
     body: Expr
 
 
