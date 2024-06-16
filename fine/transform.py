@@ -102,10 +102,10 @@ class Transformer:
             case ast.Function(params, body):
                 return ast.Function(params, self.transform(body, env))
 
-            case ast.ValueDefn(name, value):
-                return ast.ValueDefn(name, self.transform(value, env))
+            case ast.Binding(name, value):
+                return ast.Binding(name, self.transform(value, env))
 
-            case ast.TypeDefn() | ast.DatatypeDefn():
+            case ast.Typing() | ast.DatatypeDefn():
                 return node
 
             case ast.FixitySignature(operators, is_left_assoc, prec):

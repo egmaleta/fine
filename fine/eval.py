@@ -188,15 +188,15 @@ class Evaluator:
             case ast.Function() as f:
                 return Closure(f, env)
 
-            case ast.ValueDefn(name, value):
+            case ast.Binding(name, value):
                 env.add(name, self._eval(value, env))
 
-            case ast.TypeDefn():
+            case ast.Typing():
                 pass
 
-            case ast.DatatypeDefn(_, val_defns, _):
-                for defn in val_defns:
-                    self._eval(defn, env)
+            case ast.DatatypeDefn(_, bindings, _):
+                for binding in bindings:
+                    self._eval(binding, env)
 
             case ast.FixitySignature():
                 pass

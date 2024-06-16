@@ -124,13 +124,13 @@ class Function(Expr):
 
 
 @dataclass
-class ValueDefn(Defn):
+class Binding(Defn):
     name: String
     value: Expr
 
 
 @dataclass
-class TypeDefn(Defn):
+class Typing(Defn):
     name: String
     type: Type
 
@@ -138,8 +138,8 @@ class TypeDefn(Defn):
 @dataclass
 class DatatypeDefn(Defn):
     type: TypeConstant | TypeApp
-    val_defns: list[ValueDefn] = field(default_factory=lambda: [])
-    type_defns: list[TypeDefn] = field(default_factory=lambda: [])
+    bindings: list[Binding] = field(default_factory=lambda: [])
+    typings: list[Typing] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         match self.type:
@@ -147,13 +147,13 @@ class DatatypeDefn(Defn):
                 assert isinstance(f, TypeConstant)
                 assert all(isinstance(type_arg, TypeVar) for type_arg in args)
 
-        assert len(self.val_defns) == len(self.type_defns)
-        for val_defn, type_defn in zip(self.val_defns, self.type_defns):
-            assert val_defn.name == type_defn.name
+        assert len(self.bindings) == len(self.typings)
+        for binding, typing in zip(self.bindings, self.typings):
+            assert binding.name == typing.name
 
     @property
     def is_internal(self):
-        return len(self.type_defns) == 0
+        return len(self.typings) == 0
 
 
 @dataclass

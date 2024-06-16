@@ -14,13 +14,13 @@ def _create_function_app(f, args):
 
 
 def _create_datatype_defn(main_type, pairs):
-    val_defns = []
-    type_defns = []
+    bindings = []
+    typings = []
     for name, type in pairs:
         match type:
             case None:
-                val_defns.append(ast.ValueDefn(name, ast.Data(name)))
-                type_defns.append(ast.TypeDefn(name, main_type))
+                bindings.append(ast.Binding(name, ast.Data(name)))
+                typings.append(ast.Typing(name, main_type))
 
             case _:
                 ftype = (
@@ -30,17 +30,17 @@ def _create_datatype_defn(main_type, pairs):
                 )
                 params = [(f"_{i+1}", False) for i in range(len(ftype) - 1)]
 
-                val_defns.append(
-                    ast.ValueDefn(
+                bindings.append(
+                    ast.Binding(
                         name,
                         ast.Function(
                             params, ast.PolyData(name, [name for name, _ in params])
                         ),
                     )
                 )
-                type_defns.append(ast.TypeDefn(name, ftype))
+                typings.append(ast.Typing(name, ftype))
 
-    return ast.DatatypeDefn(main_type, val_defns, type_defns)
+    return ast.DatatypeDefn(main_type, bindings, typings)
 
 
 class ASTBuilder(Transformer):
@@ -69,9 +69,9 @@ class ASTBuilder(Transformer):
     def int_val_defn(self, p):
         match p:
             case [name, intr]:
-                return ast.ValueDefn(name, ast.InternalValue(intr))
+                return ast.Binding(name, ast.InternalValue(intr))
             case [name, params, intr]:
-                return ast.ValueDefn(
+                return ast.Binding(
                     name,
                     ast.Function(
                         params, ast.InternalFunction(intr, [name for name, _ in params])
@@ -81,7 +81,7 @@ class ASTBuilder(Transformer):
     def int_op_defn(self, p):
         left, op, right, intr = p
         params = [left, right]
-        return ast.ValueDefn(
+        return ast.Binding(
             op,
             ast.Function(
                 params, ast.InternalFunction(intr, [name for name, _ in params])
@@ -131,18 +131,18 @@ class ASTBuilder(Transformer):
 
     def typeof_defn(self, p):
         name, type = p
-        return ast.TypeDefn(name, type)
+        return ast.Typing(name, type)
 
     def val_defn(self, p):
         match p:
             case [name, value]:
-                return ast.ValueDefn(name, value)
+                return ast.Binding(name, value)
             case [name, params, body]:
-                return ast.ValueDefn(name, ast.Function(params, body))
+                return ast.Binding(name, ast.Function(params, body))
 
     def op_defn(self, p):
         left, op, right, body = p
-        return ast.ValueDefn(op, ast.Function([left, right], body))
+        return ast.Binding(op, ast.Function([left, right], body))
 
     def param_list(self, p):
         return p

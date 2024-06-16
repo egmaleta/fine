@@ -73,9 +73,9 @@ class NameChecker:
                 ops = []
                 for defn in defns:
                     match defn:
-                        case ast.ValueDefn(name):
+                        case ast.Binding(name):
                             val_names.append(name)
-                        case ast.TypeDefn(name):
+                        case ast.Typing(name):
                             valtype_names.append(name)
                         case ast.FixitySignature(operators):
                             ops.extend(operators)
@@ -131,19 +131,19 @@ class NameChecker:
 
                 self.check(body, child_env)
 
-            case ast.ValueDefn(name, value):
+            case ast.Binding(name, value):
                 env.add(name, None)
                 self.check(value, env)
 
-            case ast.TypeDefn(name, type) as defn:
+            case ast.Typing(name, type) as defn:
                 defn.type = quantify(type)
 
-            case ast.DatatypeDefn(_, val_defns, type_defns):
-                for defn in val_defns:
-                    self.check(defn, env)
+            case ast.DatatypeDefn(_, bindings, typings):
+                for binding in bindings:
+                    self.check(binding, env)
 
-                for defn in type_defns:
-                    self.check(defn, env)
+                for typing in typings:
+                    self.check(typing, env)
 
             case ast.FixitySignature(_, _, prec):
                 min_prec = self._config.min_op_precedence
@@ -161,16 +161,16 @@ class NameChecker:
                 ct_names = []
                 for defn in defns:
                     match defn:
-                        case ast.ValueDefn(name):
+                        case ast.Binding(name):
                             val_names.append(name)
-                        case ast.TypeDefn(name):
+                        case ast.Typing(name):
                             valtype_names.append(name)
                         case ast.FixitySignature(operators):
                             ops.extend(operators)
-                        case ast.DatatypeDefn(type, _, type_defns):
+                        case ast.DatatypeDefn(type, _, typings):
                             type_names.append(type.name)
-                            for tdefn in type_defns:
-                                ct_names.append(tdefn.name)
+                            for typing in typings:
+                                ct_names.append(typing.name)
 
                 self._assert_unique(val_names)
                 self._assert_unique(valtype_names)
