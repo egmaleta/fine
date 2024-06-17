@@ -68,6 +68,6 @@ if __name__ == "__main__":
     eval = pipeline(SOURCE_CODE, DEFAULT_CONFIG)
 
     entrypoints = ["main"]
-    for ep in ["main"]:
+    for ep in entrypoints:
         value = eval(ep)
         print(ep, "=", value)

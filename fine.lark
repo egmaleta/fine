@@ -81,7 +81,7 @@ expr_list: expr ( _COMMA expr )*
 
 // LEXER GRAMMAR
 
-CAP_ID: /[A-Z][a-zA-Z0-9_]*/
+CAP_ID: /[A-Z][a-zA-Z0-9_']*/
 
 _INTERNAL: "%internal"
 _DATA: "data"
@@ -98,7 +98,7 @@ _LET: "let"
 _MATCH: "match"
 _THEN: "then"
 
-ID: /[a-z_][a-zA-Z0-9_]*/
+ID: /[a-z_][a-zA-Z0-9_']*/
 
 %import common.ESCAPED_STRING -> STRING
 
