@@ -1,24 +1,10 @@
 from fine.ast import Int
-from fine.check import NameChecker
+from fine.check import SemanticChecker
 from fine.config import DEFAULT_CONFIG
-from fine.eval import Evaluator
+from fine.eval import Evaluator, try_pythonize
 from fine.parser import parse
 from fine.transform import Transformer
-from fine.utils import Env
 
-
-checker = NameChecker(DEFAULT_CONFIG)
-transformer = Transformer(DEFAULT_CONFIG)
-evaluator = Evaluator(
-    {
-        "add": lambda x, y: Int(str(int(x.value) + int(y.value))),
-        "sub": lambda x, y: Int(str(int(x.value) - int(y.value))),
-        "times": lambda x, y: Int(str(int(x.value) * int(y.value))),
-        "div": lambda x, y: Int(str(int(x.value) // int(y.value))),
-        "mod": lambda x, y: Int(str(int(x.value) % int(y.value))),
-        "pow": lambda x, y: Int(str(int(x.value) ** int(y.value))),
-    }
-)
 
 SOURCE_CODE = """
 infixl 6 + -
@@ -52,16 +38,36 @@ let main =
     in map(squared, numbers)
 """
 
-if __name__ == "__main__":
-    program = parse(SOURCE_CODE)
+
+def pipeline(source, config):
+    program = parse(source)
     assert program is not None
 
-    checker.check(program, Env())
+    checker = SemanticChecker(config)
+    checker.check(program)
 
-    program = transformer.transform(program, Env())
+    transformer = Transformer(config)
+    program = transformer.transform(program)
+
+    evaluator = Evaluator(
+        {
+            "add": lambda x, y: Int(str(int(x.value) + int(y.value))),
+            "sub": lambda x, y: Int(str(int(x.value) - int(y.value))),
+            "times": lambda x, y: Int(str(int(x.value) * int(y.value))),
+            "div": lambda x, y: Int(str(int(x.value) // int(y.value))),
+            "mod": lambda x, y: Int(str(int(x.value) % int(y.value))),
+            "pow": lambda x, y: Int(str(int(x.value) ** int(y.value))),
+        }
+    )
+    env = evaluator.eval(program)
+
+    return lambda ep: try_pythonize(env.get(ep)[0])
+
+
+if __name__ == "__main__":
+    eval = pipeline(SOURCE_CODE, DEFAULT_CONFIG)
 
     entrypoints = ["main"]
-    values = evaluator.eval(program, Env(), entrypoints)
-
-    for entry, value in zip(entrypoints, values):
-        print(entry, "is", value)
+    for ep in ["main"]:
+        value = eval(ep)
+        print(ep, "=", value)

@@ -50,7 +50,7 @@ class Transformer:
         assert len(operands) == 1
         return operands[0]
 
-    def transform(self, node: ast.AST, env: SigEnv):
+    def _transform(self, node: ast.AST, env: SigEnv):
         match node:
             case (
                 ast.InternalValue()
@@ -66,12 +66,14 @@ class Transformer:
                 return node
 
             case ast.FunctionApp(f, arg):
-                return ast.FunctionApp(self.transform(f, env), self.transform(arg, env))
+                return ast.FunctionApp(
+                    self._transform(f, env), self._transform(arg, env)
+                )
 
             case ast.OpChain(chain):
                 return self._binop(
                     [
-                        self.transform(el, env) if isinstance(el, ast.Expr) else el
+                        self._transform(el, env) if isinstance(el, ast.Expr) else el
                         for el in chain
                     ],
                     env,
@@ -80,30 +82,30 @@ class Transformer:
             case ast.LetExpr(defns, body):
                 child_env = env.child_env()
                 return ast.LetExpr(
-                    [self.transform(defn, child_env) for defn in defns],
-                    self.transform(body, child_env),
+                    [self._transform(defn, child_env) for defn in defns],
+                    self._transform(body, child_env),
                 )
 
             case ast.PatternMatching(matchable, matches):
                 return ast.PatternMatching(
-                    self.transform(matchable, env),
-                    [(p, self.transform(e, env)) for p, e in matches],
+                    self._transform(matchable, env),
+                    [(p, self._transform(e, env)) for p, e in matches],
                 )
 
             case ast.Guards(conditionals, fallback):
                 return ast.Guards(
                     [
-                        (self.transform(cond, env), self.transform(expr, env))
+                        (self._transform(cond, env), self._transform(expr, env))
                         for cond, expr in conditionals
                     ],
-                    self.transform(fallback, env),
+                    self._transform(fallback, env),
                 )
 
             case ast.Function(params, body):
-                return ast.Function(params, self.transform(body, env))
+                return ast.Function(params, self._transform(body, env))
 
             case ast.Binding(name, value):
-                return ast.Binding(name, self.transform(value, env))
+                return ast.Binding(name, self._transform(value, env))
 
             case ast.Typing() | ast.DatatypeDefn():
                 return node
@@ -114,4 +116,10 @@ class Transformer:
                 return node
 
             case ast.Module(defns):
-                return ast.Module([self.transform(defn, env) for defn in defns])
+                return ast.Module([self._transform(defn, env) for defn in defns])
+
+            case _:
+                assert False
+
+    def transform(self, node: ast.AST):
+        return self._transform(node, Env())

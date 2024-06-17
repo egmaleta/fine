@@ -1,5 +1,3 @@
-# TODO: report errors including token's meta
-
 from collections import defaultdict
 
 from . import ast, pattern as pat
@@ -11,7 +9,7 @@ from .utils import Env, String
 type NameEnv = Env[None]
 
 
-class NameChecker:
+class SemanticChecker:
     def __init__(self, config: Config):
         self._config = config
 
@@ -39,7 +37,7 @@ class NameChecker:
         for name in set(names) - val_names:
             assert False, f"Missing value definition for '{name}'."
 
-    def check(self, node: ast.AST, env: NameEnv):
+    def _check(self, node: ast.AST, env: NameEnv):
         match node:
             case (
                 ast.InternalValue()
@@ -57,13 +55,13 @@ class NameChecker:
                 self._assert_name(name, env)
 
             case ast.FunctionApp(f, arg):
-                self.check(f, env)
-                self.check(arg, env)
+                self._check(f, env)
+                self._check(arg, env)
 
             case ast.OpChain(chain):
                 for x in chain:
                     if isinstance(x, ast.Expr):
-                        self.check(x, env)
+                        self._check(x, env)
                     else:
                         self._assert_name(x, env)
 
@@ -89,21 +87,21 @@ class NameChecker:
                 self._assert_val_defn(valtype_names, val_names)
 
                 for defn in defns:
-                    self.check(defn, env)
+                    self._check(defn, env)
 
-                self.check(body, env)
+                self._check(body, env)
 
             case ast.PatternMatching(matchable, matches):
-                self.check(matchable, env)
+                self._check(matchable, env)
                 for pattern, expr in matches:
                     match pattern:
                         case pat.LiteralPattern() | pat.DataPattern(_, []):
-                            self.check(expr, env)
+                            self._check(expr, env)
 
                         case pat.CapturePattern(name):
                             child_env = env.child_env()
                             child_env.add(name, None)
-                            self.check(expr, child_env)
+                            self._check(expr, child_env)
 
                         case pat.DataPattern(_, capture_patterns):
                             names = [p.name for p in capture_patterns]
@@ -112,14 +110,14 @@ class NameChecker:
                             child_env = env.child_env()
                             for name in names:
                                 child_env.add(name, None)
-                            self.check(expr, child_env)
+                            self._check(expr, child_env)
 
             case ast.Guards(conditionals, fallback):
                 for cond, expr in conditionals:
-                    self.check(cond, env)
-                    self.check(expr, env)
+                    self._check(cond, env)
+                    self._check(expr, env)
 
-                self.check(fallback, env)
+                self._check(fallback, env)
 
             case ast.Function(params, body):
                 names = [name for name, _ in params]
@@ -129,21 +127,21 @@ class NameChecker:
                 for name in names:
                     child_env.add(name, None)
 
-                self.check(body, child_env)
+                self._check(body, child_env)
 
             case ast.Binding(name, value):
                 env.add(name, None)
-                self.check(value, env)
+                self._check(value, env)
 
             case ast.Typing(name, type) as defn:
                 defn.type = quantify(type)
 
             case ast.DatatypeDefn(_, bindings, typings):
                 for binding in bindings:
-                    self.check(binding, env)
+                    self._check(binding, env)
 
                 for typing in typings:
-                    self.check(typing, env)
+                    self._check(typing, env)
 
             case ast.FixitySignature(_, _, prec):
                 min_prec = self._config.min_op_precedence
@@ -183,4 +181,10 @@ class NameChecker:
                 self._assert_val_defn(valtype_names, val_names)
 
                 for defn in defns:
-                    self.check(defn, env)
+                    self._check(defn, env)
+
+            case _:
+                assert False
+
+    def check(self, node: ast.AST):
+        self._check(node, Env())

@@ -38,39 +38,9 @@ class Evaluator:
     def __init__(self, internals: dict[String]):
         self._internals = internals
 
-    @staticmethod
-    def try_pythonize(value: Value):
-        match value:
-            case ast.Int(v):
-                return int(v)
-
-            case ast.Float(v):
-                return float(v)
-
-            case ast.Unit():
-                return ()
-
-            case ast.Str(v):
-                return v[1:-1].encode().decode("unicode_escape")
-
-            case ast.Data(tag) as data:
-                match tag:
-                    case "True":
-                        return True
-                    case "False":
-                        return False
-                    case "Nil":
-                        return []
-
-                return data
-
-            case PolyData(tag, values) as data:
-                if tag == "Cons":
-                    assert len(values) == 2
-                    head, tail = [Evaluator.try_pythonize(v) for v in values]
-                    return [head, *tail]
-
-                return data
+    def _unlazy(self, value: Value):
+        if isinstance(value, Lazy):
+            return self._eval(value.expr, value.env)
 
         return value
 
@@ -87,12 +57,6 @@ class Evaluator:
 
             case _:
                 return Lazy(node, env)
-
-    def _unlazy(self, value: Value):
-        if isinstance(value, Lazy):
-            return self._eval(value.expr, value.env)
-
-        return value
 
     def _eval(self, node: ast.AST, env: Env[Value]) -> Value:
         match node:
@@ -205,8 +169,46 @@ class Evaluator:
                 for defn in defns:
                     self._eval(defn, env)
 
-    def eval(self, node: ast.Defn, env: Env[Value], entrypoints: list[String]):
-        self._eval(node, env)
+            case _:
+                False
 
-        values = [env.get(entry)[0] for entry in entrypoints]
-        return [self.try_pythonize(v) for v in values]
+    def eval(self, node: ast.Module):
+        env = Env()
+        self._eval(node, env)
+        return env
+
+
+def try_pythonize(value: Value):
+    match value:
+        case ast.Int(v):
+            return int(v)
+
+        case ast.Float(v):
+            return float(v)
+
+        case ast.Unit():
+            return ()
+
+        case ast.Str(v):
+            return v[1:-1].encode().decode("unicode_escape")
+
+        case ast.Data(tag) as data:
+            match tag:
+                case "True":
+                    return True
+                case "False":
+                    return False
+                case "Nil":
+                    return []
+
+            return data
+
+        case PolyData(tag, values) as data:
+            if tag == "Cons":
+                assert len(values) == 2
+                head, tail = [try_pythonize(v) for v in values]
+                return [head, *tail]
+
+            return data
+
+    return value
