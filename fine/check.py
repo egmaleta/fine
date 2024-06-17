@@ -76,11 +76,11 @@ class SemanticChecker:
                 names = [name for name, _ in params]
                 self._assert_unique(names)
 
-                child_env = env.child()
+                new_env = env.child()
                 for name in names:
-                    child_env.add(name, None)
+                    new_env.add(name, None)
 
-                self._check(body, child_env)
+                self._check(body, new_env)
 
             case ast.PatternMatching(matchable, matches):
                 self._check(matchable, env)
@@ -90,18 +90,18 @@ class SemanticChecker:
                             self._check(expr, env)
 
                         case pat.CapturePattern(name):
-                            child_env = env.child()
-                            child_env.add(name, None)
-                            self._check(expr, child_env)
+                            new_env = env.child()
+                            new_env.add(name, None)
+                            self._check(expr, new_env)
 
                         case pat.DataPattern(_, capture_patterns):
                             names = [p.name for p in capture_patterns]
                             self._assert_unique(names)
 
-                            child_env = env.child()
+                            new_env = env.child()
                             for name in names:
-                                child_env.add(name, None)
-                            self._check(expr, child_env)
+                                new_env.add(name, None)
+                            self._check(expr, new_env)
 
             case ast.LetExpr(defns, body):
                 val_names = []

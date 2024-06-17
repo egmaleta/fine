@@ -90,18 +90,18 @@ class Evaluator:
 
                 param, *rest = cl.f.params
 
-                child_env = cl.env.child()
+                new_env = cl.env.child()
                 name, is_lazy = param
-                child_env.add(
+                new_env.add(
                     name, self._lazy_eval(arg, env) if is_lazy else self._eval(arg, env)
                 )
 
                 # full app
                 if len(rest) == 0:
-                    return self._eval(cl.f.body, child_env)
+                    return self._eval(cl.f.body, new_env)
 
                 # partial app
-                return Closure(ast.Function(rest, cl.f.body), child_env)
+                return Closure(ast.Function(rest, cl.f.body), new_env)
 
             case ast.Guards(conditionals, fallback):
                 for cond, expr in conditionals:
@@ -133,24 +133,24 @@ class Evaluator:
 
                         case pat.DataPattern(tag, capture_patterns):
                             if isinstance(value, PolyData) and value.tag == tag:
-                                child_env = env.child()
+                                new_env = env.child()
                                 for p, v in zip(capture_patterns, value.values):
-                                    child_env.add(p.name, v)
-                                return self._eval(expr, child_env)
+                                    new_env.add(p.name, v)
+                                return self._eval(expr, new_env)
 
                         case pat.CapturePattern(name):
-                            child_env = env.child()
-                            child_env.add(name, value)
-                            return self._eval(expr, child_env)
+                            new_env = env.child()
+                            new_env.add(name, value)
+                            return self._eval(expr, new_env)
 
                 assert False, "No pattern was matched"
 
             case ast.LetExpr(defns, body):
-                child_env = env.child()
+                new_env = env.child()
                 for defn in defns:
-                    self._eval(defn, child_env)
+                    self._eval(defn, new_env)
 
-                return self._eval(body, child_env)
+                return self._eval(body, new_env)
 
             case ast.Binding(name, value):
                 env.add(name, self._eval(value, env))

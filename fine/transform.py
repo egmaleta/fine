@@ -98,10 +98,10 @@ class Transformer:
                 )
 
             case ast.LetExpr(defns, body):
-                child_env = env.child()
+                new_env = env.child()
                 return ast.LetExpr(
-                    [self._transform(defn, child_env) for defn in defns],
-                    self._transform(body, child_env),
+                    [self._transform(defn, new_env) for defn in defns],
+                    self._transform(body, new_env),
                 )
 
             case ast.Binding(name, value):
