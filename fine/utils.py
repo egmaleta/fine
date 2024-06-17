@@ -43,7 +43,7 @@ class Env[V]:
 
         return False
 
-    def child_env(self):
+    def child(self):
         return Env(self)
 
     def __iter__(self):

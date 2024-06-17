@@ -90,7 +90,7 @@ class Evaluator:
 
                 param, *rest = cl.f.params
 
-                child_env = cl.env.child_env()
+                child_env = cl.env.child()
                 name, is_lazy = param
                 child_env.add(
                     name, self._lazy_eval(arg, env) if is_lazy else self._eval(arg, env)
@@ -104,7 +104,7 @@ class Evaluator:
                 return Closure(ast.Function(rest, cl.f.body), child_env)
 
             case ast.LetExpr(defns, body):
-                child_env = env.child_env()
+                child_env = env.child()
                 for defn in defns:
                     self._eval(defn, child_env)
 
@@ -128,13 +128,13 @@ class Evaluator:
 
                         case pat.DataPattern(tag, capture_patterns):
                             if isinstance(value, PolyData) and value.tag == tag:
-                                child_env = env.child_env()
+                                child_env = env.child()
                                 for p, v in zip(capture_patterns, value.values):
                                     child_env.add(p.name, v)
                                 return self._eval(expr, child_env)
 
                         case pat.CapturePattern(name):
-                            child_env = env.child_env()
+                            child_env = env.child()
                             child_env.add(name, value)
                             return self._eval(expr, child_env)
 

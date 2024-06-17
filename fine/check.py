@@ -99,7 +99,7 @@ class SemanticChecker:
                             self._check(expr, env)
 
                         case pat.CapturePattern(name):
-                            child_env = env.child_env()
+                            child_env = env.child()
                             child_env.add(name, None)
                             self._check(expr, child_env)
 
@@ -107,7 +107,7 @@ class SemanticChecker:
                             names = [p.name for p in capture_patterns]
                             self._assert_unique(names)
 
-                            child_env = env.child_env()
+                            child_env = env.child()
                             for name in names:
                                 child_env.add(name, None)
                             self._check(expr, child_env)
@@ -123,7 +123,7 @@ class SemanticChecker:
                 names = [name for name, _ in params]
                 self._assert_unique(names)
 
-                child_env = env.child_env()
+                child_env = env.child()
                 for name in names:
                     child_env.add(name, None)
 

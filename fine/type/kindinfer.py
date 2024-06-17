@@ -126,7 +126,7 @@ class KindInferer:
                 return ATOM_KIND
 
             case TypeScheme(vars, inner):
-                new_env = env.child_env()
+                new_env = env.child()
                 for name in vars:
                     new_env.add(name, None)
 
