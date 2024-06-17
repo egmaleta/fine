@@ -103,12 +103,17 @@ class Evaluator:
                 # partial app
                 return Closure(ast.Function(rest, cl.f.body), child_env)
 
-            case ast.LetExpr(defns, body):
-                child_env = env.child()
-                for defn in defns:
-                    self._eval(defn, child_env)
+            case ast.Guards(conditionals, fallback):
+                for cond, expr in conditionals:
+                    data = self._eval(cond, env)
+                    assert isinstance(data, ast.Data)
+                    if data.tag == "True":
+                        return self._eval(expr, env)
 
-                return self._eval(body, child_env)
+                return self._eval(fallback, env)
+
+            case ast.Function() as f:
+                return Closure(f, env)
 
             case ast.PatternMatching(matchable, matches):
                 value = self._eval(matchable, env)
@@ -140,17 +145,12 @@ class Evaluator:
 
                 assert False, "No pattern was matched"
 
-            case ast.Guards(conditionals, fallback):
-                for cond, expr in conditionals:
-                    data = self._eval(cond, env)
-                    assert isinstance(data, ast.Data)
-                    if data.tag == "True":
-                        return self._eval(expr, env)
+            case ast.LetExpr(defns, body):
+                child_env = env.child()
+                for defn in defns:
+                    self._eval(defn, child_env)
 
-                return self._eval(fallback, env)
-
-            case ast.Function() as f:
-                return Closure(f, env)
+                return self._eval(body, child_env)
 
             case ast.Binding(name, value):
                 env.add(name, self._eval(value, env))

@@ -79,19 +79,6 @@ class Transformer:
                     env,
                 )
 
-            case ast.LetExpr(defns, body):
-                child_env = env.child()
-                return ast.LetExpr(
-                    [self._transform(defn, child_env) for defn in defns],
-                    self._transform(body, child_env),
-                )
-
-            case ast.PatternMatching(matchable, matches):
-                return ast.PatternMatching(
-                    self._transform(matchable, env),
-                    [(p, self._transform(e, env)) for p, e in matches],
-                )
-
             case ast.Guards(conditionals, fallback):
                 return ast.Guards(
                     [
@@ -103,6 +90,19 @@ class Transformer:
 
             case ast.Function(params, body):
                 return ast.Function(params, self._transform(body, env))
+
+            case ast.PatternMatching(matchable, matches):
+                return ast.PatternMatching(
+                    self._transform(matchable, env),
+                    [(p, self._transform(e, env)) for p, e in matches],
+                )
+
+            case ast.LetExpr(defns, body):
+                child_env = env.child()
+                return ast.LetExpr(
+                    [self._transform(defn, child_env) for defn in defns],
+                    self._transform(body, child_env),
+                )
 
             case ast.Binding(name, value):
                 return ast.Binding(name, self._transform(value, env))

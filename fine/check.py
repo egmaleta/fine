@@ -65,6 +65,44 @@ class SemanticChecker:
                     else:
                         self._assert_name(x, env)
 
+            case ast.Guards(conditionals, fallback):
+                for cond, expr in conditionals:
+                    self._check(cond, env)
+                    self._check(expr, env)
+
+                self._check(fallback, env)
+
+            case ast.Function(params, body):
+                names = [name for name, _ in params]
+                self._assert_unique(names)
+
+                child_env = env.child()
+                for name in names:
+                    child_env.add(name, None)
+
+                self._check(body, child_env)
+
+            case ast.PatternMatching(matchable, matches):
+                self._check(matchable, env)
+                for pattern, expr in matches:
+                    match pattern:
+                        case pat.LiteralPattern() | pat.DataPattern(_, []):
+                            self._check(expr, env)
+
+                        case pat.CapturePattern(name):
+                            child_env = env.child()
+                            child_env.add(name, None)
+                            self._check(expr, child_env)
+
+                        case pat.DataPattern(_, capture_patterns):
+                            names = [p.name for p in capture_patterns]
+                            self._assert_unique(names)
+
+                            child_env = env.child()
+                            for name in names:
+                                child_env.add(name, None)
+                            self._check(expr, child_env)
+
             case ast.LetExpr(defns, body):
                 val_names = []
                 valtype_names = []
@@ -90,44 +128,6 @@ class SemanticChecker:
                     self._check(defn, env)
 
                 self._check(body, env)
-
-            case ast.PatternMatching(matchable, matches):
-                self._check(matchable, env)
-                for pattern, expr in matches:
-                    match pattern:
-                        case pat.LiteralPattern() | pat.DataPattern(_, []):
-                            self._check(expr, env)
-
-                        case pat.CapturePattern(name):
-                            child_env = env.child()
-                            child_env.add(name, None)
-                            self._check(expr, child_env)
-
-                        case pat.DataPattern(_, capture_patterns):
-                            names = [p.name for p in capture_patterns]
-                            self._assert_unique(names)
-
-                            child_env = env.child()
-                            for name in names:
-                                child_env.add(name, None)
-                            self._check(expr, child_env)
-
-            case ast.Guards(conditionals, fallback):
-                for cond, expr in conditionals:
-                    self._check(cond, env)
-                    self._check(expr, env)
-
-                self._check(fallback, env)
-
-            case ast.Function(params, body):
-                names = [name for name, _ in params]
-                self._assert_unique(names)
-
-                child_env = env.child()
-                for name in names:
-                    child_env.add(name, None)
-
-                self._check(body, child_env)
 
             case ast.Binding(name, value):
                 env.add(name, None)

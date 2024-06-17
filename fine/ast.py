@@ -101,8 +101,14 @@ class OpChain(Expr):
 
 
 @dataclass
-class LetExpr(Expr):
-    defns: list[Union["Binding", "Typing", "FixitySignature"]]
+class Guards(Expr):
+    conditionals: list[tuple[Expr, Expr]]
+    fallback: Expr
+
+
+@dataclass
+class Function(Expr):
+    params: list[tuple[String, bool]]
     body: Expr
 
 
@@ -113,14 +119,8 @@ class PatternMatching(Expr):
 
 
 @dataclass
-class Guards(Expr):
-    conditionals: list[tuple[Expr, Expr]]
-    fallback: Expr
-
-
-@dataclass
-class Function(Expr):
-    params: list[tuple[String, bool]]
+class LetExpr(Expr):
+    defns: list[Union["Binding", "Typing", "FixitySignature"]]
     body: Expr
 
 
