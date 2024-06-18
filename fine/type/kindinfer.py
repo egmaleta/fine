@@ -1,182 +1,152 @@
 from dataclasses import dataclass
+from collections import deque
 
-from ..utils import String
+from ..utils import Env
 
-from .type import *
-
-
-def _assign(type: TypeVar | TypeConstant, kind: Kind, env: KindEnv):
-    type._kind = kind
-    assert env.set(type.name, kind)
+from . import kind as k, type as t
 
 
-def _kindof(type: TypeVar | TypeConstant, env: KindEnv):
-    kind, found = env.get(type.name)
-    assert found
-
-    if kind is not None and type._kind is None:
-        type._kind = kind
-
-    return type._kind
+@dataclass(unsafe_hash=True)
+class _KindVar(k.Kind):
+    id: int
 
 
 @dataclass
 class _Equation:
-    left: TypeConstant | TypeVar
-    right: list[Kind | TypeConstant | TypeVar]
-    env: KindEnv
+    left: k.Kind
+    right: k.Kind
 
-    def __post_init__(self):
-        _, found = self.env.get(self.left.name)
-        assert found
 
-    def solved(self):
-        lkind = _kindof(self.left, self.env)
-        if lkind is not None:
-            for item in self.right:
-                assert isinstance(lkind, FunctionKind)
+def _contains(container: k.Kind, kvar: _KindVar):
+    match container:
+        case k.AtomKind():
+            return False
 
-                if not isinstance(item, Kind) and _kindof(item, self.env) is None:
-                    _assign(item, lkind.left, self.env)
+        case k.FunctionKind(args):
+            return any(_contains(type_arg, kvar) for type_arg in args)
 
-                lkind = lkind.right
+        case _:
+            return container == kvar
 
-            return True
 
-        new_right = []
-        all_solved = True
-        for item in self.right:
-            if isinstance(item, Kind):
-                new_right.append(item)
-                continue
+def _subs(target: k.Kind, old: _KindVar, new: k.Kind):
+    match target:
+        case k.AtomKind():
+            return target
 
-            kind = _kindof(item, self.env)
-            if kind is not None:
-                new_right.append(kind)
-                continue
+        case k.FunctionKind(args):
+            return k.FunctionKind([_subs(kind_arg, old, new) for kind_arg in args])
 
-            all_solved = False
-            new_right.append(item)
+        case _:
+            if target == old:
+                return new
 
-        if all_solved:
-            rkind = FunctionKind([*new_right, ATOM_KIND])
-            _assign(self.left, rkind, self.env)
-
-            return True
-
-        self.right = new_right
-        return False
+            return target
 
 
 class KindInferer:
     def __init__(self):
-        self._equations: list[_Equation] = []
-        self._tvars: list[TypeVar] = []
+        self._eqs: deque[_Equation] = deque()
+        self._types: list[t.TypeConstant | t.TypeVar] = []
+        self._unsolved_kvars: set[_KindVar] = set()
 
-    def _infer(self, type: Type, env: KindEnv):
+    def _next_kvar(self):
+        kvar = _KindVar(len(self._unsolved_kvars))
+        self._unsolved_kvars.add(kvar)
+        return kvar
+
+    def _subs(self, kvar: _KindVar, kind: k.Kind):
+        for type in self._types:
+            type._kind = _subs(type._kind, kvar, kind)
+
+        for eq in self._eqs:
+            eq.left = _subs(eq.left, kvar, kind)
+            eq.right = _subs(eq.right, kvar, kind)
+
+        self._unsolved_kvars.remove(kvar)
+
+    def _unify(self, k1: k.Kind, k2: k.Kind):
+        if k1 == k2:
+            return
+
+        match (k1, k2):
+            case (_KindVar() as kvar, rkind):
+                if not _contains(rkind, kvar):
+                    self._subs(kvar, rkind)
+                    return
+
+                assert False  # TODO: recursive subs
+
+            case (lkind, _KindVar() as kvar):
+                if not _contains(lkind, kvar):
+                    self._subs(kvar, lkind)
+                    return
+
+                assert False  # TODO: recursive subs
+
+            case (k.FunctionKind(), k.FunctionKind()):
+                # FIXME
+                self._unify(k1.left, k2.left)
+                self._unify(k1.right, k2.right)
+                return
+
+        assert False  # TODO: different shapes
+
+    def _solve_eq(self, equation: _Equation):
+        self._unify(equation.left, equation.right)
+
+    def _infer(self, type: t.Type, env: Env[_KindVar | None]):
         match type:
-            case TypeConstant():
-                return _kindof(type, env)
+            case t.TypeVar(name) | t.TypeConstant(name):
+                kvar, found = env.get(name)
+                assert found
 
-            case TypeVar():
-                self._tvars.append(type)
-                return _kindof(type, env)
+                if kvar is None:
+                    kvar = self._next_kvar()
+                    env.set(name, kvar)
 
-            case TypeApp(f, args):
+                type._kind = kvar
+                self._types.append(type)
+
+                return kvar
+
+            case t.TypeApp(f, args):
                 fkind = self._infer(f, env)
+                kinds = [self._infer(type_arg, env) for type_arg in args]
 
-                if fkind is None:
-                    items = []
-                    all_kinds = True
-                    for type_arg in args:
-                        kind = self._infer(type_arg, env)
-                        if kind is not None:
-                            items.append(kind)
-                            continue
+                eq = _Equation(fkind, k.FunctionKind([*kinds, k.ATOM_KIND]))
+                self._eqs.append(eq)
 
-                        all_kinds = False
-                        items.append(type_arg)
+                return k.ATOM_KIND
 
-                    if all_kinds:
-                        _assign(f, FunctionKind([*items, ATOM_KIND]), env)
-                    else:
-                        eq = _Equation(f, items, env)
-                        self._equations.append(eq)
+            case t.FunctionType(args):
+                eqs = [
+                    _Equation(self._infer(type_arg, env), k.ATOM_KIND)
+                    for type_arg in args
+                ]
+                self._eqs.extend(eqs)
 
-                else:
-                    for type_arg in args:
-                        assert isinstance(fkind, FunctionKind)
-                        lkind = fkind.left
+                return k.ATOM_KIND
 
-                        kind = self._infer(type_arg, env)
-                        if kind is None:
-                            _assign(type_arg, lkind, env)
-
-                        fkind = fkind.right
-
-                return ATOM_KIND
-
-            case FunctionType() as ftype:
-                # kind(->) == * -> *
-                for type_arg in [ftype.left, ftype.right]:
-                    kind = self._infer(type_arg, env)
-                    if kind is None:
-                        _assign(type_arg, ATOM_KIND, env)
-
-                return ATOM_KIND
-
-            case TypeScheme(vars, inner):
+            case t.TypeScheme(vars, inner):
                 new_env = env.child()
                 for name in vars:
                     new_env.add(name, None)
 
-                kind = self._infer(inner, new_env)
-                if kind is None:
-                    _assign(inner, ATOM_KIND, new_env)
+                return self._infer(inner, new_env)
 
-                return ATOM_KIND
-
-    def infer(self, types: list[Type], env: KindEnv):
-        for type in types:
-            kind = self._infer(type, env)
-            if kind is None:
-                _assign(type, ATOM_KIND, env)
-
-        leftside_types = [eq.left for eq in self._equations]
-        while True:
-            prev_len = len(self._equations)
-
-            self._equations = [eq for eq in self._equations if not eq.solved()]
-            new_len = len(self._equations)
-
-            if new_len == 0:
-                return
-
-            if new_len < prev_len:
-                continue
-
-            for tvar in self._tvars:
-                if tvar not in leftside_types:
-                    for eq in self._equations:
-                        kind, found = eq.env.get(tvar.name)
-                        if found and kind is None:
-                            _assign(tvar, ATOM_KIND, eq.env)
-                    self._tvars.remove(tvar)
-                    break
-            else:
-                assert False
-
-    def silly_infer(self, type: Type, env: KindEnv):
-        match type:
-            case TypeConstant():
-                _assign(type, ATOM_KIND, env)
-            case TypeApp(f, args):
-                assert isinstance(f, TypeConstant)
-                assert all(isinstance(type_arg, TypeVar) for type_arg in args)
-
-                for type_arg in args:
-                    type_arg._kind = ATOM_KIND
-
-                _assign(f, FunctionKind([ATOM_KIND for _ in args] + [ATOM_KIND]), env)
             case _:
                 assert False
+
+    def infer(self, types: list[t.Type], env: Env[None]):
+        for type in types:
+            kind = self._infer(type, env)
+            eq = _Equation(kind, k.ATOM_KIND)
+            self._eqs.append(eq)
+
+        while len(self._eqs) > 0:
+            eq = self._eqs.popleft()
+            self._solve_eq(eq)
+
+        for kvar in [*self._unsolved_kvars]:
+            self._subs(kvar, k.ATOM_KIND)  # could be any kind

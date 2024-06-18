@@ -1,57 +1,17 @@
 from dataclasses import dataclass
 
-from ..utils import String, Env
+from ..utils import String
 
-
-class Kind:
-    pass
-
-
-@dataclass
-class AtomKind(Kind):
-    def __repr__(self):
-        return "*"
-
-
-ATOM_KIND = AtomKind()
-
-
-@dataclass
-class FunctionKind(Kind):
-    args: list[Kind]
-
-    def __post_init__(self):
-        assert len(self.args) >= 2
-
-    @property
-    def left(self):
-        return self.args[0]
-
-    @property
-    def right(self):
-        match self.args[1:]:
-            case [kind]:
-                return kind
-            case kinds:
-                return FunctionKind(kinds)
-
-    def __repr__(self):
-        return " -> ".join(
-            f"({kind})" if isinstance(kind, FunctionKind) else repr(kind)
-            for kind in self.args
-        )
-
-
-type KindEnv = Env[Kind | None]
-
-
-class _Kinded:
-    _kind: Kind | None = None
+from . import kind as k
 
 
 class Type:
     def __len__(self):
         return 1
+
+
+class _Kinded:
+    _kind: k.Kind | None = None
 
 
 @dataclass
@@ -110,36 +70,7 @@ class TypeScheme(Type):
         return len(self.type)
 
 
-def check_kind(type: Type, expected_kind: Kind):
-    """
-    Kind checker function.
-
-    Must be used after kind inference of 'type'.
-    """
-
-    match type:
-        case TypeConstant() | TypeVar():
-            assert type._kind == expected_kind
-
-        case TypeApp(f, args):
-            fkind = f._kind
-
-            for type_arg in args:
-                assert isinstance(fkind, FunctionKind)
-                check_kind(type_arg, fkind.left)
-                fkind = fkind.right
-
-            assert fkind == expected_kind
-
-        case FunctionType() as ftype:
-            check_kind(ftype.left, ATOM_KIND)
-            check_kind(ftype.right, ATOM_KIND)
-
-        case TypeScheme(_, inner):
-            return check_kind(inner, expected_kind)
-
-
-def kindof(type: Type) -> Kind:
+def kindof(type: Type) -> k.Kind:
     """
     Kind getter function.
 
@@ -153,16 +84,16 @@ def kindof(type: Type) -> Kind:
 
         case TypeApp(f, args):
             fkind = f._kind
-            assert isinstance(fkind, FunctionKind)
+            assert isinstance(fkind, k.FunctionKind)
 
             match fkind.args[len(args) :]:
                 case [kind]:
                     return kind
                 case kinds:
-                    return FunctionKind(kinds)
+                    return k.FunctionKind(kinds)
 
         case FunctionType():
-            return ATOM_KIND
+            return k.ATOM_KIND
 
         case TypeScheme(_, inner):
             return kindof(inner)
