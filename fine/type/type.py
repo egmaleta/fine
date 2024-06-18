@@ -71,26 +71,18 @@ class TypeScheme(Type):
 
 
 def kindof(type: Type) -> k.Kind:
-    """
-    Kind getter function.
-
-    Must be used after kind inference and kind checking of 'type'.
-    """
-
     match type:
         case TypeConstant() | TypeVar():
             assert type._kind is not None
             return type._kind
 
         case TypeApp(f, args):
-            fkind = f._kind
-            assert isinstance(fkind, k.FunctionKind)
+            kind = kindof(f)
+            for _ in args:
+                assert isinstance(kind, k.FunctionKind)
+                kind = kind.right
 
-            match fkind.args[len(args) :]:
-                case [kind]:
-                    return kind
-                case kinds:
-                    return k.FunctionKind(kinds)
+            return kind
 
         case FunctionType():
             return k.ATOM_KIND

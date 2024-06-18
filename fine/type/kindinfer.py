@@ -10,6 +10,9 @@ from . import kind as k, type as t
 class _KindVar(k.Kind):
     id: int
 
+    def __repr__(self):
+        return f"k{id}"
+
 
 @dataclass
 class _Equation:
@@ -22,8 +25,8 @@ def _contains(container: k.Kind, kvar: _KindVar):
         case k.AtomKind():
             return False
 
-        case k.FunctionKind(args):
-            return any(_contains(type_arg, kvar) for type_arg in args)
+        case k.FunctionKind(left, right):
+            return _contains(left, kvar) or _contains(right, kvar)
 
         case _:
             return container == kvar
@@ -34,8 +37,8 @@ def _subs(target: k.Kind, old: _KindVar, new: k.Kind):
         case k.AtomKind():
             return target
 
-        case k.FunctionKind(args):
-            return k.FunctionKind([_subs(kind_arg, old, new) for kind_arg in args])
+        case k.FunctionKind(left, right):
+            return k.FunctionKind(_subs(left, old, new), _subs(right, old, new))
 
         case _:
             if target == old:
@@ -114,7 +117,7 @@ class KindInferer:
                 fkind = self._infer(f, env)
                 kinds = [self._infer(type_arg, env) for type_arg in args]
 
-                eq = _Equation(fkind, k.FunctionKind([*kinds, k.ATOM_KIND]))
+                eq = _Equation(fkind, k.FunctionKind.from_args(kinds))
                 self._eqs.append(eq)
 
                 return k.ATOM_KIND

@@ -16,25 +16,19 @@ ATOM_KIND = AtomKind()
 
 @dataclass
 class FunctionKind(Kind):
-    args: list[Kind]
+    left: Kind
+    right: Kind
 
-    def __post_init__(self):
-        assert len(self.args) >= 2
-
-    @property
-    def left(self):
-        return self.args[0]
-
-    @property
-    def right(self):
-        match self.args[1:]:
+    @classmethod
+    def from_args(cls, args: list[Kind]):
+        match args:
             case [kind]:
-                return kind
-            case kinds:
-                return FunctionKind(kinds)
+                return cls(kind, ATOM_KIND)
+            case [kind, *rest]:
+                return cls(kind, cls.from_args(rest))
 
     def __repr__(self):
-        return " -> ".join(
-            f"({kind})" if isinstance(kind, FunctionKind) else repr(kind)
-            for kind in self.args
+        left_repr = (
+            f"({self.left})" if isinstance(self.left, FunctionKind) else repr(self.left)
         )
+        return f"{left_repr} -> {self.right}"
