@@ -11,7 +11,7 @@ class AtomKind(Kind):
         return "*"
 
 
-ATOM_KIND = AtomKind()
+ATOM = AtomKind()
 
 
 @dataclass
@@ -23,7 +23,7 @@ class FunctionKind(Kind):
     def from_args(cls, args: list[Kind]):
         match args:
             case [kind]:
-                return cls(kind, ATOM_KIND)
+                return cls(kind, ATOM)
             case [kind, *rest]:
                 return cls(kind, cls.from_args(rest))
 

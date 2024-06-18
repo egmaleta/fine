@@ -120,7 +120,7 @@ class KindInferer:
                 eq = _Equation(fkind, k.FunctionKind.from_args(kinds))
                 self._eqs.append(eq)
 
-                return k.ATOM_KIND
+                return k.ATOM
 
             case t.TypeScheme(vars, inner):
                 new_env = env.child()
@@ -135,7 +135,7 @@ class KindInferer:
     def infer(self, types: list[t.Type], env: Env[None]):
         for type in types:
             kind = self._infer(type, env)
-            eq = _Equation(kind, k.ATOM_KIND)
+            eq = _Equation(kind, k.ATOM)
             self._eqs.append(eq)
 
         while len(self._eqs) > 0:
@@ -143,4 +143,4 @@ class KindInferer:
             self._solve_eq(eq)
 
         for kvar in [*self._unsolved_kvars]:
-            self._subs(kvar, k.ATOM_KIND)  # could be any kind
+            self._subs(kvar, k.ATOM)  # could be any kind
