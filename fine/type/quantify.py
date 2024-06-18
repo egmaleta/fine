@@ -1,6 +1,6 @@
 from ..utils import String
 
-from . import type as t
+from . import Type, TypeConstant, TypeVar, TypeApp, TypeScheme
 
 
 def _format_vars(vars):
@@ -20,21 +20,21 @@ def _assert_free(vars: set[String]):
     assert len(vars) == 0, f"{_format_vars(vars)} free."
 
 
-def _quantify(type: t.Type) -> set[String]:
+def _quantify(type: Type) -> set[String]:
     match type:
-        case t.TypeConstant():
+        case TypeConstant():
             return set()
 
-        case t.TypeVar(name):
+        case TypeVar(name):
             return {name}
 
-        case t.TypeApp(f, args):
+        case TypeApp(f, args):
             vars = _quantify(f)
             for type in args:
                 vars |= _quantify(type)
             return vars
 
-        case t.TypeScheme(vars, inner):
+        case TypeScheme(vars, inner):
             captured = _quantify(inner)
             _assert_unused(vars - captured)
 
@@ -42,12 +42,12 @@ def _quantify(type: t.Type) -> set[String]:
             return free
 
 
-def quantify(type: t.Type):
+def quantify(type: Type):
     free = _quantify(type)
 
     match type:
-        case t.TypeScheme():
+        case TypeScheme():
             _assert_free(free)
             return type
         case _:
-            return t.TypeScheme(free, type) if len(free) > 0 else type
+            return TypeScheme(free, type) if len(free) > 0 else type

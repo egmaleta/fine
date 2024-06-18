@@ -1,21 +1,17 @@
 from dataclasses import dataclass
 
 
-class Kind:
-    pass
+type Kind = AtomKind | FunctionKind
 
 
 @dataclass
-class AtomKind(Kind):
+class AtomKind:
     def __repr__(self):
         return "*"
 
 
-ATOM = AtomKind()
-
-
 @dataclass
-class FunctionKind(Kind):
+class FunctionKind:
     left: Kind
     right: Kind
 
@@ -32,3 +28,6 @@ class FunctionKind(Kind):
             f"({self.left})" if isinstance(self.left, FunctionKind) else repr(self.left)
         )
         return f"{left_repr} -> {self.right}"
+
+
+ATOM = AtomKind()

@@ -5,20 +5,31 @@ from .type import Type, TypeConstant, TypeVar, TypeApp
 from .utils import String
 
 
-class AST:
-    pass
+type AST = Expr | Defn
 
+type Expr = (
+    InternalValue
+    | InternalFunction
+    | Data
+    | PolyData
+    | Int
+    | Float
+    | Unit
+    | Str
+    | Id
+    | FunctionApp
+    | OpChain
+    | Guards
+    | Function
+    | PatternMatching
+    | LetExpr
+)
 
-class Defn(AST):
-    pass
-
-
-class Expr(AST):
-    pass
+type Defn = Binding | Typing | DatatypeDefn | FixitySignature | Module
 
 
 @dataclass
-class InternalValue(Expr):
+class InternalValue:
     """A value provided by the compiler.
 
     `name` is the identifier of the value."""
@@ -27,7 +38,7 @@ class InternalValue(Expr):
 
 
 @dataclass
-class InternalFunction(Expr):
+class InternalFunction:
     """A function provided by the compiler.
 
     `name` is the identifier of the function.
@@ -40,7 +51,7 @@ class InternalFunction(Expr):
 
 
 @dataclass
-class Data(Expr):
+class Data:
     """Data created by constant data constructors.
 
     `tag` is the name of the constructor and the actual data."""
@@ -49,7 +60,7 @@ class Data(Expr):
 
 
 @dataclass
-class PolyData(Expr):
+class PolyData:
     """Data created by function data constructors.
 
     `tag` is the name of the constructor.
@@ -62,81 +73,81 @@ class PolyData(Expr):
 
 
 @dataclass
-class Int(Expr):
+class Int:
     value: String
 
 
 @dataclass
-class Float(Expr):
+class Float:
     value: String
 
 
 @dataclass
-class Unit(Expr):
+class Unit:
     value: String
 
 
 @dataclass
-class Str(Expr):
+class Str:
     value: String
 
 
 @dataclass
-class Id(Expr):
+class Id:
     name: String
 
 
 @dataclass
-class FunctionApp(Expr):
+class FunctionApp:
     f: Expr
     arg: Expr
 
 
 @dataclass
-class OpChain(Expr):
+class OpChain:
     """Expected to be transformed in a tree of `FunctionApp`."""
 
     chain: list[String | Expr]
 
 
 @dataclass
-class Guards(Expr):
+class Guards:
     conditionals: list[tuple[Expr, Expr]]
     fallback: Expr
 
 
 @dataclass
-class Function(Expr):
+class Function:
     params: list[tuple[String, bool]]
     body: Expr
 
 
 @dataclass
-class PatternMatching(Expr):
+class PatternMatching:
     matchable: Expr
     matches: list[tuple[Pattern, Expr]]
 
 
 @dataclass
-class LetExpr(Expr):
+class LetExpr:
     defns: list[Defn]
     body: Expr
 
 
 @dataclass
-class Binding(Defn):
+class Binding:
     name: String
     value: Expr
 
 
 @dataclass
-class Typing(Defn):
+class Typing:
     name: String
     type: Type
 
 
 @dataclass
-class DatatypeDefn(Defn):
+class DatatypeDefn:
     type: TypeConstant | TypeApp
     bindings: list[Binding] = field(default_factory=lambda: [])
     typings: list[Typing] = field(default_factory=lambda: [])
@@ -157,12 +168,12 @@ class DatatypeDefn(Defn):
 
 
 @dataclass
-class FixitySignature(Defn):
+class FixitySignature:
     operators: list[String]
     is_left_associative: bool
     precedence: int
 
 
 @dataclass
-class Module(Defn):
+class Module:
     defns: list[Defn]

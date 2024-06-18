@@ -3,21 +3,20 @@ from dataclasses import dataclass, field
 from .utils import String
 
 
-class Pattern:
-    pass
+type Pattern = CapturePattern | DataPattern | LiteralPattern
 
 
 @dataclass
-class CapturePattern(Pattern):
+class CapturePattern:
     name: String
 
 
 @dataclass
-class DataPattern(Pattern):
+class DataPattern:
     tag: String
     patterns: list[CapturePattern] = field(default_factory=lambda: [])
 
 
 @dataclass
-class LiteralPattern(Pattern):
+class LiteralPattern:
     value: String

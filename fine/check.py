@@ -1,8 +1,9 @@
 from collections import defaultdict
 
-from . import ast, pattern as pat
+from . import ast
+from .pattern import CapturePattern, DataPattern, LiteralPattern
 from .config import Config
-from .type import quantify
+from .type.quantify import quantify
 from .utils import Env, String
 
 
@@ -59,11 +60,11 @@ class SemanticChecker:
                 self._check(arg, env)
 
             case ast.OpChain(chain):
-                for x in chain:
-                    if isinstance(x, ast.Expr):
-                        self._check(x, env)
+                for item in chain:
+                    if not isinstance(item, str):
+                        self._check(item, env)
                     else:
-                        self._assert_name(x, env)
+                        self._assert_name(item, env)
 
             case ast.Guards(conditionals, fallback):
                 for cond, expr in conditionals:
@@ -86,15 +87,15 @@ class SemanticChecker:
                 self._check(matchable, env)
                 for pattern, expr in matches:
                     match pattern:
-                        case pat.LiteralPattern() | pat.DataPattern(_, []):
+                        case LiteralPattern() | DataPattern(_, []):
                             self._check(expr, env)
 
-                        case pat.CapturePattern(name):
+                        case CapturePattern(name):
                             new_env = env.child()
                             new_env.add(name, None)
                             self._check(expr, new_env)
 
-                        case pat.DataPattern(_, capture_patterns):
+                        case DataPattern(_, capture_patterns):
                             names = [p.name for p in capture_patterns]
                             self._assert_unique(names)
 

@@ -15,7 +15,7 @@ class Transformer:
         op_stack: list[String] = []
 
         for item in infixn:
-            if isinstance(item, ast.Expr):
+            if not isinstance(item, str):
                 rpn.append(item)
                 continue
 
@@ -39,7 +39,7 @@ class Transformer:
 
         operands: list[ast.Expr] = []
         for item in rpn:
-            if isinstance(item, ast.Expr):
+            if not isinstance(item, str):
                 operands.append(item)
                 continue
 
@@ -73,8 +73,12 @@ class Transformer:
             case ast.OpChain(chain):
                 return self._binop(
                     [
-                        self._transform(el, env) if isinstance(el, ast.Expr) else el
-                        for el in chain
+                        (
+                            self._transform(item, env)
+                            if not isinstance(item, str)
+                            else item
+                        )
+                        for item in chain
                     ],
                     env,
                 )

@@ -3,11 +3,15 @@ from collections import deque
 
 from ..utils import Env
 
-from . import kind as k, type as t
+from . import Type, TypeConstant, TypeVar, TypeApp, TypeScheme
+from .kind import Kind, AtomKind, FunctionKind, ATOM
+
+
+type _Kind = Kind | _KindVar
 
 
 @dataclass(unsafe_hash=True)
-class _KindVar(k.Kind):
+class _KindVar:
     id: int
 
     def __repr__(self):
@@ -16,29 +20,29 @@ class _KindVar(k.Kind):
 
 @dataclass
 class _Equation:
-    left: k.Kind
-    right: k.Kind
+    left: _Kind
+    right: _Kind
 
 
-def _contains(container: k.Kind, kvar: _KindVar):
+def _contains(container: _Kind, kvar: _KindVar):
     match container:
-        case k.AtomKind():
+        case AtomKind():
             return False
 
-        case k.FunctionKind(left, right):
+        case FunctionKind(left, right):
             return _contains(left, kvar) or _contains(right, kvar)
 
         case _:
             return container == kvar
 
 
-def _subs(target: k.Kind, old: _KindVar, new: k.Kind):
+def _subs(target: _Kind, old: _KindVar, new: _Kind):
     match target:
-        case k.AtomKind():
+        case AtomKind():
             return target
 
-        case k.FunctionKind(left, right):
-            return k.FunctionKind(_subs(left, old, new), _subs(right, old, new))
+        case FunctionKind(left, right):
+            return FunctionKind(_subs(left, old, new), _subs(right, old, new))
 
         case _:
             if target == old:
@@ -50,7 +54,7 @@ def _subs(target: k.Kind, old: _KindVar, new: k.Kind):
 class KindInferer:
     def __init__(self):
         self._eqs: deque[_Equation] = deque()
-        self._types: list[t.TypeConstant | t.TypeVar] = []
+        self._types: list[TypeConstant | TypeVar] = []
         self._unsolved_kvars: set[_KindVar] = set()
 
     def _next_kvar(self):
@@ -58,7 +62,7 @@ class KindInferer:
         self._unsolved_kvars.add(kvar)
         return kvar
 
-    def _subs(self, kvar: _KindVar, kind: k.Kind):
+    def _subs(self, kvar: _KindVar, kind: _Kind):
         for type in self._types:
             type._kind = _subs(type._kind, kvar, kind)
 
@@ -68,7 +72,7 @@ class KindInferer:
 
         self._unsolved_kvars.remove(kvar)
 
-    def _unify(self, k1: k.Kind, k2: k.Kind):
+    def _unify(self, k1: _Kind, k2: _Kind):
         if k1 == k2:
             return
 
@@ -87,7 +91,7 @@ class KindInferer:
 
                 assert False  # TODO: recursive subs
 
-            case (k.FunctionKind(), k.FunctionKind()):
+            case (FunctionKind(), FunctionKind()):
                 # FIXME
                 self._unify(k1.left, k2.left)
                 self._unify(k1.right, k2.right)
@@ -98,9 +102,9 @@ class KindInferer:
     def _solve_eq(self, equation: _Equation):
         self._unify(equation.left, equation.right)
 
-    def _infer(self, type: t.Type, env: Env[_KindVar | None]):
+    def _infer(self, type: Type, env: Env[_KindVar | None]):
         match type:
-            case t.TypeVar(name) | t.TypeConstant(name):
+            case TypeVar(name) | TypeConstant(name):
                 kvar, found = env.get(name)
                 assert found
 
@@ -113,16 +117,16 @@ class KindInferer:
 
                 return kvar
 
-            case t.TypeApp(f, args):
+            case TypeApp(f, args):
                 fkind = self._infer(f, env)
                 kinds = [self._infer(type_arg, env) for type_arg in args]
 
-                eq = _Equation(fkind, k.FunctionKind.from_args(kinds))
+                eq = _Equation(fkind, FunctionKind.from_args(kinds))
                 self._eqs.append(eq)
 
-                return k.ATOM
+                return ATOM
 
-            case t.TypeScheme(vars, inner):
+            case TypeScheme(vars, inner):
                 new_env = env.child()
                 for name in vars:
                     new_env.add(name, None)
@@ -132,10 +136,10 @@ class KindInferer:
             case _:
                 assert False
 
-    def infer(self, types: list[t.Type], env: Env[None]):
+    def infer(self, types: list[Type], env: Env[None]):
         for type in types:
             kind = self._infer(type, env)
-            eq = _Equation(kind, k.ATOM)
+            eq = _Equation(kind, ATOM)
             self._eqs.append(eq)
 
         while len(self._eqs) > 0:
@@ -143,4 +147,4 @@ class KindInferer:
             self._solve_eq(eq)
 
         for kvar in [*self._unsolved_kvars]:
-            self._subs(kvar, k.ATOM)  # could be any kind
+            self._subs(kvar, ATOM)  # could be any kind

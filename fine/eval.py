@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
-from . import ast, pattern as pat
+from . import ast
+from .pattern import CapturePattern, DataPattern, LiteralPattern
 from .utils import Env, String
 
 
@@ -120,25 +121,25 @@ class Evaluator:
 
                 for pattern, expr in matches:
                     match pattern:
-                        case pat.LiteralPattern(pat_value):
+                        case LiteralPattern(pat_value):
                             if (
                                 isinstance(value, (ast.Int, ast.Float, ast.Unit))
                                 and value.value == pat_value
                             ):
                                 return self._eval(expr, env)
 
-                        case pat.DataPattern(tag, []):
+                        case DataPattern(tag, []):
                             if isinstance(value, ast.Data) and value.tag == tag:
                                 return self._eval(expr, env)
 
-                        case pat.DataPattern(tag, capture_patterns):
+                        case DataPattern(tag, capture_patterns):
                             if isinstance(value, PolyData) and value.tag == tag:
                                 new_env = env.child()
                                 for p, v in zip(capture_patterns, value.values):
                                     new_env.add(p.name, v)
                                 return self._eval(expr, new_env)
 
-                        case pat.CapturePattern(name):
+                        case CapturePattern(name):
                             new_env = env.child()
                             new_env.add(name, value)
                             return self._eval(expr, new_env)

@@ -1,19 +1,19 @@
 from lark import Transformer, Lark, Token
 
 from . import ast
-from . import pattern as pat
-from . import type as t
+from .pattern import CapturePattern, DataPattern, LiteralPattern
+from .type import Type, TypeConstant, TypeVar, TypeApp, TypeScheme, ftype_length
 
 
 def _create_datatype_defn(
-    main_type: t.TypeConstant | t.TypeApp, cts: list[tuple[Token, t.Type]]
+    main_type: TypeConstant | TypeApp, cts: list[tuple[Token, Type]]
 ):
     bindings = []
     typings = []
     for name, type in cts:
         typings.append(ast.Typing(name, type))
 
-        params_len = t.ftype_length(type) - 1
+        params_len = ftype_length(type) - 1
         if params_len == 0:
             bindings.append(ast.Binding(name, ast.Data(name)))
         else:
@@ -42,20 +42,20 @@ class ASTBuilder(Transformer):
     def int_data_defn(self, p):
         match p:
             case [name]:
-                return ast.DatatypeDefn(t.TypeConstant(name))
+                return ast.DatatypeDefn(TypeConstant(name))
             case [name, params]:
                 return ast.DatatypeDefn(
-                    t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
+                    TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 )
 
     def data_defn(self, p):
         match p:
             case [name, cts]:
-                type = t.TypeConstant(name)
+                type = TypeConstant(name)
                 return _create_datatype_defn(type, cts)
 
             case [name, params, cts]:
-                type = t.TypeApp(t.TypeConstant(name), [t.TypeVar(p) for p in params])
+                type = TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 return _create_datatype_defn(type, cts)
 
     def int_val_defn(self, p):
@@ -115,24 +115,24 @@ class ASTBuilder(Transformer):
             case [ftype]:
                 return ftype
             case [vars, _, ftype]:
-                return t.TypeScheme(vars, ftype)
+                return TypeScheme(vars, ftype)
 
     def fun_type(self, p):
         match p:
             case [type]:
                 return type
             case [left, arrow, right]:
-                return t.TypeApp(t.TypeConstant(arrow), [left, right])
+                return TypeApp(TypeConstant(arrow), [left, right])
 
     def type_var(self, p):
-        return t.TypeVar(p[0])
+        return TypeVar(p[0])
 
     def type_const(self, p):
-        return t.TypeConstant(p[0])
+        return TypeConstant(p[0])
 
     def type_app(self, p):
         f, args = p
-        return t.TypeApp(f, args)
+        return TypeApp(f, args)
 
     def targ_list(self, p):
         match p:
@@ -196,19 +196,17 @@ class ASTBuilder(Transformer):
                 return ast.OpChain(chain)
 
     def capture_pattern(self, p):
-        return pat.CapturePattern(p[0])
+        return CapturePattern(p[0])
 
     def data_pattern(self, p):
         match p:
             case [tag]:
-                return pat.DataPattern(tag)
+                return DataPattern(tag)
             case [tag, names]:
-                return pat.DataPattern(
-                    tag, [pat.CapturePattern(name) for name in names]
-                )
+                return DataPattern(tag, [CapturePattern(name) for name in names])
 
     def literal_pattern(self, p):
-        return pat.LiteralPattern(p[0])
+        return LiteralPattern(p[0])
 
     def fun_app(self, p):
         f, arg = p
