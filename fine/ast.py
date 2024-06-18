@@ -156,7 +156,7 @@ class DatatypeDefn:
         match self.type:
             case TypeApp(f, args):
                 assert isinstance(f, TypeConstant)
-                assert all(isinstance(type_arg, TypeVar) for type_arg in args)
+                assert all(isinstance(targ, TypeVar) for targ in args)
 
         assert len(self.bindings) == len(self.typings)
         for binding, typing in zip(self.bindings, self.typings):

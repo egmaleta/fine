@@ -119,7 +119,7 @@ class KindInferer:
 
             case TypeApp(f, args):
                 fkind = self._infer(f, env)
-                kinds = [self._infer(type_arg, env) for type_arg in args]
+                kinds = [self._infer(targ, env) for targ in args]
 
                 eq = _Equation(fkind, FunctionKind.from_args(kinds))
                 self._eqs.append(eq)
