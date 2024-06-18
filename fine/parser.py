@@ -5,14 +5,6 @@ from . import pattern as pat
 from . import type as t
 
 
-def _create_function_app(f, args):
-    match args:
-        case [arg, *rest]:
-            return _create_function_app(ast.FunctionApp(f, arg), rest)
-        case []:
-            return f
-
-
 def _create_datatype_defn(main_type, pairs):
     bindings = []
     typings = []
@@ -45,7 +37,15 @@ def _create_datatype_defn(main_type, pairs):
 
 class ASTBuilder(Transformer):
     def module(self, p):
-        return ast.Module(p)
+        return ast.Module(p[0])
+
+    def defn_list(self, p):
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
 
     def int_data_defn(self, p):
         match p:
@@ -89,7 +89,7 @@ class ASTBuilder(Transformer):
         )
 
     def fix_defn(self, p):
-        fixity, prec, *operators = p
+        fixity, prec, operators = p
         return ast.FixitySignature(operators, fixity.type != "INFIXR", int(prec))
 
     def typeof_defn(self, p):
@@ -108,7 +108,12 @@ class ASTBuilder(Transformer):
         return ast.Binding(op, ast.Function([left, right], body))
 
     def datact_list(self, p):
-        return p
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
 
     def datact(self, p):
         match p:
@@ -124,9 +129,6 @@ class ASTBuilder(Transformer):
             case [vars, _, ftype]:
                 return t.TypeScheme(vars, ftype)
 
-    def type_var_list(self, p):
-        return p
-
     def fun_type(self, p):
         match p:
             case [type]:
@@ -141,14 +143,40 @@ class ASTBuilder(Transformer):
         return t.TypeConstant(p[0])
 
     def type_app(self, p):
-        f, *args = p
+        f, args = p
         return t.TypeApp(f, args)
 
+    def targ_list(self, p):
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
+
+    def operator_list(self, p):
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
+
     def param_list(self, p):
-        return p
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
 
     def fun_param_list(self, p):
-        return p
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
 
     def fun_param(self, p):
         match p:
@@ -162,7 +190,7 @@ class ASTBuilder(Transformer):
         return ast.Function(params, body)
 
     def let_expr(self, p):
-        *defns, body = p
+        defns, body = p
         return ast.LetExpr(defns, body)
 
     def guard_expr(self, p):
@@ -178,9 +206,6 @@ class ASTBuilder(Transformer):
                 return ast.FunctionApp(ast.FunctionApp(ast.Id(op), left), right)
             case chain:
                 return ast.OpChain(chain)
-
-    def match(self, p):
-        return tuple(p)
 
     def capture_pattern(self, p):
         return pat.CapturePattern(p[0])
@@ -198,18 +223,26 @@ class ASTBuilder(Transformer):
         return pat.LiteralPattern(p[0])
 
     def fun_app(self, p):
-        f, args = p
-        return _create_function_app(f, args)
+        f, arg = p
+        return ast.FunctionApp(f, arg)
+
+    def match_expr(self, p):
+        matchable, matches = p
+        return ast.PatternMatching(matchable, matches)
+
+    def match_list(self, p):
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
+
+    def match(self, p):
+        return tuple(p)
 
     def id_atom(self, p):
         return ast.Id(p[0])
-
-    def match_expr(self, p):
-        matchable, *matches = p
-        return ast.PatternMatching(matchable, matches)
-
-    def expr_list(self, p):
-        return p
 
     def dec_literal(self, p):
         return ast.Float(p[0])

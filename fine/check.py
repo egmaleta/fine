@@ -115,6 +115,12 @@ class SemanticChecker:
                             valtype_names.append(name)
                         case ast.FixitySignature(operators):
                             ops.extend(operators)
+                        case ast.DatatypeDefn():
+                            assert (
+                                False
+                            ), f"Datatype definitions are only allowed at the global scope."
+                        case _:
+                            assert False
 
                 self._assert_unique(val_names)
                 self._assert_unique(valtype_names)
@@ -169,6 +175,8 @@ class SemanticChecker:
                             type_names.append(type.name)
                             for typing in typings:
                                 ct_names.append(typing.name)
+                        case _:
+                            assert False
 
                 self._assert_unique(val_names)
                 self._assert_unique(valtype_names)

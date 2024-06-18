@@ -19,23 +19,24 @@ let a % b = %internal mod
 let a ^ b = %internal pow
 let (**) = (^)
 
-data List(a) {
-    Nil
-    Cons: a -> List(a)
+data List a {
+    | Nil
+    | Cons: a -> List a
 }
 
 infixr 5 ::
 let (::) = Cons
 
-let map(f, list) = match list {
-    Nil -> Nil
-    Cons(head, tail) -> f(head) :: map(f, tail)
+let map: forall a b. (a -> b) -> List a -> List b
+let map f list = match list {
+    | Nil -> Nil
+    | Cons head tail -> f head :: map f tail
 }
 
 let main =
     let numbers = 1 :: 2 :: 3 :: 4 :: 5 :: Nil
-    let squared(x) = x ** 2
-    in map(squared, numbers)
+    let squared x = x ** 2
+    in map squared numbers
 """
 
 
