@@ -53,7 +53,7 @@ def quantify(type: t.Type):
 
     match type:
         case t.TypeScheme():
-            _assert_free(vars)
+            _assert_free(free)
             return type
         case _:
             return t.TypeScheme(free, type) if len(free) > 0 else type
