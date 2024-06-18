@@ -19,7 +19,7 @@ let a % b = %internal mod
 let a ^ b = %internal pow
 let (**) = (^)
 
-data List a {
+type List a {
     | Nil
     | Cons: a -> List a
 }

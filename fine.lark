@@ -5,8 +5,8 @@ module: defn_list
 defn_list: defn_list defn
          | defn
 
-?defn: _DATA CAP_ID param_list? _OCURLY _INTERNAL _CCURLY         -> int_data_defn
-     | _DATA CAP_ID param_list? _OCURLY _BAR? datact_list _CCURLY -> data_defn
+?defn: _TYPE CAP_ID param_list? _OCURLY _INTERNAL _CCURLY         -> int_data_defn
+     | _TYPE CAP_ID param_list? _OCURLY _BAR? datact_list _CCURLY -> data_defn
      | _LET _name fun_param_list? _ASSIGN _internal               -> int_val_defn
      | _LET fun_param _operator fun_param _ASSIGN _internal       -> int_op_defn
      | ( INFIXL | INFIXR | INFIX ) INT operator_list              -> fix_defn
@@ -97,7 +97,6 @@ match: pattern _ARROW expr
 CAP_ID: /[A-Z][a-zA-Z0-9_']*/
 
 _INTERNAL: "%internal"
-_DATA: "data"
 _ELIF: "elif"
 _ELSE: "else"
 _FORALL: "forall"
@@ -110,6 +109,7 @@ LAZY: "lazy"
 _LET: "let"
 _MATCH: "match"
 _THEN: "then"
+_TYPE: "type"
 
 ID: /[a-z_][a-zA-Z0-9_']*/
 
