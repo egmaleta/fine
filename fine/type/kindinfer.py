@@ -11,7 +11,7 @@ class _KindVar(k.Kind):
     id: int
 
     def __repr__(self):
-        return f"k{id}"
+        return f"k{self.id}"
 
 
 @dataclass
@@ -119,15 +119,6 @@ class KindInferer:
 
                 eq = _Equation(fkind, k.FunctionKind.from_args(kinds))
                 self._eqs.append(eq)
-
-                return k.ATOM_KIND
-
-            case t.FunctionType(args):
-                eqs = [
-                    _Equation(self._infer(type_arg, env), k.ATOM_KIND)
-                    for type_arg in args
-                ]
-                self._eqs.extend(eqs)
 
                 return k.ATOM_KIND
 

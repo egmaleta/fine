@@ -5,23 +5,23 @@ module: defn_list
 defn_list: defn_list defn
          | defn
 
-?defn: _TYPE CAP_ID param_list? _OCURLY _INTERNAL _CCURLY         -> int_data_defn
-     | _TYPE CAP_ID param_list? _OCURLY _BAR? datact_list _CCURLY -> data_defn
-     | _LET _name fun_param_list? _ASSIGN _internal               -> int_val_defn
-     | _LET fun_param _operator fun_param _ASSIGN _internal       -> int_op_defn
-     | ( INFIXL | INFIXR | INFIX ) INT operator_list              -> fix_defn
-     | _LET _name _COLON type_scheme                              -> typeof_defn
-     | _LET _name fun_param_list? _ASSIGN expr                    -> val_defn
-     | _LET fun_param _operator fun_param _ASSIGN expr            -> op_defn
+?defn: _TYPE _typename param_list? _OCURLY _INTERNAL _CCURLY         -> int_data_defn
+     | _TYPE _typename param_list? _OCURLY _BAR? datact_list _CCURLY -> data_defn
+     | _LET _name fun_param_list? _ASSIGN _internal                  -> int_val_defn
+     | _LET fun_param _operator fun_param _ASSIGN _internal          -> int_op_defn
+     | ( INFIXL | INFIXR | INFIX ) INT operator_list                 -> fix_defn
+     | _LET _name _COLON type_scheme                                 -> typeof_defn
+     | _LET _name fun_param_list? _ASSIGN expr                       -> val_defn
+     | _LET fun_param _operator fun_param _ASSIGN expr               -> op_defn
 
 datact_list: datact_list _BAR datact
            | datact
 
-datact: CAP_ID ( _COLON fun_type )?
+datact: CAP_ID _COLON type_scheme
 
 type_scheme: ( _FORALL param_list DOT )? fun_type
 
-fun_type: type ( _ARROW type )*
+fun_type: type ( ARROW fun_type )?
 
 ?type: type_var
      | type_const
@@ -30,7 +30,7 @@ fun_type: type ( _ARROW type )*
 
 type_var: ID
 
-type_const: CAP_ID
+type_const: _typename
 
 type_app: ( type_var | type_const ) targ_list
 
@@ -43,6 +43,9 @@ targ_list: targ_list targ
      | _OPAR fun_type _CPAR
 
 _internal: _INTERNAL ID
+
+_typename: CAP_ID
+         | _OPAR ARROW _CPAR
 
 _name: ID
      | _OPAR ( LARGE_OP | OP | DOT ) _CPAR
@@ -64,7 +67,7 @@ fun_param_list: fun_param_list fun_param
 fun_param: _OPAR LAZY ID _CPAR
          | ID
 
-?expr: _BSLASH fun_param_list _ARROW expr                        -> fun_expr
+?expr: _BSLASH fun_param_list ARROW expr                         -> fun_expr
      | defn_list _IN expr                                        -> let_expr
      | _IF expr _THEN expr ( _ELIF expr _THEN expr )* _ELSE expr -> guard_expr
      | operand ( _operator operand )*                            -> op_chain_expr
@@ -84,7 +87,7 @@ fun_param: _OPAR LAZY ID _CPAR
 match_list: match_list _BAR match
           | match
 
-match: pattern _ARROW expr
+match: pattern ARROW expr
 
 ?literal: FLOAT  -> dec_literal
         | INT    -> nat_literal
@@ -123,7 +126,7 @@ _BSLASH: "\\"
 _OCURLY: "{"
 _CCURLY: "}"
 
-_ARROW: "->"
+ARROW: "->"
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 
 DOT: "."

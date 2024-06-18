@@ -34,12 +34,6 @@ def _quantify(type: t.Type) -> set[String]:
                 vars |= _quantify(type)
             return vars
 
-        case t.FunctionType(args):
-            vars = set()
-            for type in args:
-                vars |= _quantify(type)
-            return vars
-
         case t.TypeScheme(vars, inner):
             captured = _quantify(inner)
             _assert_unused(vars - captured)

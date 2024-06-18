@@ -1,36 +1,28 @@
-from lark import Transformer, Lark
+from lark import Transformer, Lark, Token
 
 from . import ast
 from . import pattern as pat
 from . import type as t
 
 
-def _create_datatype_defn(main_type, pairs):
+def _create_datatype_defn(
+    main_type: t.TypeConstant | t.TypeApp, cts: list[tuple[Token, t.Type]]
+):
     bindings = []
     typings = []
-    for name, type in pairs:
-        match type:
-            case None:
-                bindings.append(ast.Binding(name, ast.Data(name)))
-                typings.append(ast.Typing(name, main_type))
+    for name, type in cts:
+        typings.append(ast.Typing(name, type))
 
-            case _:
-                ftype = (
-                    t.FunctionType([*type.args, main_type])
-                    if isinstance(type, t.FunctionType)
-                    else t.FunctionType([type, main_type])
-                )
-                params = [(f"_{i+1}", False) for i in range(len(ftype) - 1)]
-
-                bindings.append(
-                    ast.Binding(
-                        name,
-                        ast.Function(
-                            params, ast.PolyData(name, [name for name, _ in params])
-                        ),
-                    )
-                )
-                typings.append(ast.Typing(name, ftype))
+        params_len = t.ftype_length(type) - 1
+        if params_len == 0:
+            bindings.append(ast.Binding(name, ast.Data(name)))
+        else:
+            params = [(f"_{i+1}", False) for i in range(params_len)]
+            binding = ast.Binding(
+                name,
+                ast.Function(params, ast.PolyData(name, [name for name, _ in params])),
+            )
+            bindings.append(binding)
 
     return ast.DatatypeDefn(main_type, bindings, typings)
 
@@ -116,11 +108,7 @@ class ASTBuilder(Transformer):
                 return p
 
     def datact(self, p):
-        match p:
-            case [ct]:
-                return (ct, None)
-            case [ct, type]:
-                return (ct, type)
+        return tuple(p)
 
     def type_scheme(self, p):
         match p:
@@ -133,8 +121,8 @@ class ASTBuilder(Transformer):
         match p:
             case [type]:
                 return type
-            case types:
-                return t.FunctionType(types)
+            case [left, arrow, right]:
+                return t.TypeApp(t.TypeConstant(arrow), [left, right])
 
     def type_var(self, p):
         return t.TypeVar(p[0])
@@ -186,7 +174,7 @@ class ASTBuilder(Transformer):
                 return (name, False)
 
     def fun_expr(self, p):
-        params, body = p
+        params, _, body = p
         return ast.Function(params, body)
 
     def let_expr(self, p):
@@ -239,7 +227,7 @@ class ASTBuilder(Transformer):
                 return p
 
     def match(self, p):
-        return tuple(p)
+        return (p[0], p[2])
 
     def id_atom(self, p):
         return ast.Id(p[0])

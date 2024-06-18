@@ -6,8 +6,7 @@ from . import kind as k
 
 
 class Type:
-    def __len__(self):
-        return 1
+    pass
 
 
 class _Kinded:
@@ -32,29 +31,6 @@ class TypeApp(Type):
     @property
     def name(self):
         return self.f.name
-
-
-@dataclass
-class FunctionType(Type):
-    args: list[Type]
-
-    def __post_init__(self):
-        assert len(self.args) >= 2
-
-    @property
-    def left(self):
-        return self.args[0]
-
-    @property
-    def right(self):
-        match self.args[1:]:
-            case [type]:
-                return type
-            case types:
-                return FunctionType(types)
-
-    def __len__(self):
-        return len(self.args)
 
 
 @dataclass
@@ -84,8 +60,17 @@ def kindof(type: Type) -> k.Kind:
 
             return kind
 
-        case FunctionType():
-            return k.ATOM_KIND
-
         case TypeScheme(_, inner):
             return kindof(inner)
+
+
+def ftype_length(type: Type) -> int:
+    match type:
+        case TypeApp(f, args):
+            if f.name == "->" and len(args) == 2:
+                return 1 + ftype_length(args[1])
+
+        case TypeScheme(_, inner):
+            return ftype_length(inner)
+
+    return 1
