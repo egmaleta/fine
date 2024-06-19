@@ -83,21 +83,25 @@ class KindInferer:
                     self._subs(kvar, k2)
                     return
 
-                assert False  # TODO: recursive subs
+                assert (
+                    False
+                ), f"Cannot substitute kindvar {kvar} with kind {k1} because {k1} contains {kvar}."
 
             case (_, _KindVar() as kvar):
                 if not _contains(k1, kvar):
                     self._subs(kvar, k1)
                     return
 
-                assert False  # TODO: recursive subs
+                assert (
+                    False
+                ), f"Cannot substitute kindvar {kvar} with kind {k1} because {k1} contains {kvar}."
 
             case (FunctionKind(), FunctionKind()):
                 self._unify(k1.left, k2.left)
                 self._unify(k1.right, k2.right)
                 return
 
-        assert False  # TODO: different shapes
+        assert False, f"Cannot unify kinds {k1} and {k2}. They have different shape."
 
     def _solve_eq(self, equation: _Equation):
         self._unify(equation.left, equation.right)
@@ -136,7 +140,7 @@ class KindInferer:
             case _:
                 assert False
 
-    def infer(self, types: list[Type], env: Env[None]):
+    def infer(self, types: list[Type], env: Env[None], default_kind=ATOM):
         for type in types:
             kind = self._infer(type, env)
             eq = _Equation(kind, ATOM)
@@ -147,4 +151,4 @@ class KindInferer:
             self._solve_eq(eq)
 
         for kvar in [*self._unsolved_kvars]:
-            self._subs(kvar, ATOM)  # could be any kind
+            self._subs(kvar, default_kind)  # could be any kind
