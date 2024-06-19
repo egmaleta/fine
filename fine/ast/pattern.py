@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from .utils import String
+from ..utils import String
 
 
 type Pattern = CapturePattern | DataPattern | LiteralPattern

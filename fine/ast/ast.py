@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 
+from ..type import Type, TypeConstant, TypeVar, TypeApp
+from ..utils import String
+
 from .pattern import Pattern
-from .type import Type, TypeConstant, TypeVar, TypeApp
-from .utils import String
 
 
 type AST = Expr | Defn
@@ -28,8 +29,12 @@ type Expr = (
 type Defn = Binding | Typing | DatatypeDefn | FixitySignature | Module
 
 
+class _Typed:
+    _type: Type | None = None
+
+
 @dataclass
-class InternalValue:
+class InternalValue(_Typed):
     """A value provided by the compiler.
 
     `name` is the identifier of the value."""
@@ -38,7 +43,7 @@ class InternalValue:
 
 
 @dataclass
-class InternalFunction:
+class InternalFunction(_Typed):
     """A function provided by the compiler.
 
     `name` is the identifier of the function.
@@ -51,7 +56,7 @@ class InternalFunction:
 
 
 @dataclass
-class Data:
+class Data(_Typed):
     """Data created by constant data constructors.
 
     `tag` is the name of the constructor and the actual data."""
@@ -60,7 +65,7 @@ class Data:
 
 
 @dataclass
-class PolyData:
+class PolyData(_Typed):
     """Data created by function data constructors.
 
     `tag` is the name of the constructor.
@@ -73,22 +78,22 @@ class PolyData:
 
 
 @dataclass
-class Int:
+class Int(_Typed):
     value: String
 
 
 @dataclass
-class Float:
+class Float(_Typed):
     value: String
 
 
 @dataclass
-class Unit:
+class Unit(_Typed):
     value: String
 
 
 @dataclass
-class Str:
+class Str(_Typed):
     value: String
 
 

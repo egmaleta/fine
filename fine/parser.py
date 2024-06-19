@@ -1,7 +1,7 @@
 from lark import Transformer, Lark, Token
 
 from . import ast
-from .pattern import CapturePattern, DataPattern, LiteralPattern
+from .ast.pattern import CapturePattern, DataPattern, LiteralPattern
 from .type import Type, TypeConstant, TypeVar, TypeApp, TypeScheme, ftype_length
 
 

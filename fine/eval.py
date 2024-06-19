@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from . import ast
-from .pattern import CapturePattern, DataPattern, LiteralPattern
+from .ast.pattern import CapturePattern, DataPattern, LiteralPattern
 from .utils import Env, String
 
 
