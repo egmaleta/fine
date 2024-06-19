@@ -63,36 +63,36 @@ class KindInferer:
         return kvar
 
     def _subs(self, kvar: _KindVar, kind: _Kind):
-        for type in self._types:
-            type._kind = _subs(type._kind, kvar, kind)
+        if kvar in self._unsolved_kvars:
+            for type in self._types:
+                type._kind = _subs(type._kind, kvar, kind)
 
-        for eq in self._eqs:
-            eq.left = _subs(eq.left, kvar, kind)
-            eq.right = _subs(eq.right, kvar, kind)
+            for eq in self._eqs:
+                eq.left = _subs(eq.left, kvar, kind)
+                eq.right = _subs(eq.right, kvar, kind)
 
-        self._unsolved_kvars.remove(kvar)
+            self._unsolved_kvars.remove(kvar)
 
     def _unify(self, k1: _Kind, k2: _Kind):
         if k1 == k2:
             return
 
         match (k1, k2):
-            case (_KindVar() as kvar, rkind):
-                if not _contains(rkind, kvar):
-                    self._subs(kvar, rkind)
+            case (_KindVar() as kvar, _):
+                if not _contains(k2, kvar):
+                    self._subs(kvar, k2)
                     return
 
                 assert False  # TODO: recursive subs
 
-            case (lkind, _KindVar() as kvar):
-                if not _contains(lkind, kvar):
-                    self._subs(kvar, lkind)
+            case (_, _KindVar() as kvar):
+                if not _contains(k1, kvar):
+                    self._subs(kvar, k1)
                     return
 
                 assert False  # TODO: recursive subs
 
             case (FunctionKind(), FunctionKind()):
-                # FIXME
                 self._unify(k1.left, k2.left)
                 self._unify(k1.right, k2.right)
                 return
