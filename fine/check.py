@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from . import ast
-from .ast.pattern import CapturePattern, DataPattern, LiteralPattern
+from .pattern import CapturePattern, DataPattern, LiteralPattern
 from .config import Config
 from .type.quantify import quantify
 from .utils import Env, String

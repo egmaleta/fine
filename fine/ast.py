@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Union
 
-from ..type import Type, TypeConstant, TypeVar, TypeApp
-from ..utils import String
-
 from .pattern import Pattern
+from .type import Type, TypeConstant, TypeVar, TypeApp
+from .utils import String
 
 
 type AST = Expr | Defn
