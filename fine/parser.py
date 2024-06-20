@@ -39,6 +39,14 @@ class ASTBuilder(Transformer):
             case _:
                 return p
 
+    def localdefn_list(self, p):
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
+
     def int_datatype(self, p):
         match p:
             case [name]:
@@ -57,6 +65,10 @@ class ASTBuilder(Transformer):
             case [name, params, cts]:
                 type = TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 return _create_datatype_defn(type, cts)
+
+    def typing(self, p):
+        name, type = p
+        return ast.Typing(name, type)
 
     def int_binding(self, p):
         match p:
@@ -83,10 +95,6 @@ class ASTBuilder(Transformer):
     def fixity(self, p):
         fixity, prec, operators = p
         return ast.FixitySignature(operators, fixity.type != "INFIXR", int(prec))
-
-    def typing(self, p):
-        name, type = p
-        return ast.Typing(name, type)
 
     def binding(self, p):
         match p:

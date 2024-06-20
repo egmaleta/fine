@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Union
 
 from ..type import Type, TypeConstant, TypeVar, TypeApp
 from ..utils import String
@@ -135,7 +136,7 @@ class PatternMatching:
 
 @dataclass
 class LetExpr:
-    defns: list[Defn]
+    defns: list[Union["FixitySignature", "Binding"]]
     body: Expr
 
 

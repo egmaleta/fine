@@ -106,30 +106,18 @@ class SemanticChecker:
 
             case ast.LetExpr(defns, body):
                 val_names = []
-                valtype_names = []
                 ops = []
                 for defn in defns:
                     match defn:
                         case ast.Binding(name):
                             val_names.append(name)
-                        case ast.Typing(name):
-                            valtype_names.append(name)
                         case ast.FixitySignature(operators):
                             ops.extend(operators)
-                        case ast.DatatypeDefn():
-                            assert (
-                                False
-                            ), f"Datatype definitions are only allowed at the global scope."
-                        case _:
-                            assert False
 
                 self._assert_unique(val_names)
-                self._assert_unique(valtype_names)
                 self._assert_unique(ops)
 
-                val_names = set(val_names)
-                self._assert_val_defn(ops, val_names)
-                self._assert_val_defn(valtype_names, val_names)
+                self._assert_val_defn(ops, set(val_names))
 
                 for defn in defns:
                     self._check(defn, env)

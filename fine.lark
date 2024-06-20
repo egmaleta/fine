@@ -5,14 +5,19 @@ module: defn_list
 defn_list: defn_list defn
          | defn
 
+localdefn_list: localdefn_list localdefn
+              | localdefn
+
 ?defn: _TYPE _typename param_list? _OCURLY _INTERNAL _CCURLY         -> int_datatype
      | _TYPE _typename param_list? _OCURLY _BAR? datact_list _CCURLY -> datatype
      | _LET _name _COLON type_scheme                                 -> typing
-     | ( INFIXL | INFIXR | INFIX ) INT operator_list                 -> fixity
      | _LET _name fun_param_list? _ASSIGN _internal                  -> int_binding
-     | _LET _name fun_param_list? _ASSIGN expr                       -> binding
      | _LET fun_param _operator fun_param _ASSIGN _internal          -> int_operation
-     | _LET fun_param _operator fun_param _ASSIGN expr               -> operation
+     | localdefn
+
+?localdefn: ( INFIXL | INFIXR | INFIX ) INT operator_list   -> fixity
+          | _LET _name fun_param_list? _ASSIGN expr         -> binding
+          | _LET fun_param _operator fun_param _ASSIGN expr -> operation
 
 datact_list: datact_list _BAR datact
            | datact
@@ -68,7 +73,7 @@ fun_param: _OPAR LAZY ID _CPAR
          | ID
 
 ?expr: _BSLASH fun_param_list ARROW expr                         -> fun_expr
-     | defn_list _IN expr                                        -> let_expr
+     | localdefn_list _IN expr                                   -> let_expr
      | _IF expr _THEN expr ( _ELIF expr _THEN expr )* _ELSE expr -> guard_expr
      | operand ( _operator operand )*                            -> op_chain_expr
 
