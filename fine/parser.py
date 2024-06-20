@@ -39,7 +39,7 @@ class ASTBuilder(Transformer):
             case _:
                 return p
 
-    def int_data_defn(self, p):
+    def int_datatype(self, p):
         match p:
             case [name]:
                 return ast.DatatypeDefn(TypeConstant(name))
@@ -48,7 +48,7 @@ class ASTBuilder(Transformer):
                     TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 )
 
-    def data_defn(self, p):
+    def datatype(self, p):
         match p:
             case [name, cts]:
                 type = TypeConstant(name)
@@ -58,7 +58,7 @@ class ASTBuilder(Transformer):
                 type = TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 return _create_datatype_defn(type, cts)
 
-    def int_val_defn(self, p):
+    def int_binding(self, p):
         match p:
             case [name, intr]:
                 return ast.Binding(name, ast.InternalValue(intr))
@@ -70,7 +70,7 @@ class ASTBuilder(Transformer):
                     ),
                 )
 
-    def int_op_defn(self, p):
+    def int_operation(self, p):
         left, op, right, intr = p
         params = [left, right]
         return ast.Binding(
@@ -80,22 +80,22 @@ class ASTBuilder(Transformer):
             ),
         )
 
-    def fix_defn(self, p):
+    def fixity(self, p):
         fixity, prec, operators = p
         return ast.FixitySignature(operators, fixity.type != "INFIXR", int(prec))
 
-    def typeof_defn(self, p):
+    def typing(self, p):
         name, type = p
         return ast.Typing(name, type)
 
-    def val_defn(self, p):
+    def binding(self, p):
         match p:
             case [name, value]:
                 return ast.Binding(name, value)
             case [name, params, body]:
                 return ast.Binding(name, ast.Function(params, body))
 
-    def op_defn(self, p):
+    def operation(self, p):
         left, op, right, body = p
         return ast.Binding(op, ast.Function([left, right], body))
 

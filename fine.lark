@@ -5,14 +5,14 @@ module: defn_list
 defn_list: defn_list defn
          | defn
 
-?defn: _TYPE _typename param_list? _OCURLY _INTERNAL _CCURLY         -> int_data_defn
-     | _TYPE _typename param_list? _OCURLY _BAR? datact_list _CCURLY -> data_defn
-     | _LET _name fun_param_list? _ASSIGN _internal                  -> int_val_defn
-     | _LET fun_param _operator fun_param _ASSIGN _internal          -> int_op_defn
-     | ( INFIXL | INFIXR | INFIX ) INT operator_list                 -> fix_defn
-     | _LET _name _COLON type_scheme                                 -> typeof_defn
-     | _LET _name fun_param_list? _ASSIGN expr                       -> val_defn
-     | _LET fun_param _operator fun_param _ASSIGN expr               -> op_defn
+?defn: _TYPE _typename param_list? _OCURLY _INTERNAL _CCURLY         -> int_datatype
+     | _TYPE _typename param_list? _OCURLY _BAR? datact_list _CCURLY -> datatype
+     | _LET _name _COLON type_scheme                                 -> typing
+     | ( INFIXL | INFIXR | INFIX ) INT operator_list                 -> fixity
+     | _LET _name fun_param_list? _ASSIGN _internal                  -> int_binding
+     | _LET _name fun_param_list? _ASSIGN expr                       -> binding
+     | _LET fun_param _operator fun_param _ASSIGN _internal          -> int_operation
+     | _LET fun_param _operator fun_param _ASSIGN expr               -> operation
 
 datact_list: datact_list _BAR datact
            | datact
