@@ -1,6 +1,6 @@
 from ..utils import String
 
-from . import Type, TypeConstant, TypeVar, TypeApp, TypeScheme
+from . import Type, TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme
 
 
 def _format_vars(vars):
@@ -30,8 +30,14 @@ def _quantify(type: Type) -> set[String]:
 
         case TypeApp(f, args):
             vars = _quantify(f)
-            for type in args:
-                vars |= _quantify(type)
+            for targ in args:
+                vars |= _quantify(targ)
+            return vars
+
+        case FunctionType(args):
+            vars = set()
+            for targ in args:
+                vars |= _quantify(targ)
             return vars
 
         case TypeScheme(vars, inner):

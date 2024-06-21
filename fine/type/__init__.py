@@ -5,7 +5,7 @@ from ..utils import String
 from .kind import Kind, FunctionKind
 
 
-type Type = TypeConstant | TypeVar | TypeApp | TypeScheme
+type Type = TypeConstant | TypeVar | TypeApp | FunctionType | TypeScheme
 
 
 class _Kinded:
@@ -30,6 +30,29 @@ class TypeApp:
     @property
     def name(self):
         return self.f.name
+
+
+@dataclass
+class FunctionType:
+    args: list[Type]
+
+    def __post_init__(self):
+        assert len(self.args) >= 2
+
+    @property
+    def left(self):
+        return self.args[0]
+
+    @property
+    def right(self):
+        match self.args[1:]:
+            case [type]:
+                return type
+            case types:
+                return FunctionType(types)
+
+    def __len__(self):
+        return len(self.args)
 
 
 @dataclass

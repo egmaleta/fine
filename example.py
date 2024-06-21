@@ -20,8 +20,8 @@ let a ^ b = %internal pow
 let (**) = (^)
 
 type List(a) {
-    Nil: List(a)
-    Cons: a -> List(a) -> List(a)
+    Nil
+    Cons: a -> List(a)
 }
 
 infixr 5 ::

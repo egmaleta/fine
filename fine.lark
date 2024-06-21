@@ -8,11 +8,11 @@ defn_list: defn_list defn
 localdefn_list: localdefn_list localdefn
               | localdefn
 
-?defn: _TYPE _typename ( _OPAR param_list _CPAR )? _OCURLY _INTERNAL _CCURLY   -> int_datatype
-     | _TYPE _typename ( _OPAR param_list _CPAR )? _OCURLY datact_list _CCURLY -> datatype
-     | _LET _name _COLON type_scheme                                           -> typing
-     | _LET _name ( _OPAR fun_param_list _CPAR )? _ASSIGN _internal            -> int_binding
-     | _LET fun_param _operator fun_param _ASSIGN _internal                    -> int_operation
+?defn: _TYPE CAP_ID ( _OPAR param_list _CPAR )? _OCURLY _INTERNAL _CCURLY   -> int_datatype
+     | _TYPE CAP_ID ( _OPAR param_list _CPAR )? _OCURLY datact_list _CCURLY -> datatype
+     | _LET _name _COLON type_scheme                                        -> typing
+     | _LET _name ( _OPAR fun_param_list _CPAR )? _ASSIGN _internal         -> int_binding
+     | _LET fun_param _operator fun_param _ASSIGN _internal                 -> int_operation
      | localdefn
 
 ?localdefn: ( INFIXL | INFIXR | INFIX ) INT operator_list           -> fixity
@@ -22,11 +22,11 @@ localdefn_list: localdefn_list localdefn
 datact_list: datact_list datact
            | datact
 
-datact: CAP_ID _COLON type_scheme
+datact: CAP_ID ( _COLON fun_type )?
 
 type_scheme: ( _FORALL ID+ DOT )? fun_type
 
-fun_type: type ( ARROW fun_type )?
+fun_type: type ( _ARROW type )*
 
 ?type: type_var
      | type_const
@@ -35,7 +35,7 @@ fun_type: type ( ARROW fun_type )?
 
 type_var: ID
 
-type_const: _typename
+type_const: CAP_ID
 
 type_app: ( type_var | type_const ) _OPAR targ_list _CPAR
 
@@ -43,9 +43,6 @@ targ_list: targ_list _COMMA fun_type
          | fun_type
 
 _internal: _INTERNAL ID
-
-_typename: CAP_ID
-         | _OPAR ARROW _CPAR
 
 _name: ID
      | _OPAR ( LARGE_OP | OP | DOT ) _CPAR
@@ -67,7 +64,7 @@ fun_param_list: fun_param_list _COMMA fun_param
 fun_param: LAZY ID
          | ID
 
-?expr: _BSLASH _OPAR fun_param_list _CPAR ARROW expr             -> fun_expr
+?expr: _BSLASH _OPAR fun_param_list _CPAR _ARROW expr            -> fun_expr
      | localdefn_list _IN expr                                   -> let_expr
      | _IF expr _THEN expr ( _ELIF expr _THEN expr )* _ELSE expr -> guard_expr
      | operand ( _operator operand )*                            -> op_chain_expr
@@ -88,7 +85,7 @@ expr_list: expr_list _COMMA expr
 match_list: match_list match
           | match
 
-match: pattern ARROW expr
+match: pattern _ARROW expr
 
 ?literal: FLOAT  -> dec_literal
         | INT    -> nat_literal
@@ -128,7 +125,7 @@ _COMMA: ","
 _OCURLY: "{"
 _CCURLY: "}"
 
-ARROW: "->"
+_ARROW: "->"
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
 
 DOT: "."

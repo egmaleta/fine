@@ -3,7 +3,7 @@ from collections import deque
 
 from ..utils import Env
 
-from . import Type, TypeConstant, TypeVar, TypeApp, TypeScheme
+from . import Type, TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme
 from .kind import Kind, AtomKind, FunctionKind, ATOM
 
 
@@ -127,6 +127,12 @@ class KindInferer:
 
                 eq = _Equation(fkind, FunctionKind.from_args(kinds))
                 self._eqs.append(eq)
+
+                return ATOM
+
+            case FunctionType(args):
+                eqs = [_Equation(self._infer(targ, env), ATOM) for targ in args]
+                self._eqs.extend(eqs)
 
                 return ATOM
 

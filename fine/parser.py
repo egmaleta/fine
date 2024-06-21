@@ -1,28 +1,36 @@
-from lark import Transformer, Lark, Token
+from lark import Transformer, Lark
 
 from . import ast
 from .pattern import CapturePattern, DataPattern, LiteralPattern
-from .type import Type, TypeConstant, TypeVar, TypeApp, TypeScheme, ftype_length
+from .type import TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme
 
 
-def _create_datatype_defn(
-    main_type: TypeConstant | TypeApp, cts: list[tuple[Token, Type]]
-):
+def _create_datatype_defn(main_type, pairs):
     bindings = []
     typings = []
-    for name, type in cts:
-        typings.append(ast.Typing(name, type))
+    for name, type in pairs:
+        match type:
+            case None:
+                bindings.append(ast.Binding(name, ast.Data(name)))
+                typings.append(ast.Typing(name, main_type))
 
-        params_len = ftype_length(type) - 1
-        if params_len == 0:
-            bindings.append(ast.Binding(name, ast.Data(name)))
-        else:
-            params = [(f"_{i+1}", False) for i in range(params_len)]
-            binding = ast.Binding(
-                name,
-                ast.Function(params, ast.PolyData(name, [name for name, _ in params])),
-            )
-            bindings.append(binding)
+            case _:
+                ftype = (
+                    FunctionType([*type.args, main_type])
+                    if isinstance(type, FunctionType)
+                    else FunctionType([type, main_type])
+                )
+                params = [(f"_{i+1}", False) for i in range(len(ftype) - 1)]
+
+                bindings.append(
+                    ast.Binding(
+                        name,
+                        ast.Function(
+                            params, ast.PolyData(name, [name for name, _ in params])
+                        ),
+                    )
+                )
+                typings.append(ast.Typing(name, ftype))
 
     return ast.DatatypeDefn(main_type, bindings, typings)
 
@@ -116,7 +124,11 @@ class ASTBuilder(Transformer):
                 return p
 
     def datact(self, p):
-        return tuple(p)
+        match p:
+            case [name]:
+                return (name, None)
+            case [name, type]:
+                return (name, type)
 
     def type_scheme(self, p):
         match p:
@@ -129,8 +141,8 @@ class ASTBuilder(Transformer):
         match p:
             case [type]:
                 return type
-            case [left, arrow, right]:
-                return TypeApp(TypeConstant(arrow), [left, right])
+            case types:
+                return FunctionType(types)
 
     def type_var(self, p):
         return TypeVar(p[0])
@@ -182,7 +194,7 @@ class ASTBuilder(Transformer):
                 return (name, False)
 
     def fun_expr(self, p):
-        params, _, body = p
+        params, body = p
         return ast.Function(params, body)
 
     def let_expr(self, p):
@@ -243,7 +255,7 @@ class ASTBuilder(Transformer):
                 return p
 
     def match(self, p):
-        return (p[0], p[2])
+        return tuple(p)
 
     def id_atom(self, p):
         return ast.Id(p[0])
