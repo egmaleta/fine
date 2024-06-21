@@ -47,14 +47,6 @@ class ASTBuilder(Transformer):
             case _:
                 return p
 
-    def localdefn_list(self, p):
-        match p:
-            case [l, x]:
-                l.append(x)
-                return l
-            case _:
-                return p
-
     def int_datatype(self, p):
         match p:
             case [name]:
@@ -215,18 +207,16 @@ class ASTBuilder(Transformer):
             case chain:
                 return ast.OpChain(chain)
 
-    def capture_pattern(self, p):
-        return CapturePattern(p[0])
-
-    def data_pattern(self, p):
+    def local_binding_list(self, p):
         match p:
-            case [tag]:
-                return DataPattern(tag)
-            case [tag, names]:
-                return DataPattern(tag, [CapturePattern(name) for name in names])
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
 
-    def literal_pattern(self, p):
-        return LiteralPattern(p[0])
+    def local_binding(self, p):
+        return self.binding(p)
 
     def fun_app(self, p):
         f, args = p
@@ -256,6 +246,19 @@ class ASTBuilder(Transformer):
 
     def match(self, p):
         return tuple(p)
+
+    def capture_pattern(self, p):
+        return CapturePattern(p[0])
+
+    def data_pattern(self, p):
+        match p:
+            case [tag]:
+                return DataPattern(tag)
+            case [tag, names]:
+                return DataPattern(tag, [CapturePattern(name) for name in names])
+
+    def literal_pattern(self, p):
+        return LiteralPattern(p[0])
 
     def id_atom(self, p):
         return ast.Id(p[0])

@@ -105,19 +105,7 @@ class SemanticChecker:
                             self._check(expr, new_env)
 
             case ast.LetExpr(defns, body):
-                val_names = []
-                ops = []
-                for defn in defns:
-                    match defn:
-                        case ast.Binding(name):
-                            val_names.append(name)
-                        case ast.FixitySignature(operators):
-                            ops.extend(operators)
-
-                self._assert_unique(val_names)
-                self._assert_unique(ops)
-
-                self._assert_val_defn(ops, set(val_names))
+                self._assert_unique([defn.name for defn in defns])
 
                 for defn in defns:
                     self._check(defn, env)
