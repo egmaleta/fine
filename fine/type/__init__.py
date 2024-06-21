@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 
 from ..utils import String, raw_str
-
-from .kind import Kind, FunctionKind
+from .kind import Kind, FunctionKind, ATOM_KIND
 
 
 type Type = TypeConstant | TypeVar | TypeApp | FunctionType | TypeScheme
@@ -16,6 +15,9 @@ class _Kinded:
 class TypeConstant(_Kinded):
     name: String
 
+    def __len__(self):
+        return 1
+
     def __repr__(self):
         return raw_str(self.name)
 
@@ -23,6 +25,9 @@ class TypeConstant(_Kinded):
 @dataclass
 class TypeVar(_Kinded):
     name: String
+
+    def __len__(self):
+        return 1
 
     def __repr__(self):
         return raw_str(self.name)
@@ -36,6 +41,9 @@ class TypeApp:
     @property
     def name(self):
         return self.f.name
+
+    def __len__(self):
+        return 1
 
     def __repr__(self):
         args_repr = ", ".join(repr(targ) for targ in self.args)
@@ -101,6 +109,9 @@ def kindof(type: Type) -> Kind:
                 kind = kind.right
 
             return kind
+
+        case FunctionType():
+            return ATOM_KIND
 
         case TypeScheme(_, inner):
             return kindof(inner)

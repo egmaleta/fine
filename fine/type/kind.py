@@ -19,7 +19,7 @@ class FunctionKind:
     def from_args(cls, args: list[Kind]):
         match args:
             case [kind]:
-                return cls(kind, ATOM)
+                return cls(kind, ATOM_KIND)
             case [kind, *rest]:
                 return cls(kind, cls.from_args(rest))
 
@@ -30,4 +30,4 @@ class FunctionKind:
         return f"{left_repr} -> {self.right}"
 
 
-ATOM = AtomKind()
+ATOM_KIND = AtomKind()

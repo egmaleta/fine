@@ -2,9 +2,8 @@ from dataclasses import dataclass
 from collections import deque
 
 from ..utils import Env
-
 from . import Type, TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme
-from .kind import Kind, AtomKind, FunctionKind, ATOM
+from .kind import Kind, AtomKind, FunctionKind, ATOM_KIND
 
 
 type _Kind = Kind | _KindVar
@@ -128,13 +127,13 @@ class KindInferer:
                 eq = _Equation(fkind, FunctionKind.from_args(kinds))
                 self._eqs.append(eq)
 
-                return ATOM
+                return ATOM_KIND
 
             case FunctionType(args):
-                eqs = [_Equation(self._infer(targ, env), ATOM) for targ in args]
+                eqs = [_Equation(self._infer(targ, env), ATOM_KIND) for targ in args]
                 self._eqs.extend(eqs)
 
-                return ATOM
+                return ATOM_KIND
 
             case TypeScheme(vars, inner):
                 new_env = env.child()
@@ -146,10 +145,10 @@ class KindInferer:
             case _:
                 assert False
 
-    def infer(self, types: list[Type], env: Env[None], default_kind=ATOM):
+    def infer(self, types: list[Type], env: Env[None], default_kind=ATOM_KIND):
         for type in types:
             kind = self._infer(type, env)
-            eq = _Equation(kind, ATOM)
+            eq = _Equation(kind, ATOM_KIND)
             self._eqs.append(eq)
 
         while len(self._eqs) > 0:

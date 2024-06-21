@@ -1,5 +1,4 @@
 from ..utils import String
-
 from . import Type, TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme
 
 
