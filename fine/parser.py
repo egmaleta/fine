@@ -122,7 +122,7 @@ class ASTBuilder(Transformer):
         match p:
             case [ftype]:
                 return ftype
-            case [vars, _, ftype]:
+            case [*vars, _, ftype]:
                 return TypeScheme(vars, ftype)
 
     def fun_type(self, p):
@@ -217,8 +217,18 @@ class ASTBuilder(Transformer):
         return LiteralPattern(p[0])
 
     def fun_app(self, p):
-        f, arg = p
-        return ast.FunctionApp(f, arg)
+        f, args = p
+        for arg in args:
+            f = ast.FunctionApp(f, arg)
+        return f
+
+    def expr_list(self, p):
+        match p:
+            case [l, x]:
+                l.append(x)
+                return l
+            case _:
+                return p
 
     def match_expr(self, p):
         matchable, matches = p
