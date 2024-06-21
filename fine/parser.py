@@ -2,23 +2,25 @@ from lark import Transformer, Lark
 
 from . import ast
 from .pattern import CapturePattern, DataPattern, LiteralPattern
-from .type import TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme
+from .type import TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme, clone
 
 
 def _create_datatype_defn(main_type, pairs):
     bindings = []
     typings = []
     for name, type in pairs:
+        return_type = clone(main_type)
+
         match type:
             case None:
                 bindings.append(ast.Binding(name, ast.Data(name)))
-                typings.append(ast.Typing(name, main_type))
+                typings.append(ast.Typing(name, return_type))
 
             case _:
                 ftype = (
-                    FunctionType([*type.args, main_type])
+                    FunctionType([*type.args, return_type])
                     if isinstance(type, FunctionType)
-                    else FunctionType([type, main_type])
+                    else FunctionType([type, return_type])
                 )
                 params = [(f"_{i+1}", False) for i in range(len(ftype) - 1)]
 

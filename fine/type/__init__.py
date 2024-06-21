@@ -115,3 +115,21 @@ def kindof(type: Type) -> Kind:
 
         case TypeScheme(_, inner):
             return kindof(inner)
+
+
+def clone(type: Type) -> Type:
+    match type:
+        case TypeConstant(name):
+            return TypeConstant(name)
+
+        case TypeVar(name):
+            return TypeVar(name)
+
+        case TypeApp(f, args):
+            return TypeApp(clone(f), [clone(targ) for targ in args])
+
+        case FunctionType(args):
+            return FunctionType([clone(targ) for targ in args])
+
+        case TypeScheme(vars, inner):
+            return TypeScheme({*vars}, clone(inner))
