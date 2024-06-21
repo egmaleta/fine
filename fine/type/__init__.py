@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ..utils import String
+from ..utils import String, raw_str
 
 from .kind import Kind, FunctionKind
 
@@ -16,10 +16,16 @@ class _Kinded:
 class TypeConstant(_Kinded):
     name: String
 
+    def __repr__(self):
+        return raw_str(self.name)
+
 
 @dataclass
 class TypeVar(_Kinded):
     name: String
+
+    def __repr__(self):
+        return raw_str(self.name)
 
 
 @dataclass
@@ -30,6 +36,10 @@ class TypeApp:
     @property
     def name(self):
         return self.f.name
+
+    def __repr__(self):
+        args_repr = ", ".join(repr(targ) for targ in self.args)
+        return f"{self.f}({args_repr})"
 
 
 @dataclass
@@ -54,6 +64,12 @@ class FunctionType:
     def __len__(self):
         return len(self.args)
 
+    def __repr__(self):
+        return " -> ".join(
+            f"({targ})" if isinstance(targ, FunctionType) else repr(targ)
+            for targ in self.args
+        )
+
 
 @dataclass
 class TypeScheme:
@@ -66,6 +82,10 @@ class TypeScheme:
 
     def __len__(self):
         return len(self.type)
+
+    def __repr__(self):
+        vars = " ".join(raw_str(var) for var in self.vars)
+        return f"forall {vars}. {self.type}"
 
 
 def kindof(type: Type) -> Kind:
@@ -84,15 +104,3 @@ def kindof(type: Type) -> Kind:
 
         case TypeScheme(_, inner):
             return kindof(inner)
-
-
-def ftype_length(type: Type) -> int:
-    match type:
-        case TypeApp(f, args):
-            if f.name == "->" and len(args) == 2:
-                return 1 + ftype_length(args[1])
-
-        case TypeScheme(_, inner):
-            return ftype_length(inner)
-
-    return 1

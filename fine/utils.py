@@ -5,6 +5,14 @@ from lark.lexer import Token
 type String = str | Token
 
 
+def raw_str(s: String) -> str:
+    match s:
+        case Token():
+            return s.value
+        case _:
+            return s
+
+
 class Env[V]:
     def __init__(self, parent: Self | None = None):
         self._values: dict[String, V] = {}
