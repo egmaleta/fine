@@ -107,10 +107,10 @@ class Transformer:
                     self._transform(body, new_env),
                 )
 
-            case ast.Binding(name, value):
-                return ast.Binding(name, self._transform(value, env))
+            case ast.Binding(name, value, type):
+                return ast.Binding(name, self._transform(value, env), type)
 
-            case ast.Typing() | ast.DatatypeDefn():
+            case ast.DatatypeDefn():
                 return node
 
             case ast.FixitySignature(operators, is_left_assoc, prec):

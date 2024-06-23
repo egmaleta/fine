@@ -24,7 +24,7 @@ type Expr = (
     | LetExpr
 )
 
-type Defn = Binding | Typing | DatatypeDefn | FixitySignature | Module
+type Defn = Binding | DatatypeDefn | FixitySignature | Module
 
 
 @dataclass
@@ -132,19 +132,13 @@ class LetExpr:
 class Binding:
     name: String
     value: Expr
-
-
-@dataclass
-class Typing:
-    name: String
-    type: Type
+    type: Type | None
 
 
 @dataclass
 class DatatypeDefn:
     type: TypeConstant | TypeApp
     bindings: list[Binding] = field(default_factory=lambda: [])
-    typings: list[Typing] = field(default_factory=lambda: [])
 
     def __post_init__(self):
         match self.type:
@@ -152,13 +146,8 @@ class DatatypeDefn:
                 assert isinstance(f, TypeConstant)
                 assert all(isinstance(targ, TypeVar) for targ in args)
 
-        assert len(self.bindings) == len(self.typings)
-        for binding, typing in zip(self.bindings, self.typings):
-            assert binding.name == typing.name
-
-    @property
-    def is_internal(self):
-        return len(self.typings) == 0
+        for binding in self.bindings:
+            assert binding.type is not None
 
 
 @dataclass

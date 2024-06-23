@@ -7,14 +7,12 @@ from .type import TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme, clon
 
 def _create_datatype_defn(main_type, pairs):
     bindings = []
-    typings = []
     for name, type in pairs:
         return_type = clone(main_type)
 
         match type:
             case None:
-                bindings.append(ast.Binding(name, ast.Data(name)))
-                typings.append(ast.Typing(name, return_type))
+                bindings.append(ast.Binding(name, ast.Data(name), return_type))
 
             case _:
                 ftype = (
@@ -30,11 +28,11 @@ def _create_datatype_defn(main_type, pairs):
                         ast.Function(
                             params, ast.PolyData(name, [name for name, _ in params])
                         ),
+                        ftype,
                     )
                 )
-                typings.append(ast.Typing(name, ftype))
 
-    return ast.DatatypeDefn(main_type, bindings, typings)
+    return ast.DatatypeDefn(main_type, bindings)
 
 
 class ASTBuilder(Transformer):
@@ -68,30 +66,28 @@ class ASTBuilder(Transformer):
                 type = TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 return _create_datatype_defn(type, cts)
 
-    def typing(self, p):
-        name, type = p
-        return ast.Typing(name, type)
-
     def int_binding(self, p):
         match p:
-            case [name, intr]:
-                return ast.Binding(name, ast.InternalValue(intr))
-            case [name, params, intr]:
+            case [name, type, intr]:
+                return ast.Binding(name, ast.InternalValue(intr), type)
+            case [name, params, type, intr]:
                 return ast.Binding(
                     name,
                     ast.Function(
                         params, ast.InternalFunction(intr, [name for name, _ in params])
                     ),
+                    type,
                 )
 
     def int_operation(self, p):
-        left, op, right, intr = p
+        left, op, right, type, intr = p
         params = [left, right]
         return ast.Binding(
             op,
             ast.Function(
                 params, ast.InternalFunction(intr, [name for name, _ in params])
             ),
+            type,
         )
 
     def fixity(self, p):
@@ -100,14 +96,14 @@ class ASTBuilder(Transformer):
 
     def binding(self, p):
         match p:
-            case [name, value]:
-                return ast.Binding(name, value)
-            case [name, params, body]:
-                return ast.Binding(name, ast.Function(params, body))
+            case [name, type, value]:
+                return ast.Binding(name, value, type)
+            case [name, params, type, body]:
+                return ast.Binding(name, ast.Function(params, body), type)
 
     def operation(self, p):
-        left, op, right, body = p
-        return ast.Binding(op, ast.Function([left, right], body))
+        left, op, right, type, body = p
+        return ast.Binding(op, ast.Function([left, right], body), type)
 
     def datact_list(self, p):
         match p:
@@ -123,6 +119,13 @@ class ASTBuilder(Transformer):
                 return (name, None)
             case [name, type]:
                 return (name, type)
+
+    def typeof(self, p):
+        match p:
+            case [type]:
+                return type
+            case _:
+                return None
 
     def type_scheme(self, p):
         match p:
@@ -218,7 +221,11 @@ class ASTBuilder(Transformer):
                 return p
 
     def local_binding(self, p):
-        return self.binding(p)
+        match p:
+            case [name, value]:
+                return ast.Binding(name, value, None)
+            case [name, params, body]:
+                return ast.Binding(name, ast.Function(params, body), None)
 
     def fun_app(self, p):
         f, args = p

@@ -116,19 +116,15 @@ class SemanticChecker:
 
                 self._check(body, env)
 
-            case ast.Binding(name, value):
+            case ast.Binding(name, value, type):
                 env.add(name, None)
                 self._check(value, env)
+                if type is not None:
+                    node.type = quantify(type)
 
-            case ast.Typing(name, type) as defn:
-                defn.type = quantify(type)
-
-            case ast.DatatypeDefn(_, bindings, typings):
+            case ast.DatatypeDefn(_, bindings):
                 for binding in bindings:
                     self._check(binding, env)
-
-                for typing in typings:
-                    self._check(typing, env)
 
             case ast.FixitySignature(_, _, prec):
                 min_prec = self._config.min_op_precedence
@@ -140,7 +136,6 @@ class SemanticChecker:
 
             case ast.Module(defns):
                 val_names = []
-                valtype_names = []
                 ops = []
                 type_names = []
                 ct_names = []
@@ -148,26 +143,21 @@ class SemanticChecker:
                     match defn:
                         case ast.Binding(name):
                             val_names.append(name)
-                        case ast.Typing(name):
-                            valtype_names.append(name)
                         case ast.FixitySignature(operators):
                             ops.extend(operators)
-                        case ast.DatatypeDefn(type, _, typings):
+                        case ast.DatatypeDefn(type, bindings):
                             type_names.append(type.name)
-                            for typing in typings:
-                                ct_names.append(typing.name)
+                            for binding in bindings:
+                                ct_names.append(binding.name)
                         case _:
                             assert False
 
                 self._assert_unique(val_names)
-                self._assert_unique(valtype_names)
                 self._assert_unique(ops)
                 self._assert_unique(type_names)
                 self._assert_unique(ct_names)
 
-                val_names = set(val_names)
-                self._assert_val_defn(ops, val_names)
-                self._assert_val_defn(valtype_names, val_names)
+                self._assert_val_defn(ops, set(val_names))
 
                 for defn in defns:
                     self._check(defn, env)

@@ -27,10 +27,9 @@ type List(a) {
 infixr 5 ::
 let (::) = Cons
 
-let map: forall a b. (a -> b) -> List(a) -> List(b)
-let map(f, list) = match list {
+let map(f, list): forall a b. (a -> b) -> List(a) -> List(b) = match list {
     Nil -> Nil
-    Cons(head, tail) -> f(head) :: map(f, tail)
+    Cons(head, tail) -> Cons( f(head), map(f, tail) )
 }
 
 let main =
