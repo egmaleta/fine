@@ -264,7 +264,7 @@ class ASTBuilder(Transformer):
             case [tag]:
                 return pat.DataPattern(tag)
             case [tag, names]:
-                return pat.DataPattern(
+                return pat.PolyDataPattern(
                     tag, [pat.CapturePattern(name) for name in names]
                 )
 

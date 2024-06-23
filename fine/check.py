@@ -86,20 +86,12 @@ class SemanticChecker:
                 self._check(matchable, env)
                 for pattern, expr in matches:
                     match pattern:
-                        case (
-                            pat.FloatPattern()
-                            | pat.IntPattern()
-                            | pat.StrPattern()
-                            | pat.DataPattern(_, [])
-                        ):
-                            self._check(expr, env)
-
                         case pat.CapturePattern(name):
                             new_env = env.child()
                             new_env.add(name, None)
                             self._check(expr, new_env)
 
-                        case pat.DataPattern(_, capture_patterns):
+                        case pat.PolyDataPattern(_, capture_patterns):
                             names = [p.name for p in capture_patterns]
                             self._assert_unique(names)
 
@@ -107,6 +99,9 @@ class SemanticChecker:
                             for name in names:
                                 new_env.add(name, None)
                             self._check(expr, new_env)
+
+                        case _:
+                            self._check(expr, env)
 
             case ast.LetExpr(defns, body):
                 self._assert_unique([defn.name for defn in defns])

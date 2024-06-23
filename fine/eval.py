@@ -120,6 +120,22 @@ class Evaluator:
 
                 for pattern, expr in matches:
                     match pattern:
+                        case pat.CapturePattern(name):
+                            new_env = env.child()
+                            new_env.add(name, value)
+                            return self._eval(expr, new_env)
+
+                        case pat.DataPattern(tag):
+                            if isinstance(value, ast.Data) and value.tag == tag:
+                                return self._eval(expr, env)
+
+                        case pat.PolyDataPattern(tag, capture_patterns):
+                            if isinstance(value, PolyData) and value.tag == tag:
+                                new_env = env.child()
+                                for p, v in zip(capture_patterns, value.values):
+                                    new_env.add(p.name, v)
+                                return self._eval(expr, new_env)
+
                         case (
                             pat.FloatPattern(pat_value)
                             | pat.IntPattern(pat_value)
@@ -130,22 +146,6 @@ class Evaluator:
                                 and value.value == pat_value
                             ):
                                 return self._eval(expr, env)
-
-                        case pat.DataPattern(tag, []):
-                            if isinstance(value, ast.Data) and value.tag == tag:
-                                return self._eval(expr, env)
-
-                        case pat.DataPattern(tag, capture_patterns):
-                            if isinstance(value, PolyData) and value.tag == tag:
-                                new_env = env.child()
-                                for p, v in zip(capture_patterns, value.values):
-                                    new_env.add(p.name, v)
-                                return self._eval(expr, new_env)
-
-                        case pat.CapturePattern(name):
-                            new_env = env.child()
-                            new_env.add(name, value)
-                            return self._eval(expr, new_env)
 
                 assert False, "No pattern was matched"
 
