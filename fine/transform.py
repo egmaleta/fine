@@ -107,6 +107,9 @@ class Transformer:
                     self._transform(body, new_env),
                 )
 
+            case ast.InternalBinding() | ast.InternalDatatype():
+                return node
+
             case ast.Binding(name, value, type):
                 return ast.Binding(name, self._transform(value, env), type)
 
@@ -122,6 +125,7 @@ class Transformer:
                 return ast.Module([self._transform(defn, env) for defn in defns])
 
             case _:
+                node
                 assert False
 
     def transform(self, node: ast.AST):

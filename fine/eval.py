@@ -156,6 +156,12 @@ class Evaluator:
 
                 return self._eval(body, new_env)
 
+            case ast.InternalBinding(name, value):
+                env.add(name, self._eval(value, env))
+
+            case ast.InternalDatatype():
+                pass
+
             case ast.Binding(name, value):
                 env.add(name, self._eval(value, env))
 

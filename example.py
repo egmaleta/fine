@@ -7,16 +7,9 @@ from fine.transform import Transformer
 
 
 SOURCE_CODE = """
-infixl 6 + -
-infixl 7 * / %
 infixr 8 ^ **
-
-let a + b = %internal add
-let a - b = %internal sub
-let a * b = %internal times
-let a / b = %internal div
-let a % b = %internal mod
-let a ^ b = %internal pow
+%internal pow
+let a ^ b: Int -> Int -> Int
 let (**) = (^)
 
 type List(a) {

@@ -50,11 +50,35 @@ class ASTBuilder(Transformer):
     def int_datatype(self, p):
         match p:
             case [name]:
-                return ast.Datatype(TypeConstant(name))
+                return ast.InternalDatatype(TypeConstant(name))
             case [name, params]:
-                return ast.Datatype(
+                return ast.InternalDatatype(
                     TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 )
+
+    def int_binding(self, p):
+        match p:
+            case [intr, name, type]:
+                return ast.InternalBinding(name, ast.InternalValue(intr), type)
+            case [intr, name, params, type]:
+                return ast.InternalBinding(
+                    name,
+                    ast.Function(
+                        [(p, False) for p in params], ast.InternalFunction(intr, params)
+                    ),
+                    type,
+                )
+
+    def int_operation(self, p):
+        intr, left, op, right, type = p
+        params = [left, right]
+        return ast.InternalBinding(
+            op,
+            ast.Function(
+                [(p, False) for p in params], ast.InternalFunction(intr, params)
+            ),
+            type,
+        )
 
     def datatype(self, p):
         match p:
@@ -65,30 +89,6 @@ class ASTBuilder(Transformer):
             case [name, params, cts]:
                 type = TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 return _create_datatype_defn(type, cts)
-
-    def int_binding(self, p):
-        match p:
-            case [name, type, intr]:
-                return ast.Binding(name, ast.InternalValue(intr), type)
-            case [name, params, type, intr]:
-                return ast.Binding(
-                    name,
-                    ast.Function(
-                        params, ast.InternalFunction(intr, [name for name, _ in params])
-                    ),
-                    type,
-                )
-
-    def int_operation(self, p):
-        left, op, right, type, intr = p
-        params = [left, right]
-        return ast.Binding(
-            op,
-            ast.Function(
-                params, ast.InternalFunction(intr, [name for name, _ in params])
-            ),
-            type,
-        )
 
     def fixity(self, p):
         fixity, prec, operators = p

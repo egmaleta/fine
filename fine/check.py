@@ -111,6 +111,14 @@ class SemanticChecker:
 
                 self._check(body, env)
 
+            case ast.InternalBinding(name, value, type):
+                env.add(name, None)
+                self._check(value, env)
+                node.type = quantify(type)
+
+            case ast.InternalDatatype():
+                pass
+
             case ast.Binding(name, value, type):
                 env.add(name, None)
                 self._check(value, env)
@@ -136,8 +144,10 @@ class SemanticChecker:
                 ct_names = []
                 for defn in defns:
                     match defn:
-                        case ast.Binding(name):
+                        case ast.InternalBinding(name) | ast.Binding(name):
                             val_names.append(name)
+                        case ast.InternalDatatype(type):
+                            type_names.append(type.name)
                         case ast.FixitySignature(operators):
                             ops.extend(operators)
                         case ast.Datatype(type, bindings):

@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .pattern import Pattern
 from .type import Type, TypeConstant, TypeVar, TypeApp
@@ -24,7 +24,7 @@ type Expr = (
     | LetExpr
 )
 
-type Defn = Binding | Datatype | FixitySignature | Module
+type Defn = InternalBinding | InternalDatatype | Binding | Datatype | FixitySignature | Module
 
 
 @dataclass
@@ -129,6 +129,18 @@ class LetExpr:
 
 
 @dataclass
+class InternalBinding:
+    name: String
+    value: Expr
+    type: Type
+
+
+@dataclass
+class InternalDatatype:
+    type: TypeConstant | TypeApp[TypeConstant, TypeVar]
+
+
+@dataclass
 class Binding:
     name: String
     value: Expr
@@ -138,14 +150,9 @@ class Binding:
 @dataclass
 class Datatype:
     type: TypeConstant | TypeApp[TypeConstant, TypeVar]
-    bindings: list[Binding] = field(default_factory=lambda: [])
+    bindings: list[Binding]
 
     def __post_init__(self):
-        match self.type:
-            case TypeApp(f, args):
-                assert isinstance(f, TypeConstant)
-                assert all(isinstance(targ, TypeVar) for targ in args)
-
         for binding in self.bindings:
             assert binding.type is not None
 

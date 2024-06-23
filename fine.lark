@@ -5,13 +5,13 @@ module: defn_list
 defn_list: defn_list defn
          | defn
 
-?defn: _TYPE CAP_ID ( _OPAR param_list _CPAR )? _OCURLY _INTERNAL _CCURLY   -> int_datatype
-     | _TYPE CAP_ID ( _OPAR param_list _CPAR )? _OCURLY datact_list _CCURLY -> datatype
-     | _LET _name ( _OPAR fun_param_list _CPAR )? typeof _ASSIGN _internal  -> int_binding
-     | _LET _name ( _OPAR fun_param_list _CPAR )? typeof _ASSIGN expr       -> binding
-     | _LET fun_param _operator fun_param typeof _ASSIGN _internal          -> int_operation
-     | _LET fun_param _operator fun_param typeof _ASSIGN expr               -> operation
-     | ( INFIXL | INFIXR | INFIX ) INT operator_list                        -> fixity
+?defn: _INTERNAL _TYPE CAP_ID ( _OPAR param_list _CPAR )?                     -> int_datatype
+     | _INTERNAL ID _LET _name ( _OPAR param_list _CPAR )? _COLON type_scheme -> int_binding
+     | _INTERNAL ID _LET ID _operator ID _COLON type_scheme                   -> int_operation
+     | _TYPE CAP_ID ( _OPAR param_list _CPAR )? _OCURLY datact_list _CCURLY   -> datatype
+     | _LET _name ( _OPAR fun_param_list _CPAR )? typeof _ASSIGN expr         -> binding
+     | _LET fun_param _operator fun_param typeof _ASSIGN expr                 -> operation
+     | ( INFIXL | INFIXR | INFIX ) INT operator_list                          -> fixity
 
 datact_list: datact_list datact
            | datact
@@ -37,8 +37,6 @@ type_app: ( type_var | type_const ) _OPAR targ_list _CPAR
 
 targ_list: targ_list _COMMA fun_type
          | fun_type
-
-_internal: _INTERNAL ID
 
 _name: ID
      | _OPAR ( LARGE_OP | OP | DOT ) _CPAR
