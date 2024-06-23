@@ -137,7 +137,7 @@ class Binding:
 
 @dataclass
 class DatatypeDefn:
-    type: TypeConstant | TypeApp
+    type: TypeConstant | TypeApp[TypeConstant, TypeVar]
     bindings: list[Binding] = field(default_factory=lambda: [])
 
     def __post_init__(self):

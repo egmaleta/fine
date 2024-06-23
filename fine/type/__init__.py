@@ -4,7 +4,9 @@ from ..utils import String, raw_str
 from .kind import Kind, FunctionKind, ATOM_KIND
 
 
-type Type = TypeConstant | TypeVar | TypeApp | FunctionType | TypeScheme
+type Type = (
+    TypeConstant | TypeVar | TypeApp[Type, Type] | FunctionType[Type] | TypeScheme[Type]
+)
 
 
 class _Kinded:
@@ -34,9 +36,9 @@ class TypeVar(_Kinded):
 
 
 @dataclass
-class TypeApp:
-    f: TypeConstant | TypeVar
-    args: list[Type]
+class TypeApp[T: TypeConstant | TypeVar, A: Type]:
+    f: T
+    args: list[A]
 
     @property
     def name(self):
@@ -51,8 +53,8 @@ class TypeApp:
 
 
 @dataclass
-class FunctionType:
-    args: list[Type]
+class FunctionType[T: Type]:
+    args: list[T]
 
     def __post_init__(self):
         assert len(self.args) >= 2
@@ -80,9 +82,9 @@ class FunctionType:
 
 
 @dataclass
-class TypeScheme:
+class TypeScheme[T: Type]:
     vars: set[String]
-    type: Type
+    type: T
 
     def __post_init__(self):
         if isinstance(self.vars, list):
@@ -117,7 +119,7 @@ def kindof(type: Type) -> Kind:
             return kindof(inner)
 
 
-def clone(type: Type) -> Type:
+def clone[T: Type](type: T) -> T:
     match type:
         case TypeConstant(name):
             return TypeConstant(name)

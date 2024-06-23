@@ -47,7 +47,7 @@ def _quantify(type: Type) -> set[String]:
             return free
 
 
-def quantify(type: Type):
+def quantify[T: Type](type: T) -> T | TypeScheme[T]:
     free = _quantify(type)
 
     match type:
