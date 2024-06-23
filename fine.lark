@@ -85,11 +85,14 @@ match: pattern _ARROW expr
 
 ?pattern: ID                                 -> capture_pattern
         | CAP_ID ( _OPAR param_list _CPAR )? -> data_pattern
-        | ( FLOAT | INT | UNIT | STRING )    -> literal_pattern
+        | literal_pattern
 
-?literal: FLOAT  -> dec_literal
-        | INT    -> nat_literal
-        | UNIT   -> unit_literal
+?literal_pattern: FLOAT  -> float_pattern
+                | INT    -> int_pattern
+                | STRING -> string_pattern
+
+?literal: FLOAT  -> float_literal
+        | INT    -> int_literal
         | STRING -> string_literal
 
 
@@ -124,6 +127,8 @@ _BSLASH: "\\"
 _COMMA: ","
 _OCURLY: "{"
 _CCURLY: "}"
+_OPAR: "("
+_CPAR: ")"
 
 _ARROW: "->"
 LARGE_OP: /[~!@$%^&*\/\-+|?.<>:=]{2,3}/
@@ -132,10 +137,6 @@ DOT: "."
 _COLON: ":"
 _ASSIGN: "="
 OP: /[~!@$%^&*\/\-+|?<>]/
-
-UNIT: "(" _SPACE? ")"
-_OPAR: "("
-_CPAR: ")"
 
 %import common.WS -> _SPACE
 %import common.SH_COMMENT -> _COMMENT

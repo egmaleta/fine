@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from .utils import String
 
 
-type Pattern = CapturePattern | DataPattern | LiteralPattern
+type Pattern = CapturePattern | DataPattern | FloatPattern | IntPattern | StrPattern
 
 
 @dataclass
@@ -18,5 +18,15 @@ class DataPattern:
 
 
 @dataclass
-class LiteralPattern:
+class FloatPattern:
+    value: String
+
+
+@dataclass
+class IntPattern:
+    value: String
+
+
+@dataclass
+class StrPattern:
     value: String

@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from . import ast
-from .pattern import CapturePattern, DataPattern, LiteralPattern
+from . import pattern as pat
 from .config import Config
 from .type.quantify import quantify
 from .utils import Env, String
@@ -47,7 +47,6 @@ class SemanticChecker:
                 | ast.PolyData()
                 | ast.Int()
                 | ast.Float()
-                | ast.Unit()
                 | ast.Str()
             ):
                 pass
@@ -87,15 +86,20 @@ class SemanticChecker:
                 self._check(matchable, env)
                 for pattern, expr in matches:
                     match pattern:
-                        case LiteralPattern() | DataPattern(_, []):
+                        case (
+                            pat.FloatPattern()
+                            | pat.IntPattern()
+                            | pat.StrPattern()
+                            | pat.DataPattern(_, [])
+                        ):
                             self._check(expr, env)
 
-                        case CapturePattern(name):
+                        case pat.CapturePattern(name):
                             new_env = env.child()
                             new_env.add(name, None)
                             self._check(expr, new_env)
 
-                        case DataPattern(_, capture_patterns):
+                        case pat.DataPattern(_, capture_patterns):
                             names = [p.name for p in capture_patterns]
                             self._assert_unique(names)
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from . import ast
-from .pattern import CapturePattern, DataPattern, LiteralPattern
+from . import pattern as pat
 from .utils import Env, String
 
 
@@ -29,7 +29,6 @@ type Value = (
     | Lazy[Value]
     | ast.Int
     | ast.Float
-    | ast.Unit
     | ast.Str
     | ast.Data
 )
@@ -47,7 +46,7 @@ class Evaluator:
 
     def _lazy_eval(self, node: ast.Expr, env: Env[Value]):
         match node:
-            case ast.Data() | ast.Int() | ast.Float() | ast.Unit() | ast.Str():
+            case ast.Data() | ast.Int() | ast.Float() | ast.Str():
                 return node
 
             case ast.Id(name):
@@ -79,7 +78,7 @@ class Evaluator:
                 values = [self._unlazy(env.get(name)[0]) for name in value_names]
                 return PolyData(tag, values)
 
-            case ast.Int() | ast.Float() | ast.Unit() | ast.Str():
+            case ast.Int() | ast.Float() | ast.Str():
                 return node
 
             case ast.Id(name):
@@ -121,25 +120,29 @@ class Evaluator:
 
                 for pattern, expr in matches:
                     match pattern:
-                        case LiteralPattern(pat_value):
+                        case (
+                            pat.FloatPattern(pat_value)
+                            | pat.IntPattern(pat_value)
+                            | pat.StrPattern(pat_value)
+                        ):
                             if (
-                                isinstance(value, (ast.Int, ast.Float, ast.Unit))
+                                isinstance(value, (ast.Int, ast.Float, ast.Str))
                                 and value.value == pat_value
                             ):
                                 return self._eval(expr, env)
 
-                        case DataPattern(tag, []):
+                        case pat.DataPattern(tag, []):
                             if isinstance(value, ast.Data) and value.tag == tag:
                                 return self._eval(expr, env)
 
-                        case DataPattern(tag, capture_patterns):
+                        case pat.DataPattern(tag, capture_patterns):
                             if isinstance(value, PolyData) and value.tag == tag:
                                 new_env = env.child()
                                 for p, v in zip(capture_patterns, value.values):
                                     new_env.add(p.name, v)
                                 return self._eval(expr, new_env)
 
-                        case CapturePattern(name):
+                        case pat.CapturePattern(name):
                             new_env = env.child()
                             new_env.add(name, value)
                             return self._eval(expr, new_env)
@@ -187,9 +190,6 @@ def try_pythonize(value: Value):
         case ast.Float(v):
             return float(v)
 
-        case ast.Unit():
-            return ()
-
         case ast.Str(v):
             return v[1:-1].encode().decode("unicode_escape")
 
@@ -199,6 +199,8 @@ def try_pythonize(value: Value):
                     return True
                 case "False":
                     return False
+                case "Unit":
+                    return ()
                 case "Nil":
                     return []
 

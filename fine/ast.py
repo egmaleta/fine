@@ -14,7 +14,6 @@ type Expr = (
     | PolyData
     | Int
     | Float
-    | Unit
     | Str
     | Id
     | FunctionApp
@@ -28,12 +27,8 @@ type Expr = (
 type Defn = Binding | Typing | DatatypeDefn | FixitySignature | Module
 
 
-class _Typed:
-    _type: Type | None = None
-
-
 @dataclass
-class InternalValue(_Typed):
+class InternalValue:
     """A value provided by the compiler.
 
     `name` is the identifier of the value."""
@@ -42,7 +37,7 @@ class InternalValue(_Typed):
 
 
 @dataclass
-class InternalFunction(_Typed):
+class InternalFunction:
     """A function provided by the compiler.
 
     `name` is the identifier of the function.
@@ -55,7 +50,7 @@ class InternalFunction(_Typed):
 
 
 @dataclass
-class Data(_Typed):
+class Data:
     """Data created by constant data constructors.
 
     `tag` is the name of the constructor and the actual data."""
@@ -64,7 +59,7 @@ class Data(_Typed):
 
 
 @dataclass
-class PolyData(_Typed):
+class PolyData:
     """Data created by function data constructors.
 
     `tag` is the name of the constructor.
@@ -77,22 +72,17 @@ class PolyData(_Typed):
 
 
 @dataclass
-class Int(_Typed):
+class Int:
     value: String
 
 
 @dataclass
-class Float(_Typed):
+class Float:
     value: String
 
 
 @dataclass
-class Unit(_Typed):
-    value: String
-
-
-@dataclass
-class Str(_Typed):
+class Str:
     value: String
 
 

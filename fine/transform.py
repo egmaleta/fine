@@ -59,7 +59,6 @@ class Transformer:
                 | ast.PolyData()
                 | ast.Int()
                 | ast.Float()
-                | ast.Unit()
                 | ast.Str()
                 | ast.Id()
             ):

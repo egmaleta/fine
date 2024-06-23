@@ -1,7 +1,7 @@
 from lark import Transformer, Lark
 
 from . import ast
-from .pattern import CapturePattern, DataPattern, LiteralPattern
+from . import pattern as pat
 from .type import TypeConstant, TypeVar, TypeApp, FunctionType, TypeScheme, clone
 
 
@@ -250,29 +250,34 @@ class ASTBuilder(Transformer):
         return tuple(p)
 
     def capture_pattern(self, p):
-        return CapturePattern(p[0])
+        return pat.CapturePattern(p[0])
 
     def data_pattern(self, p):
         match p:
             case [tag]:
-                return DataPattern(tag)
+                return pat.DataPattern(tag)
             case [tag, names]:
-                return DataPattern(tag, [CapturePattern(name) for name in names])
+                return pat.DataPattern(
+                    tag, [pat.CapturePattern(name) for name in names]
+                )
 
-    def literal_pattern(self, p):
-        return LiteralPattern(p[0])
+    def float_pattern(self, p):
+        return pat.FloatPattern(p[0])
+
+    def int_pattern(self, p):
+        return pat.IntPattern(p[0])
+
+    def string_pattern(self, p):
+        return pat.StrPattern(p[0])
 
     def id_atom(self, p):
         return ast.Id(p[0])
 
-    def dec_literal(self, p):
+    def float_literal(self, p):
         return ast.Float(p[0])
 
-    def nat_literal(self, p):
+    def int_literal(self, p):
         return ast.Int(p[0])
-
-    def unit_literal(self, p):
-        return ast.Unit(p[0])
 
     def string_literal(self, p):
         return ast.Str(p[0])
