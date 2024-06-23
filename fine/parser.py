@@ -32,7 +32,7 @@ def _create_datatype_defn(main_type, pairs):
                     )
                 )
 
-    return ast.DatatypeDefn(main_type, bindings)
+    return ast.Datatype(main_type, bindings)
 
 
 class ASTBuilder(Transformer):
@@ -50,9 +50,9 @@ class ASTBuilder(Transformer):
     def int_datatype(self, p):
         match p:
             case [name]:
-                return ast.DatatypeDefn(TypeConstant(name))
+                return ast.Datatype(TypeConstant(name))
             case [name, params]:
-                return ast.DatatypeDefn(
+                return ast.Datatype(
                     TypeApp(TypeConstant(name), [TypeVar(p) for p in params])
                 )
 

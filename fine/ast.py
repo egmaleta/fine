@@ -24,7 +24,7 @@ type Expr = (
     | LetExpr
 )
 
-type Defn = Binding | DatatypeDefn | FixitySignature | Module
+type Defn = Binding | Datatype | FixitySignature | Module
 
 
 @dataclass
@@ -136,7 +136,7 @@ class Binding:
 
 
 @dataclass
-class DatatypeDefn:
+class Datatype:
     type: TypeConstant | TypeApp[TypeConstant, TypeVar]
     bindings: list[Binding] = field(default_factory=lambda: [])
 

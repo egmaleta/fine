@@ -159,7 +159,7 @@ class Evaluator:
             case ast.Binding(name, value):
                 env.add(name, self._eval(value, env))
 
-            case ast.DatatypeDefn(_, bindings):
+            case ast.Datatype(_, bindings):
                 for binding in bindings:
                     self._eval(binding, env)
 

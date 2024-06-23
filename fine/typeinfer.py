@@ -173,7 +173,7 @@ class TypeInferer:
 
                 self._eqs.append(_Equation(expected_type, inferred_type))
 
-            case ast.DatatypeDefn(type, bindings):
+            case ast.Datatype(type, bindings):
                 if isinstance(type, TypeConstant):
                     self._typeconst_env.add(type.name, type)
 

@@ -110,7 +110,7 @@ class Transformer:
             case ast.Binding(name, value, type):
                 return ast.Binding(name, self._transform(value, env), type)
 
-            case ast.DatatypeDefn():
+            case ast.Datatype():
                 return node
 
             case ast.FixitySignature(operators, is_left_assoc, prec):

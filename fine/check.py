@@ -117,7 +117,7 @@ class SemanticChecker:
                 if type is not None:
                     node.type = quantify(type)
 
-            case ast.DatatypeDefn(_, bindings):
+            case ast.Datatype(_, bindings):
                 for binding in bindings:
                     self._check(binding, env)
 
@@ -140,7 +140,7 @@ class SemanticChecker:
                             val_names.append(name)
                         case ast.FixitySignature(operators):
                             ops.extend(operators)
-                        case ast.DatatypeDefn(type, bindings):
+                        case ast.Datatype(type, bindings):
                             type_names.append(type.name)
                             for binding in bindings:
                                 ct_names.append(binding.name)
