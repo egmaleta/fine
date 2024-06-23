@@ -1,0 +1,5 @@
+INT_TNAME = "Int"
+FLOAT_TNAME = "Float"
+STR_TNAME = "String"
+BOOL_TNAME = "Bool"
+UNIT_TNAME = "Unit"
