@@ -14,6 +14,9 @@ class _Equation:
     left: Type
     right: Type
 
+    def __repr__(self) -> str:
+        return f"{self.left} = {self.right}"
+
 
 def _typename_of_literal(lit: ast.Float | ast.Int | ast.Str):
     match lit:
