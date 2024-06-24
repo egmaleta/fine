@@ -51,7 +51,7 @@ class TypeInferer:
         self._typeconst_env = Env[TypeConstant]()
 
     def _new_tvar(self):
-        tvar = TypeVar(f"t{len(self._unsolved_tvars)}")
+        tvar = TypeVar(f"%t{len(self._unsolved_tvars)}")
         self._unsolved_tvars.add(tvar)
         return tvar
 
@@ -72,7 +72,7 @@ class TypeInferer:
 
             case ast.FunctionApp(f, arg):
                 ftype = self._infer(f, env)
-                arg_type = self.infer(arg, env)
+                arg_type = self._infer(arg, env)
 
                 tvar = self._new_tvar()
                 eq = _Equation(ftype, FunctionType([arg_type, tvar]))
@@ -165,6 +165,13 @@ class TypeInferer:
                     self._infer(defn, new_env)
 
                 return self._infer(body, new_env)
+
+            case ast.InternalBinding(name, _, type):
+                env.add(name, type)
+
+            case ast.InternalDatatype(type):
+                if isinstance(type, TypeConstant):
+                    self._typeconst_env.add(type.name, type)
 
             case ast.Binding(name, value, type):
                 expected_type = type if type is not None else self._new_tvar()
